@@ -1,0 +1,97 @@
+# ROADMAP: CarRecord
+
+**Project:** CarRecord — Kotlin Multiplatform car service record app (iOS + Android)
+**Core Value:** Every vehicle's full service history and upcoming reminders, always accessible offline, in a clean and minimal interface.
+**Granularity:** Coarse (3 phases)
+**Coverage:** 21/21 v1 requirements mapped ✓
+
+---
+
+## Phases
+
+- [ ] **Phase 1: Foundation & Vehicle Management** — KMP project scaffold, SQLDelight schema with WAL + migration CI, full vehicle CRUD
+- [ ] **Phase 2: Service Log** — Complete service entry logging, history view, parts, photos, edit/delete
+- [ ] **Phase 3: Reminders & Dashboard** — Mileage and time-based reminders, push notifications, iOS foreground-check pattern, home dashboard
+
+---
+
+## Phase Details
+
+### Phase 1: Foundation & Vehicle Management
+**Goal:** The KMP project runs on both platforms with a stable, migration-safe local database, and users can manage their vehicle list.
+**Mode:** mvp
+**Depends on:** Nothing (first phase)
+**Requirements:** DAT-01, DAT-02, DAT-03, DAT-04, VEH-01, VEH-02, VEH-03, VEH-04, VEH-05
+**Success Criteria**:
+1. App launches on both Android (API 26+) and iOS (16+) from a single shared KMP codebase with no platform-specific UI duplication
+2. User can add a vehicle with name, make, model, year, license plate, and type — vehicle persists after app restart with no data loss
+3. User can attach a photo to a vehicle, and edit or delete a vehicle (with all its records)
+4. User can view a list of all their vehicles on the home screen
+5. SQLite WAL mode is active from first launch, and all schema changes are blocked in CI without a corresponding `.sqm` migration file
+**Plans:** TBD
+
+### Phase 2: Service Log
+**Goal:** Users can log, view, and manage the complete history of service events for any vehicle.
+**Mode:** mvp
+**Depends on:** Phase 1
+**Requirements:** SVC-01, SVC-02, SVC-03, SVC-04, SVC-05, SVC-06, SVC-07
+**Success Criteria**:
+1. User can create a service entry with date, mileage, service type (preset or custom), cost, and notes in under 30 seconds
+2. User can add parts replaced/repaired (part name, quantity) and workshop/mechanic details to a service entry
+3. User can attach one or more photos (e.g., receipts) to a service entry
+4. User can view the full service history for a vehicle sorted by date or mileage
+5. User can edit or delete any existing service entry
+**Plans:** TBD
+
+### Phase 3: Reminders & Dashboard
+**Goal:** Users receive proactive mileage- and time-based reminders when service is due, and see an at-a-glance summary of all vehicles on the home screen.
+**Mode:** mvp
+**Depends on:** Phase 2
+**Requirements:** REM-01, REM-02, REM-03, REM-04, DSH-01
+**Success Criteria**:
+1. User can set a mileage-based reminder ("every X km from last service") and a time-based reminder ("every X months") for any service type on any vehicle
+2. User receives a local push notification when a service reminder becomes due — notification permission is only requested when the user creates their first reminder
+3. On Android, overdue mileage reminders are evaluated by a background WorkManager task; on iOS, overdue mileage reminders are evaluated on app foreground via `triggerImmediateIfOverdue()` — both platforms deliver the notification correctly
+4. Home screen dashboard shows all vehicles with last service date and next due service at a glance
+**Plans:** TBD
+**UI hint**: yes
+
+---
+
+## Progress
+
+| Phase | Plans Complete | Status | Completed |
+|-------|----------------|--------|-----------|
+| 1. Foundation & Vehicle Management | 0/? | Not started | — |
+| 2. Service Log | 0/? | Not started | — |
+| 3. Reminders & Dashboard | 0/? | Not started | — |
+
+---
+
+## Requirement Coverage
+
+| Phase | Requirements |
+|-------|-------------|
+| 1 – Foundation & Vehicle Management | DAT-01, DAT-02, DAT-03, DAT-04, VEH-01, VEH-02, VEH-03, VEH-04, VEH-05 |
+| 2 – Service Log | SVC-01, SVC-02, SVC-03, SVC-04, SVC-05, SVC-06, SVC-07 |
+| 3 – Reminders & Dashboard | REM-01, REM-02, REM-03, REM-04, DSH-01 |
+
+**Total mapped:** 21/21 ✓
+
+---
+
+## Architecture Notes (from Research)
+
+Critical decisions captured for execution phases:
+
+- **Stack:** Kotlin 2.2.20 + Compose Multiplatform 1.8.2 + SQLDelight 2.3.2 + Koin 4.2.0 + JetBrains Navigation Compose 2.9.0
+- **Bootstrap:** Use [kmp.jetbrains.com](https://kmp.jetbrains.com) for correct Gradle version catalog and source set wiring
+- **WAL mode:** Enable `PRAGMA journal_mode=WAL;` on iOS `NativeSqliteDriver` from Phase 1 — non-negotiable for data safety
+- **Migration CI:** Run `generateMainCarRecordSchema` before first release commit; add `verifySqlDelightMigration` to CI
+- **iOS reminders:** `NotificationScheduler` interface with `scheduleTimeBased()` + `triggerImmediateIfOverdue()` — designed in Phase 3; mileage logic stays in `commonMain`, delivery is `expect/actual`
+- **DB concurrency:** Serialize all DB writes via `Dispatchers.IO.limitedParallelism(1)` to prevent iOS `SIGABRT` crashes
+- **Notification permission:** Request only on first reminder creation, never on cold launch
+
+---
+*Roadmap created: 2026-10-18*
+*Last updated: 2026-10-18 after initial roadmap creation*

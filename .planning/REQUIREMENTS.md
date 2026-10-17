@@ -83,32 +83,32 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 | Requirement | Phase | Status |
 |-------------|-------|--------|
-| VEH-01 | — | Pending |
-| VEH-02 | — | Pending |
-| VEH-03 | — | Pending |
-| VEH-04 | — | Pending |
-| VEH-05 | — | Pending |
-| SVC-01 | — | Pending |
-| SVC-02 | — | Pending |
-| SVC-03 | — | Pending |
-| SVC-04 | — | Pending |
-| SVC-05 | — | Pending |
-| SVC-06 | — | Pending |
-| SVC-07 | — | Pending |
-| REM-01 | — | Pending |
-| REM-02 | — | Pending |
-| REM-03 | — | Pending |
-| REM-04 | — | Pending |
-| DSH-01 | — | Pending |
-| DAT-01 | — | Pending |
-| DAT-02 | — | Pending |
-| DAT-03 | — | Pending |
-| DAT-04 | — | Pending |
+| VEH-01 | Phase 1: Foundation & Vehicle Management | Pending |
+| VEH-02 | Phase 1: Foundation & Vehicle Management | Pending |
+| VEH-03 | Phase 1: Foundation & Vehicle Management | Pending |
+| VEH-04 | Phase 1: Foundation & Vehicle Management | Pending |
+| VEH-05 | Phase 1: Foundation & Vehicle Management | Pending |
+| SVC-01 | Phase 2: Service Log | Pending |
+| SVC-02 | Phase 2: Service Log | Pending |
+| SVC-03 | Phase 2: Service Log | Pending |
+| SVC-04 | Phase 2: Service Log | Pending |
+| SVC-05 | Phase 2: Service Log | Pending |
+| SVC-06 | Phase 2: Service Log | Pending |
+| SVC-07 | Phase 2: Service Log | Pending |
+| REM-01 | Phase 3: Reminders & Dashboard | Pending |
+| REM-02 | Phase 3: Reminders & Dashboard | Pending |
+| REM-03 | Phase 3: Reminders & Dashboard | Pending |
+| REM-04 | Phase 3: Reminders & Dashboard | Pending |
+| DSH-01 | Phase 3: Reminders & Dashboard | Pending |
+| DAT-01 | Phase 1: Foundation & Vehicle Management | Pending |
+| DAT-02 | Phase 1: Foundation & Vehicle Management | Pending |
+| DAT-03 | Phase 1: Foundation & Vehicle Management | Pending |
+| DAT-04 | Phase 1: Foundation & Vehicle Management | Pending |
 
 **Coverage:**
 - v1 requirements: 21 total
-- Mapped to phases: 0 (populated by roadmap)
-- Unmapped: 21 ⚠️
+- Mapped to phases: 21 ✓
+- Unmapped: 0 ✓
 
 ---
 *Requirements defined: 2026-10-18*
