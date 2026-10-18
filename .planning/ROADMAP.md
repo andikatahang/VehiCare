@@ -28,7 +28,19 @@
 3. User can attach a photo to a vehicle, and edit or delete a vehicle (with all its records)
 4. User can view a list of all their vehicles on the home screen
 5. SQLite WAL mode is active from first launch, and all schema changes are blocked in CI without a corresponding `.sqm` migration file
-**Plans:** TBD
+**Plans:** 10 plans
+
+Plans:
+- [ ] 01-01-PLAN.md — Wave 0 version/environment gate, then the Gradle root config and KMP module config (migration tasks exposed)
+- [ ] 01-02-PLAN.md — Compose Resources strings, 3 vehicle-type vector drawables, theme tokens, platform hosts, minimal `App()`
+- [ ] 01-03-PLAN.md — WAL `.sq` schema, committed `1.db` baseline, domain models, driver factories, DI, repository + mapper with tests
+- [ ] 01-04-PLAN.md — nav shell (routes, bottom tabs, Settings placeholder), the Walking Skeleton end-to-end slice, `SKELETON.md`, `README.md`
+- [ ] 01-05-PLAN.md — CI migration enforcement, per-platform WAL proof tests, and a probe-revert exercise proving the guard fires
+- [ ] 01-06-PLAN.md — the vehicle list slice: `VehicleCard`, `VehicleTypeCircle`, `LicensePlateChip`, `EmptyState`, FAB
+- [ ] 01-07-PLAN.md — the single Add/Edit form: all fields, validation rules, type picker, digits-only year
+- [ ] 01-08-PLAN.md — the photo slice: `PhotoStorage`, `PhotoField`, FileKit gallery picker, Coil preview, orphan cleanup
+- [ ] 01-09-PLAN.md — the Detail screen: hero photo, Display name, field rows, reserved service-history slot, Edit entry point
+- [ ] 01-10-PLAN.md — confirmed deletion: dialog, single-flight delete, photo-file removal asserted on a real filesystem
 
 ### Phase 2: Service Log
 **Goal:** Users can log, view, and manage the complete history of service events for any vehicle.
@@ -62,7 +74,7 @@
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation & Vehicle Management | 0/? | Not started | — |
+| 1. Foundation & Vehicle Management | 0/10 | Not started | — |
 | 2. Service Log | 0/? | Not started | — |
 | 3. Reminders & Dashboard | 0/? | Not started | — |
 
