@@ -18,53 +18,84 @@
 ## Phase Details
 
 ### Phase 1: Foundation & Vehicle Management
+
 **Goal:** The KMP project runs on both platforms with a stable, migration-safe local database, and users can manage their vehicle list.
 **Mode:** mvp
 **Depends on:** Nothing (first phase)
 **Requirements:** DAT-01, DAT-02, DAT-03, DAT-04, VEH-01, VEH-02, VEH-03, VEH-04, VEH-05
 **Success Criteria**:
+
 1. App launches on both Android (API 26+) and iOS (16+) from a single shared KMP codebase with no platform-specific UI duplication
 2. User can add a vehicle with name, make, model, year, license plate, and type — vehicle persists after app restart with no data loss
 3. User can attach a photo to a vehicle, and edit or delete a vehicle (with all its records)
 4. User can view a list of all their vehicles on the home screen
 5. SQLite WAL mode is active from first launch, and all schema changes are blocked in CI without a corresponding `.sqm` migration file
-**Plans:** 10 plans
 
+**Plans:** 10 plans
 Plans:
+**Wave 1**
+
 - [ ] 01-01-PLAN.md — Wave 0 version/environment gate, then the Gradle root config and KMP module config (migration tasks exposed)
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
 - [ ] 01-02-PLAN.md — Compose Resources strings, 3 vehicle-type vector drawables, theme tokens, platform hosts, minimal `App()`
 - [ ] 01-03-PLAN.md — WAL `.sq` schema, committed `1.db` baseline, domain models, driver factories, DI, repository + mapper with tests
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
 - [ ] 01-04-PLAN.md — nav shell (routes, bottom tabs, Settings placeholder), the Walking Skeleton end-to-end slice, `SKELETON.md`, `README.md`
 - [ ] 01-05-PLAN.md — CI migration enforcement, per-platform WAL proof tests, and a probe-revert exercise proving the guard fires
+
+**Wave 4** *(blocked on Wave 3 completion)*
+
 - [ ] 01-06-PLAN.md — the vehicle list slice: `VehicleCard`, `VehicleTypeCircle`, `LicensePlateChip`, `EmptyState`, FAB
+
+**Wave 5** *(blocked on Wave 4 completion)*
+
 - [ ] 01-07-PLAN.md — the single Add/Edit form: all fields, validation rules, type picker, digits-only year
+
+**Wave 6** *(blocked on Wave 5 completion)*
+
 - [ ] 01-08-PLAN.md — the photo slice: `PhotoStorage`, `PhotoField`, FileKit gallery picker, Coil preview, orphan cleanup
+
+**Wave 7** *(blocked on Wave 6 completion)*
+
 - [ ] 01-09-PLAN.md — the Detail screen: hero photo, Display name, field rows, reserved service-history slot, Edit entry point
+
+**Wave 8** *(blocked on Wave 7 completion)*
+
 - [ ] 01-10-PLAN.md — confirmed deletion: dialog, single-flight delete, photo-file removal asserted on a real filesystem
 
 ### Phase 2: Service Log
+
 **Goal:** Users can log, view, and manage the complete history of service events for any vehicle.
 **Mode:** mvp
 **Depends on:** Phase 1
 **Requirements:** SVC-01, SVC-02, SVC-03, SVC-04, SVC-05, SVC-06, SVC-07
 **Success Criteria**:
+
 1. User can create a service entry with date, mileage, service type (preset or custom), cost, and notes in under 30 seconds
 2. User can add parts replaced/repaired (part name, quantity) and workshop/mechanic details to a service entry
 3. User can attach one or more photos (e.g., receipts) to a service entry
 4. User can view the full service history for a vehicle sorted by date or mileage
 5. User can edit or delete any existing service entry
+
 **Plans:** TBD
 
 ### Phase 3: Reminders & Dashboard
+
 **Goal:** Users receive proactive mileage- and time-based reminders when service is due, and see an at-a-glance summary of all vehicles on the home screen.
 **Mode:** mvp
 **Depends on:** Phase 2
 **Requirements:** REM-01, REM-02, REM-03, REM-04, DSH-01
 **Success Criteria**:
+
 1. User can set a mileage-based reminder ("every X km from last service") and a time-based reminder ("every X months") for any service type on any vehicle
 2. User receives a local push notification when a service reminder becomes due — notification permission is only requested when the user creates their first reminder
 3. On Android, overdue mileage reminders are evaluated by a background WorkManager task; on iOS, overdue mileage reminders are evaluated on app foreground via `triggerImmediateIfOverdue()` — both platforms deliver the notification correctly
 4. Home screen dashboard shows all vehicles with last service date and next due service at a glance
+
 **Plans:** TBD
 **UI hint**: yes
 
