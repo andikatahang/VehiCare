@@ -1,31 +1,61 @@
-This is a Kotlin Multiplatform project targeting Android, iOS.
+# VehiCare
 
-* [/iosApp](./iosApp/iosApp) contains an iOS application. Even if you’re sharing your UI with Compose Multiplatform,
-  you need this entry point for your iOS app. This is also where you should add SwiftUI code for your project.
+A local-first vehicle service-log app for Android and iOS, built from one Kotlin Multiplatform
+codebase: shared Compose Multiplatform UI, Koin dependency injection, JetBrains type-safe
+navigation, and SQLDelight (SQLite) persistence. Everything runs offline on the device — the
+data layer has no network client by design.
 
-* [/shared](./shared/src) is for code that will be shared across your Compose Multiplatform applications.
-  It contains several subfolders:
-  - [commonMain](./shared/src/commonMain/kotlin) is for code that’s common for all targets.
-  - Other folders are for Kotlin code that will be compiled for only the platform indicated in the folder name.
-    For example, if you want to use Apple’s CoreCrypto for the iOS part of your Kotlin app,
-    the [iosMain](./shared/src/iosMain/kotlin) folder would be the right place for such calls.
-    Similarly, if you want to edit the Desktop (JVM) specific part, the [jvmMain](./shared/src/jvmMain/kotlin)
-    folder is the appropriate location.
+## Requirements
 
-### Running the apps
+- **JDK 17+** (any newer JDK works; the Gradle wrapper pins Gradle 9.5.1).
+- **Android:** an Android emulator or device running **API 26+** (Android Studio or the
+  command-line tools provide it; the SDK location stays in the git-ignored `local.properties`).
+- **iOS:** **Xcode** (verified with Xcode 27) and an installed simulator runtime of **iOS 16+**.
 
-Use the run configurations provided by the run widget in your IDE's toolbar. You can also use these commands and options:
+No third-party accounts, APIs or network services are needed to build or run the app.
 
-- Android app: `./gradlew :androidApp:assembleDebug`
-- iOS app: open the [/iosApp](./iosApp) directory in Xcode and run it from there.
+## Run the app locally (full stack)
 
-### Running tests
+**Android** — build straight onto a connected device/emulator:
 
-Use the run button in your IDE's editor gutter, or run tests using Gradle tasks:
+```
+./gradlew :androidApp:installDebug
+```
 
-- Android tests: `./gradlew :shared:testAndroidHostTest`
-- iOS tests: `./gradlew :shared:iosSimulatorArm64Test`
+**iOS** — open the Xcode project and run on a simulator:
 
----
+```
+open iosApp/iosApp.xcodeproj
+```
 
-Learn more about [Kotlin Multiplatform](https://www.jetbrains.com/help/kotlin-multiplatform-dev/get-started.html)…
+Pick an iOS 16+ simulator and press Run. The iOS host loads the same shared code the Android
+launcher mounts, so a feature you exercise on one platform exists on the other.
+
+First build takes a while; both Gradle runs use the configuration cache, so subsequent builds
+are fast.
+
+## Verify the stack
+
+```
+./gradlew :shared:testAndroidHostTest :shared:iosSimulatorArm64Test
+```
+
+runs the Android host unit tests and the iOS simulator unit tests for the shared module.
+
+```
+./gradlew verifyCommonMainVehiCareDatabaseMigration
+```
+
+builds the SQLDelight baseline schema and replays every committed migration, failing if schema
+and migration files drift — a built-in contract, not an option.
+
+## Where your data lives
+
+Everything is app-private. The SQLite database is `vehicare.db` inside the app's own sandbox —
+on Android a private `databases/` directory, on iOS inside the app container's Application
+Support — with the `vehicare.db-wal` write-ahead-log sidecar next to it. WAL is switched on from
+the first connection on both platforms, which keeps readers and writers from blocking each
+other; write the row, kill the app, relaunch, the row is still there. Later phases store photos
+as separate files (the database keeps only a relative path per row), so the database file stays
+small and movable across devices. Delete the app and everything goes with it — no data leaves
+the device, ever.

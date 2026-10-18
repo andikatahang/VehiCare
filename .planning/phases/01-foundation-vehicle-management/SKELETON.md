@@ -3,6 +3,8 @@
 **Phase:** 1
 **Generated:** 2026-10-18
 **Mode:** MVP phase 1 (`WALKING_SKELETON=true`, new project)
+**Verified and completed** by plan 01-04 (2026-10-19): every row below was checked against the
+code that actually shipped in Phase 1; rows that no longer matched were corrected, not invented.
 
 ## Capability Proven End-to-End
 
@@ -15,9 +17,10 @@ This is the thinnest slice that exercises the whole stack: Compose Multiplatform
 | Decision | Choice | Rationale |
 |---|---|---|
 | Framework | Kotlin Multiplatform + Compose Multiplatform (Material 3), single `shared` module | One shared UI for Android and iOS; D-17 forbids platform-specific UI duplication, and CMP's iOS target is stable at the selected version. |
-| Build | Gradle Kotlin DSL with a single `gradle/libs.versions.toml` version catalog; `androidTarget` (AGP 8.x path) | Kotlin 2.2.20 requires the AGP 8.x + `androidTarget` configuration; the catalog is the one place versions are pinned, so the aligned-down stack cannot drift. Exact versions are resolved at the plan 01-01 Wave 0 gate. |
+| Build | Gradle Kotlin DSL with a single `gradle/libs.versions.toml` version catalog; `:shared` is an Android library via AGP 9.1.1's `com.android.kotlin.multiplatform.library` plugin (the AGP 9.x path, not a legacy `androidTarget` block), Kotlin 2.4.20 | The plugin is what AGP 9.x supports for KMP source-set wiring; one `:androidApp` application and `:shared` keep the catalog as the one place versions are pinned. The `App()` host contract means the launcher modules stay thin. |
 | Data layer | SQLDelight (`.sq` schema + committed `databases/1.db` baseline + `migrations/`) with `AndroidSqliteDriver` / `NativeSqliteDriver` behind an `expect`/`actual` driver factory | Compile-time-verified SQL and build-time migration verification are what make DAT-04 enforceable; hand-written `ALTER TABLE` migrations drift silently. |
-| Journal mode | `PRAGMA journal_mode=wal;` declared in the `.sq` preamble | Emitted by generated `Schema.create()` on both platforms from first launch, so WAL is active without any platform-specific `onConfigure` — the failure mode that never runs on one of the two platforms. |
+| Journal mode | WAL from the first connection, by construction — Android: `DriverFactory.android.kt` runs `PRAGMA journal_mode=wal` through `executeQuery` (the row-safe path) right after `AndroidSqliteDriver` construction; iOS: SQLiter (behind `NativeSqliteDriver`) opens every connection with `JournalMode.WAL` by default, so no pragma runs at all | `PRAGMA journal_mode=wal` answers with a result row, so it can never go through `SqlDriver.execute()` (whose native step expects no rows and crashes) nor be a `.sq` preamble line replayed through that path; a WAL sidecar (`vehicare.db-wal`) appears next to the database on both platforms without platform-specific `onConfigure`. |
+| Module layout | One `:shared` module — `commonMain`: App shell, theme, strings, ViewModels, repository/domain, Koin `appModule`; `androidMain` / `iosMain`: only genuinely platform-divergent pieces (driver factory + `platformModule(context)` on Android, `AppVersion` actuals); thin `:androidApp` launcher and `iosApp` Xcode container | The shared surface is maximal so a feature touches one codebase; platform source sets stop growing the moment the divergence is absorbed behind an `expect`/`actual` seam. |
 | DB concurrency | All reads and writes through one injected `Dispatchers.IO.limitedParallelism(1)` lane | Serialises access to the single SQLite connection and prevents the iOS `SIGABRT` from concurrent `NativeSqliteDriver` access. |
 | DI | Koin, with `koinViewModel()` from `org.koin.compose.viewmodel` in `commonMain` and exactly one `KoinApplication` in `App()` | ViewModels must be scoped to nav entries on both platforms; the Compose-Multiplatform Koin overload does that, and the Android-only `org.koin.androidx.*` package cannot compile in shared code. |
 | Navigation | JetBrains Navigation Compose with type-safe `@Serializable` routes and one shared `NavHost` | iOS back-swipe and Android system back both drive the same stack, and each nav entry gets its own ViewModel scope for free. |
@@ -26,7 +29,7 @@ This is the thinnest slice that exercises the whole stack: Compose Multiplatform
 | Image loading | Coil 3 with the `filekit-coil` fetcher | Size-aware downsampling plus a memory/disk cache; a hand-rolled decoder is the standard source of OOM crashes in list screens. |
 | Strings | Compose Resources (`composeResources/values/strings.xml`, `Res.string.*`) | The only sanctioned way to hold user-facing copy in `commonMain`; Android `R.string` does not exist there, and D-11 requires centralised strings from day one. |
 | Theme | Light only, no dynamic colour; near-black ink on white with the accent exposed as one swappable token | D-21 defers the accent colour decision until the user has seen the build, so the accent equals the ink token for now and changing one value re-tints every accent surface. |
-| Navigation shell | One app-level `Scaffold`; a shared two-item bottom bar (Vehicles, Settings) shown on the tab roots only | D-17 scaffolds the shell now so later phases fill an existing slot instead of retrofitting navigation. |
+| Navigation shell | One app-level `Scaffold` in `App()` wrapping the single shared `NavHost`; the two-item bottom bar renders app-level around it (in this slice, on every destination — including Add/Edit and Detail until Phase 2 should ever want to hide it) | D-17 scaffolds the shell now so later phases fill an existing slot instead of retrofitting navigation; tab state survives switching via `popUpTo(start) { saveState }` + `restoreState`. |
 | Deployment target | Local full-stack run on both platforms (Android emulator/device API 26+, iOS 16+ simulator) with the commands documented in `README.md` | Phase 1 is a local-first app with no server, so "deployment" is a reproducible local run on both targets. |
 
 ## Stack Touched in Phase 1
