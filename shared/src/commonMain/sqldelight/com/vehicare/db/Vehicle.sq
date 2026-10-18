@@ -1,0 +1,30 @@
+PRAGMA journal_mode=wal;
+
+CREATE TABLE vehicle (
+    id         INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    name       TEXT    NOT NULL,
+    make       TEXT,
+    model      TEXT,
+    year       TEXT,
+    plate      TEXT,
+    type       TEXT    NOT NULL DEFAULT 'Car',
+    photo_path TEXT
+);
+
+selectAll:
+SELECT * FROM vehicle ORDER BY id DESC;
+
+selectById:
+SELECT * FROM vehicle WHERE id = ?;
+
+insert:
+INSERT INTO vehicle(name, make, model, year, plate, type, photo_path)
+VALUES (?, ?, ?, ?, ?, ?, ?);
+
+update:
+UPDATE vehicle SET name=?, make=?, model=?, year=?, plate=?, type=?, photo_path=? WHERE id=?;
+
+delete:
+DELETE FROM vehicle WHERE id=?;
+
+lastInsertId: SELECT last_insert_rowid();
