@@ -11,7 +11,7 @@
 - [ ] **VEH-02**: User can attach a photo to a vehicle
 - [ ] **VEH-03**: User can edit vehicle details
 - [ ] **VEH-04**: User can delete a vehicle and all its associated records
-- [ ] **VEH-05**: User can view a list of all their vehicles
+- [x] **VEH-05**: User can view a list of all their vehicles
 
 ### Service Log
 
@@ -87,7 +87,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | VEH-02 | Phase 1: Foundation & Vehicle Management | Pending |
 | VEH-03 | Phase 1: Foundation & Vehicle Management | Pending |
 | VEH-04 | Phase 1: Foundation & Vehicle Management | Pending |
-| VEH-05 | Phase 1: Foundation & Vehicle Management | Pending |
+| VEH-05 | Phase 1: Foundation & Vehicle Management | Complete |
 | SVC-01 | Phase 2: Service Log | Pending |
 | SVC-02 | Phase 2: Service Log | Pending |
 | SVC-03 | Phase 2: Service Log | Pending |

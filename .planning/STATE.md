@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: Ready to execute
-last_updated: "2026-10-18T16:48:06.992Z"
+last_updated: "2026-10-18T17:41:17.830Z"
 progress:
   total_phases: 3
   completed_phases: 0
   total_plans: 10
-  completed_plans: 3
-  percent: 30
+  completed_plans: 4
+  percent: 0
 ---
 
 # STATE: VehiCare
@@ -22,7 +22,7 @@ progress:
 ## Current Position
 
 Phase: 01 (foundation-vehicle-management) — EXECUTING
-Plan: 4 of 10
+Plan: 2 of 10
 
 | Field | Value |
 |-------|-------|
@@ -61,6 +61,7 @@ Phase 1 [In Progress] → Phase 2 [Not Started] → Phase 3 [Not Started]
 Per-plan: `Phase 1 / 01` — ~28min, 3 tasks, 63 files · `Phase 1 / 02` — 17min, 3 tasks, 15 files · `Phase 1 / 03` — 20min, 3 tasks, 17 files.
 
 ---
+| Phase 1 P04 | 24 min | 3 tasks | 17 files |
 
 ## Accumulated Context
 
@@ -150,7 +151,7 @@ None. Plans 01-01–01-03 are complete and verified by executed builds and tests
 
 ## Session Continuity
 
-**Last session:** 2026-10-18T16:48:06.988Z
+**Last session:** 2026-10-18T17:41:17.827Z
 **Next action:** Execute plan **01-04** — type-safe routes, bottom-tab shell, Settings placeholder, and the minimal vehicle list/add-form slice reading through `VehicleRepository`; wire `App(platformModule(applicationContext))` in `MainActivity`. No pre-work remains.
 
 ## Decisions
@@ -159,3 +160,7 @@ None. Plans 01-01–01-03 are complete and verified by executed builds and tests
 - [Phase 01]: Generated row type is com.vehicare.db.Vehicle, aliased VehicleEntity in the mapper — SQLDelight derives the class name from the table name; the plan's assumed VehicleEntity name does not exist. An import alias keeps the mapper and tests reading as planned.
 - [Phase 01]: Koin platform module is a platformModule(context) factory registering single<Context> — Koin 4.2.2 has no androidContext()/androidLogger() module DSL (verified via javap on koin-android-4.2.2.aar); resolution is exact-type-only, so the Context must be registered explicitly.
 - [Phase 01]: delete() funnels photo removal through a photoDeleter seam, no-op until 01-08 — PhotoStorage does not exist yet; the seam keeps the row+file deletion order (read photo_path in transaction, delete row, delete file after) testable and lets plan 01-08 swap in PhotoStorage::delete.
+- [Phase ?]: App takes the Android-only platformModule as an optional Module parameter (default: empty module); MainActivity builds it from the real application Context
+- [Phase ?]: koin-core added to androidApp dependencies because App(platformModule: Module) exposes org.koin.core.module.Module to the host (Rule 3 blocking fix)
+- [Phase ?]: Android appVersionName reads the version via the Koin-registered Context (KoinPlatformTools.defaultContext().get()) — no hidden APIs, no buildConfig in :shared
+- [Phase ?]: Screen composables are alias-imported as *Screen in App.kt so they coexist with same-named @Serializable route types
