@@ -31,15 +31,15 @@
 4. User can view a list of all their vehicles on the home screen
 5. SQLite WAL mode is active from first launch, and all schema changes are blocked in CI without a corresponding `.sqm` migration file
 
-**Plans:** 10 plans
+**Plans:** 2/10 plans executed
 Plans:
 **Wave 1**
 
-- [ ] 01-01-PLAN.md — Wave 0 version/environment gate, then the Gradle root config and KMP module config (migration tasks exposed)
+- [x] 01-01-PLAN.md — Wave 0 version/environment gate, then the Gradle root config and KMP module config (migration tasks exposed)
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 01-02-PLAN.md — Compose Resources strings, 3 vehicle-type vector drawables, theme tokens, platform hosts, minimal `App()`
+- [x] 01-02-PLAN.md — Compose Resources strings, 3 vehicle-type vector drawables, theme tokens, platform hosts, minimal `App()`
 - [ ] 01-03-PLAN.md — WAL `.sq` schema, committed `1.db` baseline, domain models, driver factories, DI, repository + mapper with tests
 
 **Wave 3** *(blocked on Wave 2 completion)*
@@ -105,7 +105,7 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation & Vehicle Management | 0/10 | Not started | — |
+| 1. Foundation & Vehicle Management | 2/10 | In Progress|  |
 | 2. Service Log | 0/? | Not started | — |
 | 3. Reminders & Dashboard | 0/? | Not started | — |
 

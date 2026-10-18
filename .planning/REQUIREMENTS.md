@@ -37,7 +37,7 @@
 ### Data & Platform
 
 - [ ] **DAT-01**: All data is stored locally on device (offline-first, no account required)
-- [ ] **DAT-02**: App runs on Android (API 26+) and iOS (16+) from a shared Kotlin Multiplatform codebase
+- [x] **DAT-02**: App runs on Android (API 26+) and iOS (16+) from a shared Kotlin Multiplatform codebase
 - [ ] **DAT-03**: SQLite database uses WAL mode from first launch to prevent corruption on iOS SIGKILL
 - [ ] **DAT-04**: All schema changes include a SQLDelight migration file (.sqm) verified in CI
 
@@ -101,11 +101,12 @@ Which phases cover which requirements. Updated during roadmap creation.
 | REM-04 | Phase 3: Reminders & Dashboard | Pending |
 | DSH-01 | Phase 3: Reminders & Dashboard | Pending |
 | DAT-01 | Phase 1: Foundation & Vehicle Management | Pending |
-| DAT-02 | Phase 1: Foundation & Vehicle Management | Pending |
+| DAT-02 | Phase 1: Foundation & Vehicle Management | Complete |
 | DAT-03 | Phase 1: Foundation & Vehicle Management | Pending |
 | DAT-04 | Phase 1: Foundation & Vehicle Management | Pending |
 
 **Coverage:**
+
 - v1 requirements: 21 total
 - Mapped to phases: 21 ✓
 - Unmapped: 0 ✓
