@@ -5,26 +5,34 @@ subsystem: build-foundation
 tags: [gradle, kotlin-multiplatform, agp, sqlalchemy, sqldelight, compose-multiplatform, ios, version-catalog]
 provides:
   - A single Gradle build (Gradle 9.5.1 wrapper) with two modules — `:shared` (KMP library, 3 targets) and `:androidApp` (Android application host)
-  - `gradle/libs.versions.toml` as the sole version source of truth, carrying all aliases that plans 02–10 reference
+  - `gradle/libs.versions.toml` as the sole version source of truth, carrying every alias that plans 02–10 reference
   - SQLDelight `VehiCareDatabase` config wired with `schemaOutputDirectory` so the migration-guard task pair exists
   - Android manifest with `allowBackup="false"`, one LAUNCHER activity, zero permissions
+  - A D-22-compliant placeholder launcher icon (single adaptive vector, no raster fallbacks)
+  - A working `androidDeviceTest` source set with test dependencies and the AndroidJUnitRunner wired
   - An iOS Xcode host project (`iosApp/`) with deployment target 16.0
 affects: [01-02, 01-03, 01-04, 01-05, 01-06, 01-07, 01-08, 01-09, 01-10]
 tech-stack:
-  added: [Gradle 9.5.1, Kotlin 2.4.20, AGP 9.1.1, Compose Multiplatform 1.12.1, SQLDelight 2.4.1, Koin 4.2.2, Navigation 2.9.2, Lifecycle 2.11.0, coroutines 1.11.0, serialization 1.11.0, FileKit 0.16.0, Coil 3.6.3, material-icons-core 1.7.3]
-  patterns: [version-catalog-as-single-source-of-truth, two-module KMP split (library + app host), schemaOutputDirectory migration guard, generateAsync=false, configuration-cache enabled]
+  added: [Gradle 9.5.1, Kotlin 2.4.20, AGP 9.1.1, Compose Multiplatform 1.12.1, SQLDelight 2.4.1, Koin 4.2.2, Navigation 2.9.2, Lifecycle 2.11.0, coroutines 1.11.0, serialization 1.11.0, FileKit 0.16.0, Coil 3.6.3, material-icons-core 1.7.3, androidx.test:runner 1.7.0]
+  patterns: [version-catalog-as-single-source-of-truth, two-module KMP split (library + app host), schemaOutputDirectory migration guard, generateAsync=false, configuration-cache enabled, adaptive-only launcher icon, dynamically-registered source set wired via named(...)]
 key-files:
   created:
-    - gradle/libs.versions.toml
-    - shared/build.gradle.kts
+    - androidApp/src/main/res/drawable/ic_launcher_foreground.xml
+    - androidApp/src/main/res/values/ic_launcher_background.xml
   modified:
     - build.gradle.kts
     - gradle/libs.versions.toml
     - shared/build.gradle.kts
-    - androidApp/src/main/AndroidManifest.xml
     - androidApp/build.gradle.kts
+    - androidApp/src/main/AndroidManifest.xml
+    - androidApp/src/main/res/mipmap-anydpi-v26/ic_launcher.xml
+    - androidApp/src/main/res/mipmap-anydpi-v26/ic_launcher_round.xml
     - iosApp/iosApp.xcodeproj/project.pbxproj
-    - .planning/** (identifier rename CarRecord→VehiCare)
+    - .planning/** (identifier rename CarRecord→VehiCare, plus the 01-02…01-10 alignment pass)
+  deleted:
+    - androidApp/src/main/res/drawable-v24/ic_launcher_foreground.xml
+    - androidApp/src/main/res/drawable/ic_launcher_background.xml
+    - 10× androidApp/src/main/res/mipmap-{mdpi,hdpi,xhdpi,xxhdpi,xxxhdpi}/ic_launcher{,_round}.png
 key-decisions:
   - "Wave 0 gate resolved as option-b (adopt current-generation stack)"
   - "New dependencies approved: FileKit, Coil, material-icons-core"
@@ -124,7 +132,10 @@ Every row in the "in use" column is now backed by an executed build, which is st
 | 13 | `material-icons-core` at 1.7.3, no `materialIconsCore`, no `material-icons-extended` | **PASS** (via catalog alias — see deviation D-3) |
 | 14 | Single Compose stack | **PASS by intent — see deviation D-2** |
 | 15 | `minSdk = 26` literal in `shared/build.gradle.kts` | **PASS by intent — see deviation D-4** |
-| 16 | `shared/src/androidMain/AndroidManifest.xml` + D-22 launcher icon | **NOT MET — see deviation D-5/D-6** |
+| 16 | `shared/src/androidMain/AndroidManifest.xml` + D-22 launcher icon | **PASS by intent after follow-up** — the manifest is `androidApp/src/main/AndroidManifest.xml` (deviation D-5); the D-22 icon was authored and verified after explicit approval (deviation D-6) |
+| 17 | `ICON_OK`: manifest `android:icon="@mipmap/ic_launcher"`, adaptive icon present, `@color/ic_launcher_background` defined | **PASS** (run against the real `androidApp` manifest) |
+| 18 | APK contains no launcher raster | **PASS** — exactly 3 launcher entries, 0 PNG |
+| 19 | `androidDeviceTest` source set compiles with the test deps | **PASS** — probe compiled via `:shared:compileAndroidDeviceTest` (deviation D-7) |
 
 ## Decisions & Deviations
 
@@ -149,25 +160,47 @@ org.jetbrains.compose.material:material-icons-core:1.7.3  <- deliberately frozen
 
 **D-5 — The manifest requested at `shared/src/androidMain/AndroidManifest.xml` lives at `androidApp/src/main/AndroidManifest.xml` instead.** Under the approved two-module split `:shared` is a library and needs no manifest; the application manifest, `MainActivity`, and launcher icons belong to the app host. All of the requirement's *substance* was verified against the real manifest: `allowBackup="false"`, exactly one activity with the `LAUNCHER` intent filter, and **zero** `android.permission` declarations (no CAMERA, no READ_EXTERNAL_STORAGE, no READ_MEDIA_IMAGES).
 
-**D-6 — D-22's placeholder launcher icon was NOT re-authored (the one unmet acceptance criterion).** The plan specifies three hand-authored files: an `<adaptive-icon>` at `shared/.../mipmap-anydpi-v26/ic_launcher.xml`, a single-colour foreground vector using the `Ink` value `#FF1C1C1E`, and a **`<color>` resource** at `values/ic_launcher_background.xml` — explicitly "no `mipmap-*` raster variant and no `.webp`". What actually exists (from the wizard) is: `mipmap-anydpi-v26/ic_launcher.xml` + `ic_launcher_round.xml` (both valid `<adaptive-icon>`), `drawable/ic_launcher_background.xml` as a **vector drawable**, `drawable-v24/ic_launcher_foreground.xml` (the default Android robot glyph, not the ink-on-white mark), **plus raster fallbacks** `mipmap-{mdpi,hdpi,xxxhdpi}/ic_launcher*.png`. So the icon *resolves* and the app builds, but the D-21/D-22 artwork spec is not implemented. **Not changed unilaterally** because the user directed that VehiCare's existing Android configuration be used as the base. Cheapest fix: author the three specified files and delete the raster PNGs.
+**D-6 — D-22's placeholder launcher icon: RESOLVED.** The plan specifies hand-authored files — an `<adaptive-icon>` at `mipmap-anydpi-v26/ic_launcher.xml`, a single-colour foreground vector using the `Ink` value `#FF1C1C1E`, and a **`<color>` resource** at `values/ic_launcher_background.xml` — explicitly "no `mipmap-*` raster variant and no `.webp`". The wizard's default set (Android-robot glyph, a *vector* background drawable, and raster fallbacks at mdpi/hdpi/xhdpi/xxhdpi/xxxhdpi) initially fell short. With explicit user approval the spec was then implemented: `androidApp/src/main/res/drawable/ic_launcher_foreground.xml` is a minimal "V" monogram in `#FF1C1C1E` whose extents (x 29–79, y 33–79) sit inside the centre 66dp safe zone, `androidApp/src/main/res/values/ic_launcher_background.xml` defines `#FFFFFFFF` (Paper), and both adaptive icons now reference `@color/ic_launcher_background`. The superseded `drawable-v24/ic_launcher_foreground.xml`, `drawable/ic_launcher_background.xml` and all ten raster PNGs were deleted. Verified by unzipping the rebuilt APK: it contains exactly `res/drawable/ic_launcher_foreground.xml`, `res/mipmap-anydpi-v26/ic_launcher.xml`, `res/mipmap-anydpi-v26/ic_launcher_round.xml` and **0** launcher rasters. (`ic_launcher_round.xml` is a fourth file beyond the plan's three — the manifest declares `android:roundIcon`, so it must exist.) Custom artwork remains the deferred polish task.
 
-**D-7 — `androidInstrumentedTest` dependencies were not added.** The plan's Task 3 lists `androidx.test.ext:junit` + `androidx.test:runner` on an `androidInstrumentedTest` source set. The AGP KMP library plugin creates the device-test source set dynamically via `withDeviceTestBuilder`, so there is **no Kotlin DSL accessor** for it — `androidDeviceTest.dependencies { }` fails script compilation with `Unresolved reference 'androidDeviceTest'`. This was removed to keep the build green. **This is a blocker to resolve in plan 01-05** (it owns the WAL instrumented test). The catalog is already prepared: `androidx-testExt-junit` 1.3.0, `androidx-testRunner` **1.7.0** (verified present on Google Maven), `androidx-espresso-core` 3.7.0.
+> **Operational note:** the first rebuild after the icon swap **failed** with `resource drawable/ic_launcher_foreground not found` while `mergeDebugResources` reported `FROM-CACHE` — Gradle served a stale merged-resource entry keyed to the pre-change tree. `./gradlew :androidApp:clean :androidApp:assembleDebug --no-build-cache` produced a correct APK immediately. When restructuring resource sets, distrust a `FROM-CACHE` merge.
+
+**D-7 — Android instrumented-test wiring: RESOLVED, with the recipe established empirically.** The plan's Task 3 asks for `androidx.test.ext:junit` + `androidx.test:runner` on the instrumented-test source set. The AGP KMP library plugin registers that set *dynamically* via `withDeviceTestBuilder`, so **no type-safe Kotlin DSL accessor exists** — `androidDeviceTest.dependencies { }` fails script compilation with `Unresolved reference 'androidDeviceTest'`. The working form is `named("androidDeviceTest") { dependencies { … } }` inside the `kotlin { sourceSets { } }` block, which is now in `shared/build.gradle.kts` carrying `kotlin-test-junit`, `androidx-test-ext-junit` 1.3.0, `androidx-test-runner` **1.7.0** and `androidx-espresso-core` 3.7.0. The other two unknowns were settled by direct measurement rather than research: the source set's Kotlin source dir is **`shared/src/androidDeviceTest/kotlin`** (read back from the plugin's own `kotlin.srcDirs`), and the compile task is **`:shared:compileAndroidDeviceTest`** — *not* `:shared:compileAndroidDeviceTestSources`, which is a generated-sources task that reports `UP-TO-DATE` without compiling the file and would have produced a false green. A throwaway probe class importing `AndroidJUnit4` and `AndroidJUnitRunner` was compiled through `:shared:compileAndroidDeviceTest` to prove directory, dependencies and runner resolution together; the probe was then deleted. The run task is `:shared:connectedAndroidDeviceTest`. Plan 01-05 was updated with all four facts so its WAL test needs no rediscovery.
 
 **D-8 — `koin-android` was not added.** Confirmed available at 4.2.2 but unused by this plan. Flagged for plan 01-06 (DI wiring).
 
 **D-9 — Wizard sample sources are still present.** `shared/src/commonMain/kotlin/com/vehicare/{App.kt,Greeting.kt,GreetingUtil.kt,Platform.kt}`, `Platform.android.kt`, `Platform.ios.kt`, `MainViewController.kt`, `androidApp/.../MainActivity.kt`, and three sample test files. The plan said "Do NOT create any Kotlin source files in this task" — these were created by the wizard, not by this plan, and they are what makes the iOS/Android compile proofs meaningful. They are not referenced by any plan and will be superseded by real code in 01-02/01-04. **Not deleted** — deleting files needs explicit approval.
 
-## Required before executing the remaining plans (option-b carry-forward)
+## Alignment pass over plans 01-02 … 01-10 (completed with user approval)
 
-Per the plan's own option-b instruction, this must be re-verified against the **adopted** generation before plans 02–10 run:
+The plan's option-b instruction required re-verifying the remaining plans against the adopted generation. That was done, and every stale reference found was corrected — plans 02–10 now name only artifacts that exist in this build:
 
-- **Every RESEARCH version reference is stale.** `01-RESEARCH.md` and `01-PATTERNS.md` still show `android-compileSdk = "36"`, `android-targetSdk = "36"`, `serialization = "1.7.3"`, and the old Kotlin/AGP/CMP numbers. `01-01-PLAN.md` line 193 still instructs `serialization = "1.7.3"` and `"36"` SDK values. **The authoritative source of truth is now `gradle/libs.versions.toml` plus the table in this SUMMARY.**
-- **The module DSL form differs.** The plans reference `:composeApp` in ~166 places, now renamed to `:shared`, but the *build shape* they assume (one module that is both library and app host) is wrong: commands must target `:shared` for module tasks and `:androidApp` for app/APK tasks.
-- **Plan 01-05's task names in particular are generation-specific.** Both names were re-verified against the adopted SQLDelight 2.4.1 and are correct as renamed: `generateCommonMainVehiCareDatabaseSchema` / `verifyCommonMainVehiCareDatabaseMigration`.
-- **Open item D-7** (instrumented-test source set) blocks 01-05 and needs a real solution, not a guess.
+| Stale reference | Count | Corrected to |
+|---|---|---|
+| `:shared:assembleDebug` | 43 | `:androidApp:assembleDebug` |
+| `:shared:testDebugUnitTest` | 14 | `:shared:testAndroidHostTest` |
+| `shared/src/androidInstrumentedTest/…` | 7 | `shared/src/androidDeviceTest/…` |
+| `shared/src/androidMain/kotlin/com/vehicare/MainActivity.kt` | 5 | `androidApp/src/main/kotlin/com/vehicare/MainActivity.kt` |
+| `:shared:connectedDebugAndroidTest` | 4 | `:shared:connectedAndroidDeviceTest` |
+| `:shared:installDebug` | 3 | `:androidApp:installDebug` |
+| `Compose Multiplatform 1.8.2` / `CMP 1.8.2` | 3 in plans, more in specs | `1.12.1` |
+| `:shared:compileDebugKotlinAndroid` | 2 | `:shared:compileAndroidMain` |
+| `shared/src/androidMain/AndroidManifest.xml` | 1 | `androidApp/src/main/AndroidManifest.xml` |
+
+Spec files that executors read were corrected as well: `ROADMAP.md` §Architecture Notes (stack line now carries the adopted pins and points at the catalog), `01-CONTEXT.md` §Established Patterns (the old locked stack is struck through and marked superseded), `01-PATTERNS.md` (intended-path table plus the CI example), `01-UI-SPEC.md` (`org.jetbrains.compose.material3:material3:1.8.2` → `1.12.0-alpha03`; "Compose Multiplatform 1.8.2" → `1.12.1`), and `01-05-PLAN.md` (the device-test source set is now stated as settled fact rather than an unknown).
+
+Two corrections went beyond mechanical renaming:
+
+- **Plan 01-04's app-version accessor was unsatisfiable as written.** It instructed the executor that the Android actual could read `BuildConfig.VERSION_NAME` after enabling `buildFeatures { buildConfig = true }` in `shared/build.gradle.kts`. Under the approved two-module split `:shared` is a *library* and declares no `versionName` — the only `versionName = "1.0"` lives in `androidApp/build.gradle.kts` — so the app's version can never be read from `:shared`'s BuildConfig, and enabling `buildConfig` would not change that. The plan now directs reading the installed package's version at runtime via the `Context` that `PlatformModule.android.kt` supplies to Koin, and explicitly sanctions switching to `expect fun appVersionName(): String` if a parameter turns out to be unavoidable.
+- **Plan 01-05's device-test unknowns were replaced with measured facts** — directory, compile task, dependency mechanism and runner are all recorded (see D-7), so no executor has to guess.
+
+**Deliberately not rewritten:** `01-RESEARCH.md`, `.planning/research/*` and `01-VERSIONS-OPTION-B.md`. These are dated evidence records of what was true when the research ran; rewriting their version claims would destroy the audit trail that makes this SUMMARY's supersession verifiable. `01-01-PLAN.md` likewise stays as the historical spec it was executed against — its deviations are recorded here instead.
+
+**Task names re-verified as already correct:** `generateCommonMainVehiCareDatabaseSchema`, `verifyCommonMainVehiCareDatabaseMigration`, `:shared:compileKotlinIosSimulatorArm64`, `:shared:linkDebugFrameworkIosSimulatorArm64`, `:shared:iosSimulatorArm64Test`, `:shared:generateComposeResClass`, `:shared:tasks`, `:shared:dependencies`.
 
 ## Next Phase Readiness
 - Build foundation is green and proven on both platforms — plans 02–10 have a working base.
-- All version-catalog aliases the later plans reference exist and resolve.
+- All version-catalog aliases the later plans reference exist and resolve, and after the alignment pass no plan names a Gradle task, source path or module that does not exist.
 - The migration-guard task pair is armed *before* any `.sq` file exists, which is exactly the ordering DAT-04 requires.
-- **Blocking decision pending with the user:** whether to align the remaining plans (waves 2–8) to the adopted generation before executing them, and whether to author the D-22 placeholder icon.
+- The D-22 placeholder icon is in place, so no UI plan inherits the default-robot artwork.
+- The `androidDeviceTest` path is open, so plan 01-05's WAL instrumented test can compile and run.
+- **Next executable plan: 01-02** (single rendering path + navigation shell).

@@ -127,7 +127,7 @@ Plans:
 
 Critical decisions captured for execution phases:
 
-- **Stack:** Kotlin 2.4.21 + Compose Multiplatform 1.12.2 + SQLDelight 2.4.1 + Koin 4.2.2 + JetBrains Navigation Compose 2.9.2 + AGP 9.3.1 + Gradle 9.5.1 (Android SDK 37, minSdk 26) — current-generation set, chosen at the Wave 0 gate; supersedes the earlier Kotlin 2.2.20 / CMP 1.8.2 / SQLDelight 2.3.2 / Koin 4.2.0 pin set
+- **Stack:** Kotlin 2.4.20 + Compose Multiplatform 1.12.1 + SQLDelight 2.4.1 + Koin 4.2.2 + JetBrains Navigation Compose 2.9.2 + AGP 9.1.1 + Gradle 9.5.1 (Android SDK 37, minSdk 26) — **the set in force**: the version generation already shipping in the VehiCare project, which the user directed be adopted after the Wave 0 gate was answered. Supersedes both the originally locked Kotlin 2.2.20 / CMP 1.8.2 / SQLDelight 2.3.2 / Koin 4.2.0 pin set *and* the option-b contract pins (Kotlin 2.4.21 / CMP 1.12.2 / AGP 9.3.1 / material3 1.9.0) which the user overrode. Authoritative source of truth is `gradle/libs.versions.toml`; see `phases/01-foundation-vehicle-management/01-01-SUMMARY.md` § "Version set actually in use" for the full table and the build evidence behind each pin.
 - **Bootstrap:** Use [kmp.jetbrains.com](https://kmp.jetbrains.com) for correct Gradle version catalog and source set wiring
 - **WAL mode:** Enable `PRAGMA journal_mode=WAL;` on iOS `NativeSqliteDriver` from Phase 1 — non-negotiable for data safety
 - **Migration CI:** Run `generateCommonMainVehiCareDatabaseSchema` before first release commit; add `verifyCommonMainVehiCareDatabaseMigration` to CI

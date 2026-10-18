@@ -84,7 +84,7 @@ No external specs/ADRs exist — requirements are fully captured above and in th
 - None — greenfield. Repository contains no source code yet; Phase 1 scaffolds the entire project (Walking Skeleton mode: project setup + routing + one real DB read/write + one real UI interaction).
 
 ### Established Patterns
-- Stack is locked from init research (STATE.md Key Decisions): Kotlin 2.2.20, Compose Multiplatform 1.8.2, SQLDelight 2.3.2, Koin 4.2.0, JetBrains Navigation Compose 2.9.0
+- ~~Stack is locked from init research (STATE.md Key Decisions): Kotlin 2.2.20, Compose Multiplatform 1.8.2, SQLDelight 2.3.2, Koin 4.2.0, JetBrains Navigation Compose 2.9.0~~ — **superseded.** The Wave 0 gate adopted the current generation, and the user then re-based the build on the version set already shipping in the VehiCare project. The set in force is Kotlin 2.4.20, Compose Multiplatform 1.12.1, material3 1.12.0-alpha03, SQLDelight 2.4.1, Koin 4.2.2, JetBrains Navigation Compose 2.9.2, AGP 9.1.1, Gradle 9.5.1. Authoritative source: `gradle/libs.versions.toml`; full table in `01-01-SUMMARY.md` § "Version set actually in use".
 - Bootstrap via kmp.jetbrains.com for correct Gradle version catalog and source set wiring
 - DB concurrency pattern: all writes serialized on `Dispatchers.IO.limitedParallelism(1)` to avoid iOS SIGABRT from concurrent NativeSqliteDriver access
 - WAL mode: `PRAGMA journal_mode=WAL;` on the iOS NativeSqliteDriver from first launch

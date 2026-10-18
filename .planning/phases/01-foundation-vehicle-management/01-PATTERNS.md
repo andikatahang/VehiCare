@@ -51,10 +51,10 @@ The code blocks in §Pattern Assignments are **RESEARCH.md-authored sketches** (
 | Intended Path | Role | Data Flow | Closest Analog | Match |
 |---|---|---|---|---|
 | `shared/src/commonMain/kotlin/com/vehicare/App.kt` | component (root composable) | request-response | NONE (greenfield) — RES §Pattern 6 (lines 521–549); UISPEC §Screens | none |
-| `shared/src/androidMain/kotlin/com/vehicare/MainActivity.kt` *(or `androidApp/…` wizard variant)* | platform-actual (UI host) | request-response | NONE (greenfield) — RES §Architecture Patterns (system diagram, lines 262–263) | none |
+| `androidApp/src/main/kotlin/com/vehicare/MainActivity.kt` *(or `androidApp/…` wizard variant)* | platform-actual (UI host) | request-response | NONE (greenfield) — RES §Architecture Patterns (system diagram, lines 262–263) | none |
 | `shared/src/iosMain/kotlin/com/vehicare/MainViewController.kt` | platform-actual (UI host) | request-response | NONE (greenfield) — RES §Architecture Patterns; §Anti-Patterns (line 622) | none |
 | `iosApp/iosApp/iOSApp.swift` + `ContentView.swift` | platform-actual (Swift host) | request-response | NONE (greenfield) — RES §Recommended Project Structure (line 352) | none |
-| `shared/src/androidMain/AndroidManifest.xml` | config | transform (build-time) | NONE (greenfield) — RES §Security Domain (line 833, `allowBackup` decision) | none |
+| `androidApp/src/main/AndroidManifest.xml` | config | transform (build-time) | NONE (greenfield) — RES §Security Domain (line 833, `allowBackup` decision) | none |
 
 ### Group C — DI
 
@@ -132,7 +132,7 @@ The code blocks in §Pattern Assignments are **RESEARCH.md-authored sketches** (
 | `shared/src/commonTest/kotlin/…/VehicleRepositoryTest.kt` | test | CRUD | NONE (greenfield) — VEH-04; RES §Pattern 3, §Pitfall 4 | none |
 | `shared/src/commonTest/kotlin/…/VehicleEntityMapperTest.kt` | test | transform | NONE (greenfield) — STATE §Architecture Constraints | none |
 | `shared/src/commonTest/kotlin/…/VehicleFormValidationTest.kt` | test | transform | NONE (greenfield) — D-09, D-13; UISPEC §States (line 235) | none |
-| `shared/src/androidInstrumentedTest/…/WalModeTest.kt` | test | request-response | NONE (greenfield) — DAT-03; RES §Pitfall 5 | none |
+| `shared/src/androidDeviceTest/…/WalModeTest.kt` | test | request-response | NONE (greenfield) — DAT-03; RES §Pitfall 5 | none |
 | `shared/src/iosTest/…/WalModeTest.kt` | test | request-response | NONE (greenfield) — DAT-03; RES §Pitfall 5 | none |
 
 ### Group J — Wave 0 (transient, not shipped)
@@ -222,7 +222,7 @@ Also required on this module (RES §Standard Stack, §Architecture Patterns):
           ./gradlew generateCommonMainVehiCareDatabaseSchema
           git diff --exit-code -- shared/src/commonMain/sqldelight/databases
       - name: Build shared module + Android
-        run: ./gradlew :shared:assembleDebug
+        run: ./gradlew :androidApp:assembleDebug
 ```
 *(Full file with Java 21 setup: RES lines 690–710.)*
 
@@ -650,7 +650,7 @@ All user-facing text via `stringResource(Res.string.…)`. No inline literals an
 The planner must not silently pick a side here — each is a locked-vs-researched divergence.
 
 ### Conflict 1 — Version set (HEADLINE, blocks Group A)
-STATE §Key Decisions and ROADMAP §Architecture Notes lock **SQLDelight 2.3.2 + Koin 4.2.0**. RES §Standard Stack documents both as **internally inconsistent** with Kotlin 2.2.20 / CMP 1.8.2 (registry metadata: SQLDelight 2.3.x declares `kotlin-stdlib 2.3.10`; Koin 4.2.0 declares `compose.runtime 1.10.2`, silently force-upgrading the Compose stack — RES §Pitfall 2, lines 571–575) and recommends **SQLDelight 2.2.1 + Koin 4.1.1**. RES §Assumptions A1 line 735 flags this as *"the single decision the planner must surface first."*
+STATE §Key Decisions and ROADMAP §Architecture Notes lock **SQLDelight 2.3.2 + Koin 4.2.0**. RES §Standard Stack documents both as **internally inconsistent** with Kotlin 2.2.20 / CMP 1.12.1 (registry metadata: SQLDelight 2.3.x declares `kotlin-stdlib 2.3.10`; Koin 4.2.0 declares `compose.runtime 1.10.2`, silently force-upgrading the Compose stack — RES §Pitfall 2, lines 571–575) and recommends **SQLDelight 2.2.1 + Koin 4.1.1**. RES §Assumptions A1 line 735 flags this as *"the single decision the planner must surface first."*
 
 ### Conflict 2 — Environment (blocks Wave 0)
 JDK 25/26 only (Gradle 8.14 needs ≤24) and Xcode 27.0 (Kotlin 2.2.20 supports ≤16.4). RES lines 795–797: *"not fixable inside the repository."* Requires user-approved installs **or** adopting the current wizard-default stack (Kotlin 2.4.x / AGP 9.x / CMP 1.12.x / SQLDelight 2.4.1 / Koin 4.2.2 — RES §Summary line 17).
@@ -662,7 +662,7 @@ ROADMAP line 90 says `generateMainVehiCareSchema`; the KMP-correct name is `gene
 STATE line 88 lists this as unresolved. RES §Pitfall 6 lines 595–599 resolves it: set `generateAsync.set(false)` in Phase 1.
 
 ### Conflict 5 — New dependencies not in STATE
-RES introduces **FileKit 0.11.0** and **Coil 3.3.0** (§Assumptions A3 line 737 — CONTEXT.md left picker wiring to agent discretion) and **`material-icons-core:1.7.3`** pinned (UISPEC §Icon Contract — CMP 1.8.2 does not declare it transitively). All three clear RES's Package Legitimacy Audit (Maven Central verified). Planner should surface them as approved-if-the-version-fork-is-approved.
+RES introduces **FileKit 0.11.0** and **Coil 3.3.0** (§Assumptions A3 line 737 — CONTEXT.md left picker wiring to agent discretion) and **`material-icons-core:1.7.3`** pinned (UISPEC §Icon Contract — CMP 1.12.1 does not declare it transitively). All three clear RES's Package Legitimacy Audit (Maven Central verified). Planner should surface them as approved-if-the-version-fork-is-approved.
 
 ---
 
