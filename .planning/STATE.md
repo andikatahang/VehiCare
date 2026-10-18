@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: Executing Phase 01
-last_updated: "2026-10-18T16:18:00.000Z"
+status: Ready to execute
+last_updated: "2026-10-18T16:48:06.992Z"
 progress:
   total_phases: 3
   completed_phases: 0
   total_plans: 10
-  completed_plans: 2
-  percent: 20
+  completed_plans: 3
+  percent: 30
 ---
 
 # STATE: VehiCare
@@ -22,14 +22,14 @@ progress:
 ## Current Position
 
 Phase: 01 (foundation-vehicle-management) — EXECUTING
-Plan: 3 of 10
+Plan: 4 of 10
 
 | Field | Value |
 |-------|-------|
 | **Active Phase** | Phase 1: Foundation & Vehicle Management |
-| **Active Plan** | 01-03 (01-01 and 01-02 complete and verified) |
-| **Status** | Wave 2 in progress; plans 03–10 aligned to the adopted generation |
-| **Progress** | ██░░░░░░░░ 20% |
+| **Active Plan** | 01-04 (01-01–01-03 complete and verified) |
+| **Status** | Wave 2 in progress — plan 01-03 (WAL schema, driver factories, serialized-IO repository) done and verified; next executable plan is 01-04 |
+| **Progress** | ███░░░░░░░ 30% |
 
 ```
 Phase 1 [In Progress] → Phase 2 [Not Started] → Phase 3 [Not Started]
@@ -54,11 +54,11 @@ Phase 1 [In Progress] → Phase 2 [Not Started] → Phase 3 [Not Started]
 | Metric | Value |
 |--------|-------|
 | Phases completed | 0 / 3 |
-| Plans completed | 2 / 10 |
-| Requirements covered | 1 / 21 |
-| Sessions | 4 |
+| Plans completed | 3 / 10 |
+| Requirements covered | 4 / 21 |
+| Sessions | 5 |
 
-Per-plan: `Phase 1 / 01` — ~28min, 3 tasks, 63 files · `Phase 1 / 02` — 17min, 3 tasks, 15 files.
+Per-plan: `Phase 1 / 01` — ~28min, 3 tasks, 63 files · `Phase 1 / 02` — 17min, 3 tasks, 15 files · `Phase 1 / 03` — 20min, 3 tasks, 17 files.
 
 ---
 
@@ -140,14 +140,22 @@ Unchanged from the contract: Gradle 9.5.1 · SQLDelight 2.4.1 · Koin 4.2.2 · N
 - [x] Resolve the `androidDeviceTest` source-set wiring → verified empirically (see `01-01-SUMMARY.md` D-7)
 - [x] Author the D-22 placeholder launcher icon → adaptive-only, 0 rasters (see D-6)
 - [x] Wave 2 / plan 01-02 (shared UI foundation) → verified by an Android APK build, a Kotlin/Native framework link and a real `xcodebuild` simulator build
+- [x] Wave 2 / plan 01-03 (WAL schema, driver factories, serialized-IO repository) → verified by real-driver iOS tests, mapper tests on both targets, and a reproducible `1.db` baseline; the WAL mechanism was corrected after the `.sq` preamble proved to crash iOS driver creation (see `01-03-SUMMARY.md`)
 
 ### Blockers
 
-None. Wave 1 (plan 01-01) and Wave 2's plan 01-02 are complete and verified by executed builds on both platforms; the next executable plan is **01-03**. Runtime launch on a device/emulator remains for `/gsd-verify-work` (`workflow.human_verify_mode` = end-of-phase).
+None. Plans 01-01–01-03 are complete and verified by executed builds and tests on both platforms (01-03: mapper 4/4 on both targets, 5/5 real-driver iOS repository tests, reproducible `1.db` baseline). The next executable plan is **01-04**. Runtime launch on a device/emulator remains for `/gsd-verify-work` (`workflow.human_verify_mode` = end-of-phase).
 
 ---
 
 ## Session Continuity
 
-**Last session:** 2026-10-18T16:15:50.323Z
-**Next action:** Execute plan **01-03** — WAL `.sq` schema, committed `1.db` baseline, domain models, driver factories, DI module, repository + mapper with tests. No pre-work remains.
+**Last session:** 2026-10-18T16:48:06.988Z
+**Next action:** Execute plan **01-04** — type-safe routes, bottom-tab shell, Settings placeholder, and the minimal vehicle list/add-form slice reading through `VehicleRepository`; wire `App(platformModule(applicationContext))` in `MainActivity`. No pre-work remains.
+
+## Decisions
+
+- [Phase 01]: WAL is established at driver construction, not in the .sq preamble — The plan's preamble mechanism crashes iOS driver creation: Schema.create() replays the pragma through driver.execute(), and SQLiter's non-query path rejects the row-returning PRAGMA journal_mode=wal. Android runs the same SQL via the row-safe executeQuery path; iOS relies on SQLiter's JournalMode.WAL default (verified in sources). Guards: plan 01-05 real-driver tests.
+- [Phase 01]: Generated row type is com.vehicare.db.Vehicle, aliased VehicleEntity in the mapper — SQLDelight derives the class name from the table name; the plan's assumed VehicleEntity name does not exist. An import alias keeps the mapper and tests reading as planned.
+- [Phase 01]: Koin platform module is a platformModule(context) factory registering single<Context> — Koin 4.2.2 has no androidContext()/androidLogger() module DSL (verified via javap on koin-android-4.2.2.aar); resolution is exact-type-only, so the Context must be registered explicitly.
+- [Phase 01]: delete() funnels photo removal through a photoDeleter seam, no-op until 01-08 — PhotoStorage does not exist yet; the seam keeps the row+file deletion order (read photo_path in transaction, delete row, delete file after) testable and lets plan 01-08 swap in PhotoStorage::delete.
