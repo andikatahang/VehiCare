@@ -57,7 +57,7 @@ Drawables: 24dp artboard, `fillColor="#FF1C1C1E"` (Ink) so tinting is unnecessar
 
 | Constraint | Rule | Why |
 |------------|------|-----|
-| Theme | **Light only** in Phase 1. `MaterialTheme(colorScheme = CarRecordLightColors)` is applied unconditionally; `isSystemInDarkTheme()` is **not** consulted. Dark mode is deferred to a later phase. | D-21 defines the interim language as near-black ink on white; a half-tested dark palette would violate the contract it is meant to serve |
+| Theme | **Light only** in Phase 1. `MaterialTheme(colorScheme = VehiCareLightColors)` is applied unconditionally; `isSystemInDarkTheme()` is **not** consulted. Dark mode is deferred to a later phase. | D-21 defines the interim language as near-black ink on white; a half-tested dark palette would violate the contract it is meant to serve |
 | Dynamic color | **Disabled.** Do not use `dynamicLightColorScheme()` / Material You on Android 12+. | Would replace the neutral ink palette with the user's wallpaper palette, breaking D-21 |
 | Emphasis | `LocalIndication` / ripple left at Material defaults. No custom indication. | Keeps interaction feedback identical on both platforms (D-17) |
 | Text scaling | All type declared in `sp`. **Known limitation:** CMP 1.8.2 does not wire iOS Dynamic Type (that landed later); Android `fontScale` works, iOS system text-size does not. Accepted for Phase 1, recorded in Accessibility. | Prevents re-planning the same gap |
@@ -72,7 +72,7 @@ val Slate    = Color(0xFF5C5C61) // secondary text + inactive icons
 val Hairline = Color(0xFFE4E4E7) // outlines / dividers
 val Danger   = Color(0xFFB3261E) // destructive only
 
-val CarRecordLightColors = lightColorScheme(
+val VehiCareLightColors = lightColorScheme(
     primary = Ink, onPrimary = Paper,
     secondary = Ink, onSecondary = Paper,
     background = Paper, onBackground = Ink,
@@ -140,7 +140,7 @@ Notes:
 - Body line height is **1.5** (16 × 1.5 = 24sp), Heading line height is **1.2** (20 × 1.2 = 24sp).
 - Hierarchy comes from **size + weight + tone** (`Ink` vs `Slate`), never from color. `Slate` is used for all secondary text: the meta line, Detail field labels, the "coming soon" hint, inactive tab icons/labels, and the em-dash placeholder for empty optional values.
 - Both platforms use `FontFamily.Default`, so iOS renders SF Pro and Android Roboto; glyph metrics differ slightly. Type sizes are therefore declared as fixed `sp` values via `MaterialTheme.typography` overrides — do not ship a custom font to normalize this.
-- Override the M3 slots used above in one `CarRecordTypography` object; do not rely on M3 defaults (they introduce 12sp and 22sp, i.e. sizes outside the declared scale).
+- Override the M3 slots used above in one `VehiCareTypography` object; do not rely on M3 defaults (they introduce 12sp and 22sp, i.e. sizes outside the declared scale).
 
 ---
 
@@ -271,7 +271,7 @@ English only (D-11). **Every string below is the exact value to place in `compos
 ```xml
 <resources>
     <!-- App / shell -->
-    <string name="app_name">CarRecord</string>
+    <string name="app_name">VehiCare</string>
     <string name="tab_vehicles">Vehicles</string>
     <string name="tab_settings">Settings</string>
     <string name="title_vehicles">Vehicles</string>

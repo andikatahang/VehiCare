@@ -1,6 +1,6 @@
-# ROADMAP: CarRecord
+# ROADMAP: VehiCare
 
-**Project:** CarRecord — Kotlin Multiplatform car service record app (iOS + Android)
+**Project:** VehiCare — Kotlin Multiplatform car service record app (iOS + Android)
 **Core Value:** Every vehicle's full service history and upcoming reminders, always accessible offline, in a clean and minimal interface.
 **Granularity:** Coarse (3 phases)
 **Coverage:** 21/21 v1 requirements mapped ✓
@@ -130,7 +130,7 @@ Critical decisions captured for execution phases:
 - **Stack:** Kotlin 2.4.21 + Compose Multiplatform 1.12.2 + SQLDelight 2.4.1 + Koin 4.2.2 + JetBrains Navigation Compose 2.9.2 + AGP 9.3.1 + Gradle 9.5.1 (Android SDK 37, minSdk 26) — current-generation set, chosen at the Wave 0 gate; supersedes the earlier Kotlin 2.2.20 / CMP 1.8.2 / SQLDelight 2.3.2 / Koin 4.2.0 pin set
 - **Bootstrap:** Use [kmp.jetbrains.com](https://kmp.jetbrains.com) for correct Gradle version catalog and source set wiring
 - **WAL mode:** Enable `PRAGMA journal_mode=WAL;` on iOS `NativeSqliteDriver` from Phase 1 — non-negotiable for data safety
-- **Migration CI:** Run `generateCommonMainCarRecordDatabaseSchema` before first release commit; add `verifyCommonMainCarRecordDatabaseMigration` to CI
+- **Migration CI:** Run `generateCommonMainVehiCareDatabaseSchema` before first release commit; add `verifyCommonMainVehiCareDatabaseMigration` to CI
 - **iOS reminders:** `NotificationScheduler` interface with `scheduleTimeBased()` + `triggerImmediateIfOverdue()` — designed in Phase 3; mileage logic stays in `commonMain`, delivery is `expect/actual`
 - **DB concurrency:** Serialize all DB writes via `Dispatchers.IO.limitedParallelism(1)` to prevent iOS `SIGABRT` crashes
 - **Notification permission:** Request only on first reminder creation, never on cold launch

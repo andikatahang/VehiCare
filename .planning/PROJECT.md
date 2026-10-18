@@ -1,8 +1,8 @@
-# CarRecord
+# VehiCare
 
 ## What This Is
 
-CarRecord is a Kotlin Multiplatform app (iOS + Android) for tracking service history across multiple vehicles. Users log every service event per car — date, mileage, service type, parts replaced/repaired, cost, and notes — and get proactive reminders when the next service is due, based on mileage intervals or time elapsed.
+VehiCare is a Kotlin Multiplatform app (iOS + Android) for tracking service history across multiple vehicles. Users log every service event per car — date, mileage, service type, parts replaced/repaired, cost, and notes — and get proactive reminders when the next service is due, based on mileage intervals or time elapsed.
 
 ## Core Value
 

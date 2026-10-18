@@ -79,7 +79,7 @@ The critical finding is **not** in the mechanics — it is that the **locked ver
 | ID | Description | Research Support |
 |----|-------------|------------------|
 | DAT-01 | All data stored locally on device (offline-first, no account) | SQLDelight 2.x file-backed driver on both platforms; no network dependency anywhere in the stack; `DriverFactory` expect/actual (§Architecture Patterns, Pattern 1) |
-| DAT-02 | Runs on Android (API 26+) and iOS (16+) from a shared KMP codebase | KMP Gradle target config (`androidTarget`, `iosArm64`, `iosSimulatorArm64`), Xcode `IPHONEOS_DEPLOYMENT_TARGET=16.0`, Android `minSdk=26`; single `shared`/`composeApp` module with `commonMain` UI (§Recommended Project Structure) |
+| DAT-02 | Runs on Android (API 26+) and iOS (16+) from a shared KMP codebase | KMP Gradle target config (`androidTarget`, `iosArm64`, `iosSimulatorArm64`), Xcode `IPHONEOS_DEPLOYMENT_TARGET=16.0`, Android `minSdk=26`; single `shared`/`shared` module with `commonMain` UI (§Recommended Project Structure) |
 | DAT-03 | SQLite uses WAL mode from first launch (iOS SIGKILL corruption guard) | **Verified:** touchlab SQLiter (the engine behind `NativeSqliteDriver`) defaults `journalMode = JournalMode.WAL`; Android must be set/verified explicitly. Two implementation options documented (§Pattern 1 + Code Examples) |
 | DAT-04 | All schema changes include a `.sqm` migration file verified in CI | `schemaOutputDirectory` + `generate<SourceSet><Database>Schema` produce the `1.db` baseline; `verify<SourceSet><Database>Migration` enforces it and CI adds a `git diff --exit-code` schema guard (§Pattern 1 + Code Examples) |
 | VEH-01 | Add a vehicle (name, make, model, year, plate, type) | `vehicles` table `.sq` schema (only `name` NOT NULL per D-09) + `AddEditVehicleScreen` + `VehicleFormState` validation (D-08, D-13) |
@@ -289,7 +289,7 @@ The diagram traces the phase's primary use case — *"user adds a vehicle with a
                          │            └─────────────┬──────────┘                                          │
                          │                          │ sqlDriver + withContext(Dispatchers.IO             │
                          │                          │             .limitedParallelism(1))                  │
-                         │            ┌─────────────┴───────────────┐    CarRecordDatabase (generated)        │
+                         │            ┌─────────────┴───────────────┐    VehiCareDatabase (generated)        │
                          │            │ expect fun createDriver()   │ ──► vehicleQueries (generated)          │
                          │            └─────────────┬───────────────┘                                       │
                          └──────────────────────────┼────────────────────────────────────────────────────┘
@@ -299,8 +299,8 @@ The diagram traces the phase's primary use case — *"user adds a vehicle with a
         ┌──────────────┴───────────────┐                    ┌─────────────────┴──────────────────┐
         │ androidMain                  │                    │ iosMain                            │
         │ AndroidSqliteDriver(         │                    │ NativeSqliteDriver(                │
-        │   CarRecordDatabase.Schema,  │                    │   CarRecordDatabase.Schema,        │
-        │   context, "carrecord.db")   │                    │   "carrecord.db")                  │
+        │   VehiCareDatabase.Schema,  │                    │   VehiCareDatabase.Schema,        │
+        │   context, "vehicare.db")   │                    │   "vehicare.db")                  │
         │ (+ explicit WAL pragma)      │                    │ (JournalMode.WAL is the DEFAULT)   │
         └──────────────┬───────────────┘                    └─────────────────┬──────────────────┘
                        │                                                      │
@@ -314,19 +314,19 @@ The diagram traces the phase's primary use case — *"user adds a vehicle with a
 ### Recommended Project Structure
 
 ```
-CarRecord/
+VehiCare/
 ├── gradle/
 │   ├── libs.versions.toml            # single source of versions (table above)
 │   └── wrapper/gradle-wrapper.properties   # 8.14.6
-├── composeApp/                        # the shared module (wizard's default name)
+├── shared/                        # the shared module (wizard's default name)
 │   └── src/
 │       ├── commonMain/
-│       │   ├── kotlin/com/carrecord/
+│       │   ├── kotlin/com/vehicare/
 │       │   │   ├── App.kt                          # root composable: Koin + NavHost + Scaffold(bottomBar)
 │       │   │   ├── di/AppModule.kt                 # Koin module (single place to wire everything)
 │       │   │   ├── data/
 │       │   │   │   ├── db/DriverFactory.kt         # expect fun createDriver()
-│       │   │   │   ├── db/DatabaseFactory.kt       # SqlDriver → CarRecordDatabase
+│       │   │   │   ├── db/DatabaseFactory.kt       # SqlDriver → VehiCareDatabase
 │       │   │   │   ├── VehicleEntityMapper.kt      # VehicleEntity ↔ Vehicle (SQLDelight types stay here)
 │       │   │   │   ├── VehicleRepository.kt        # interface (domain-facing)
 │       │   │   │   └── VehicleRepositoryImpl.kt    # impl + dispatcher injection
@@ -342,12 +342,12 @@ CarRecord/
 │       │   │   │   │   └── VehicleDetailScreen.kt / VehicleDetailViewModel.kt
 │       │   │   │   └── settings/SettingsScreen.kt
 │       │   │   └── util/PhotoStorage.kt            # save/replace/delete photo (FileKit)
-│       │   ├── sqldelight/com/carrecord/db/
+│       │   ├── sqldelight/com/vehicare/db/
 │       │   │   ├── Vehicle.sq                      # CREATE TABLE + queries (WAL pragma preamble)
 │       │   │   └── migrations/                     # EMPTY in phase 1 (1.db baseline only)
 │       │   └── composeResources/values/strings.xml # D-11 centralised strings
-│       ├── androidMain/kotlin/com/carrecord/db/DriverFactory.android.kt
-│       ├── iosMain/kotlin/com/carrecord/db/DriverFactory.ios.kt
+│       ├── androidMain/kotlin/com/vehicare/db/DriverFactory.android.kt
+│       ├── iosMain/kotlin/com/vehicare/db/DriverFactory.ios.kt
 │       └── commonTest/kotlin/…                     # repository/mapper tests
 ├── iosApp/iosApp.xcodeproj            # Xcode project; ContentView → ComposeUIViewController
 ├── androidApp/                        # optional thin Android application module (wizard variant)
@@ -355,7 +355,7 @@ CarRecord/
 └── settings.gradle.kts
 ```
 
-> **Where the DB schema files live matters.** SQLDelight scans `src/<sourceSet>/sqldelight/`. For a KMP module the schema source set is `commonMain`, so migrations go in `composeApp/src/commonMain/sqldelight/<package>/migrations/<version>.sqm` and the generated schema task is `generateCommonMainCarRecordDatabaseSchema`. A file placed under `src/main/sqldelight/` would be silently ignored by the KMP tasks.
+> **Where the DB schema files live matters.** SQLDelight scans `src/<sourceSet>/sqldelight/`. For a KMP module the schema source set is `commonMain`, so migrations go in `shared/src/commonMain/sqldelight/<package>/migrations/<version>.sqm` and the generated schema task is `generateCommonMainVehiCareDatabaseSchema`. A file placed under `src/main/sqldelight/` would be silently ignored by the KMP tasks.
 
 ### Pattern 1: Migration-safe SQLDelight schema from day one (DAT-01, DAT-04)
 
@@ -363,13 +363,13 @@ CarRecord/
 
 **When to use:** From the very first commit of the phase — retrofitting this after tables exist is painful because the snapshot must be regenerated and validated against a known-good baseline.
 
-**Example (`composeApp/build.gradle.kts`):**
+**Example (`shared/build.gradle.kts`):**
 ```kotlin
 // Source: SQLDelight official docs — Migrations (sqldelight.github.io/sqldelight/2.x/multiplatform_sqlite/migrations/)
 sqldelight {
     databases {
-        create("CarRecordDatabase") {
-            packageName.set("com.carrecord.db")
+        create("VehiCareDatabase") {
+            packageName.set("com.vehicare.db")
             // REQUIRED — without this NO migration-verification task is registered at all.
             schemaOutputDirectory.set(file("src/commonMain/sqldelight/databases"))
             // Phase 1: keep queries synchronous (resolves STATE.md open question — see Pitfall 6).
@@ -379,7 +379,7 @@ sqldelight {
 }
 ```
 
-Workflow: **add** the table to `Vehicle.sq` → run `./gradlew generateCommonMainCarRecordDatabaseSchema` → commit the produced `src/commonMain/sqldelight/databases/1.db`. Later, to change the schema: bump and add `migrations/2.sqm`, then the CI task below proves the migration replays on top of `1.db` to reach the new schema.
+Workflow: **add** the table to `Vehicle.sq` → run `./gradlew generateCommonMainVehiCareDatabaseSchema` → commit the produced `src/commonMain/sqldelight/databases/1.db`. Later, to change the schema: bump and add `migrations/2.sqm`, then the CI task below proves the migration replays on top of `1.db` to reach the new schema.
 
 ### Pattern 2: WAL from first launch on both drivers (DAT-02)
 
@@ -389,7 +389,7 @@ Workflow: **add** the table to `Vehicle.sq` → run `./gradlew generateCommonMai
 
 **Example — declare it in the `.sq` file so the generated schema carries it:**
 ```sql
--- composeApp/src/commonMain/sqldelight/com/carrecord/db/Vehicle.sq  (executable preamble)
+-- shared/src/commonMain/sqldelight/com/vehicare/db/Vehicle.sq  (executable preamble)
 PRAGMA journal_mode=wal;
 
 CREATE TABLE vehicle (
@@ -423,7 +423,7 @@ delete: DELETE FROM vehicle WHERE id=?;
 ```kotlin
 // Source: kotlinx.coroutines docs — Dispatchers.IO.limitedParallelism(1)
 class VehicleRepositoryImpl(
-    private val db: CarRecordDatabase,
+    private val db: VehiCareDatabase,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO.limitedParallelism(1),
 ) : VehicleRepository {
 
@@ -560,23 +560,23 @@ fun App() {
 - **Leaking SQLDelight generated types into `commonMain/ui`:** passing `VehicleEntity` to Composables couples the UI to the schema and breaks the moment a column is renamed. Always map to `domain.Vehicle`.
 - **Storing an absolute file path or the picker's temp URI (D-05):** iOS container paths change per install; a stored absolute path becomes a broken image after an app update. Store the relative path, resolve at read time.
 - **Putting migrations under `src/main/sqldelight/`:** KMP tasks scan `src/commonMain/sqldelight/`; the file is ignored and the CI check silently passes with no migration.
-- **Trusting the `verifySqlDelightMigration` *aggregate* task to fail on a missing `.sqm`:** the aggregate is registered unconditionally, so a repo with no migrations still "passes". CI must run the per-source-set task (`verifyCommonMainCarRecordDatabaseMigration`) *and* assert the schema snapshot is unchanged — or run `generate…Schema` and `git diff --exit-code` the generated `1.db`.
+- **Trusting the `verifySqlDelightMigration` *aggregate* task to fail on a missing `.sqm`:** the aggregate is registered unconditionally, so a repo with no migrations still "passes". CI must run the per-source-set task (`verifyCommonMainVehiCareDatabaseMigration`) *and* assert the schema snapshot is unchanged — or run `generate…Schema` and `git diff --exit-code` the generated `1.db`.
 - **Calling `Dispatchers.IO` inline in the repository:** makes the read/write lane untestable and re-introduces parallel writes. Inject the dispatcher (Pattern 3).
 - **Inserting `journal_mode=wal` only in Android's `onConfigure`:** the iOS driver ignores it and the "WAL from first launch" criterion becomes platform-dependent. Put the pragma in the `.sq` preamble.
-- **Hand-editing `1.db`:** the snapshot is a build output; regenerate it with `generateCommonMainCarRecordDatabaseSchema` and commit the result.
+- **Hand-editing `1.db`:** the snapshot is a build output; regenerate it with `generateCommonMainVehiCareDatabaseSchema` and commit the result.
 
 ## Common Pitfalls
 
 ### Pitfall 1: Migration-verification task silently does nothing (DAT-04)
 **What goes wrong:** CI is green, but a schema change with no `.sqm` file is never caught. The phase's headline success criterion ("schema changes blocked in CI without a `.sqm` migration") is not actually enforced.
 **Why it happens:** `schemaOutputDirectory` was not configured, so SQLDelight never registers migration tasks; or CI runs the aggregate `verifySqlDelightMigration`, which is registered unconditionally and passes vacuously when there are no migrations.
-**How to avoid:** Set `schemaOutputDirectory`, commit the generated `1.db`, and make CI run **both** `./gradlew verifyCommonMainCarRecordDatabaseMigration` **and** `./gradlew generateCommonMainCarRecordDatabaseSchema && git diff --exit-code` (the second catches "table changed but no migration authored"). Verify locally with `./gradlew tasks --all | grep -i migration` that the per-source-set task actually exists.
+**How to avoid:** Set `schemaOutputDirectory`, commit the generated `1.db`, and make CI run **both** `./gradlew verifyCommonMainVehiCareDatabaseMigration` **and** `./gradlew generateCommonMainVehiCareDatabaseSchema && git diff --exit-code` (the second catches "table changed but no migration authored"). Verify locally with `./gradlew tasks --all | grep -i migration` that the per-source-set task actually exists.
 **Warning signs:** `./gradlew tasks --all` shows no `...Migration` task before you touch schema config; the number of migration tasks doesn't change after adding `schemaOutputDirectory`.
 
 ### Pitfall 2: Version-set misalignment force-upgrades the Compose stack (whole phase)
 **What goes wrong:** Adding Koin 4.2.0 pulls `org.jetbrains.compose.runtime:runtime:1.10.2` onto a classpath otherwise pinned to CMP 1.8.2. Gradle "highest wins" silently promotes only *transitively-declared* Compose artifacts, leaving a mismatched mix (e.g. runtime 1.10.2 + foundation 1.8.2) that compiles but crashes at runtime with obscure `NoSuchMethodError`s.
 **Why it happens:** Kotlin-library metadata pins are not "constraints" — they're requests, and the resolver honours the highest.
-**How to avoid:** Use the *aligned-down* set (SQLDelight **2.2.1**, Koin **4.1.1**) from the Standard Stack table. Run `./gradlew :composeApp:dependencies --configuration commonMainImplementation` and confirm every `org.jetbrains.compose.*` resolves to **1.8.2**. Add a `resolutionStrategy` constraint (`force("org.jetbrains.compose.runtime:runtime:1.8.2")` per module) only as a belt-and-braces guard.
+**How to avoid:** Use the *aligned-down* set (SQLDelight **2.2.1**, Koin **4.1.1**) from the Standard Stack table. Run `./gradlew :shared:dependencies --configuration commonMainImplementation` and confirm every `org.jetbrains.compose.*` resolves to **1.8.2**. Add a `resolutionStrategy` constraint (`force("org.jetbrains.compose.runtime:runtime:1.8.2")` per module) only as a belt-and-braces guard.
 **Warning signs:** multiple distinct `org.jetbrains.compose.*` versions in `dependencies` output; a compose-runtime `1.1x` appearing at all.
 
 ### Pitfall 3: Absolute photo path / stale iOS container path (D-05, VEH-03, VEH-04)
@@ -635,30 +635,30 @@ Verified patterns from official sources. The project-specific code (Patterns 1�
 
 ```kotlin
 // commonMain — data/db/DriverFactory.kt
-package com.carrecord.db
+package com.vehicare.db
 import app.cash.sqldelight.db.SqlDriver
 expect class DriverFactory {
     fun createDriver(): SqlDriver
 }
 
 // androidMain — data/db/DriverFactory.android.kt
-package com.carrecord.db
+package com.vehicare.db
 import android.content.Context
 import app.cash.sqldelight.db.SqlDriver
 import app.cash.sqldelight.driver.android.AndroidSqliteDriver
 actual class DriverFactory(private val context: Context) {
     actual fun createDriver(): SqlDriver =
-        AndroidSqliteDriver(CarRecordDatabase.Schema, context, "carrecord.db")
+        AndroidSqliteDriver(VehiCareDatabase.Schema, context, "vehicare.db")
     // Note: no need to force WAL here if `PRAGMA journal_mode=wal;` is in the .sq preamble.
 }
 
 // iosMain — data/db/DriverFactory.ios.kt
-package com.carrecord.db
+package com.vehicare.db
 import app.cash.sqldelight.db.SqlDriver
 import app.cash.sqldelight.driver.native.NativeSqliteDriver
 actual class DriverFactory {
     actual fun createDriver(): SqlDriver =
-        NativeSqliteDriver(CarRecordDatabase.Schema, "carrecord.db")
+        NativeSqliteDriver(VehiCareDatabase.Schema, "vehicare.db")
     // touchlab SQLiter default for this driver is already JournalMode.WAL.
 }
 ```
@@ -666,9 +666,9 @@ actual class DriverFactory {
 ### Compose Resources strings (D-11) — the `commonMain`-only mechanism
 
 ```xml
-<!-- composeApp/src/commonMain/composeResources/values/strings.xml -->
+<!-- shared/src/commonMain/composeResources/values/strings.xml -->
 <resources>
-    <string name="app_name">CarRecord</string>
+    <string name="app_name">VehiCare</string>
     <string name="vehicles">Vehicles</string>
     <string name="settings">Settings</string>
     <string name="add_vehicle">Add vehicle</string>
@@ -681,8 +681,8 @@ actual class DriverFactory {
 
 ```kotlin
 // Usage
-import carrecord.composeapp.generated.resources.Res
-import carrecord.composeapp.generated.resources.add_vehicle
+import vehicare.composeapp.generated.resources.Res
+import vehicare.composeapp.generated.resources.add_vehicle
 import org.jetbrains.compose.resources.stringResource
 
 Text(text = stringResource(Res.string.add_vehicle))
@@ -705,13 +705,13 @@ jobs:
         with: { distribution: temurin, java-version: '21' }   # 21 — see Environment Availability
       - uses: gradle/actions/setup-gradle@v4
       - name: Verify SQLDelight migrations (per-source-set task)
-        run: ./gradlew verifyCommonMainCarRecordDatabaseMigration
+        run: ./gradlew verifyCommonMainVehiCareDatabaseMigration
       - name: Fail if schema changed without a migration
         run: |
-          ./gradlew generateCommonMainCarRecordDatabaseSchema
-          git diff --exit-code -- composeApp/src/commonMain/sqldelight/databases
+          ./gradlew generateCommonMainVehiCareDatabaseSchema
+          git diff --exit-code -- shared/src/commonMain/sqldelight/databases
       - name: Build shared module + Android
-        run: ./gradlew :composeApp:assembleDebug
+        run: ./gradlew :shared:assembleDebug
 ```
 
 > `verifySqlDelightMigration` (aggregate) is *also* wired to `check`, but because it is registered unconditionally it can pass vacuously; the explicit per-source-set task plus the `git diff --exit-code` on the schema snapshot are what actually enforce the requirement.
@@ -742,7 +742,7 @@ jobs:
 | A3 | FileKit 0.11.0 is the intended picker library (CONTEXT.md left "photo-picker library wiring details" to agent discretion). | Standard Stack / Pattern 4 | If the user insists on zero third-party deps, ~150–250 lines of `expect/actual` picker code must be planned instead (Alternatives table). |
 | A4 | Compose Resources (`composeResources/values/strings.xml`) is the sanctioned mechanism for D-11 centralised strings. | Standard Stack / Code Examples | Alternative is `expect/actual` string holders — more code, no better outcome. |
 | A5 | Photos should be persisted to `FileKit.filesDir/vehicles/<id>.jpg` with relative-path-only DB storage (D-05 leaves detail to discretion). | Pattern 4 | If the user prefers a different layout (e.g. content-hash filenames), `PhotoStorage` changes but the DB contract (relative path string) does not. |
-| A6 | A single `composeApp` KMP module is the bootstrap layout (wizard default) rather than separate `shared` + `androidApp` + `iosApp`. | Architecture Patterns | Module graph changes; plan's file paths shift. Low impact — layout is mechanical. |
+| A6 | A single `shared` KMP module is the bootstrap layout (wizard default) rather than separate `shared` + `androidApp` + `iosApp`. | Architecture Patterns | Module graph changes; plan's file paths shift. Low impact — layout is mechanical. |
 | A7 | CI runs on GitHub Actions with the repo's existing workflow permissions. | Code Examples | If CI is not GitHub Actions, the migration-verification step is transplanted to the actual CI runner. |
 
 **If this table were empty, no user confirmation would be needed.** It is not empty — A1 in particular is a locked-decision-level fork that should be confirmed at the Wave 0 checkpoint before plans are executed.

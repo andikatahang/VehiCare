@@ -1,6 +1,6 @@
 # Architecture Research: KMP Car Service App
 
-**Project:** CarRecord — multi-vehicle service history tracker  
+**Project:** VehiCare — multi-vehicle service history tracker  
 **Researched:** 2026-10-18  
 **Confidence:** HIGH (official JetBrains docs, SQLDelight docs, Android KMP samples)
 
@@ -8,10 +8,10 @@
 
 ## Module Structure
 
-CarRecord uses **Strategy 1: Shared UI** — Compose Multiplatform shares both UI and business logic across Android and iOS. This is the right call given CMP is already chosen; it maximises code reuse and keeps the codebase a single team can own.
+VehiCare uses **Strategy 1: Shared UI** — Compose Multiplatform shares both UI and business logic across Android and iOS. This is the right call given CMP is already chosen; it maximises code reuse and keeps the codebase a single team can own.
 
 ```
-CarRecord/
+VehiCare/
 ├── shared/                         # The core KMP module
 │   ├── build.gradle.kts            # KMP targets + dependencies
 │   └── src/
@@ -138,14 +138,14 @@ expect class DriverFactory {
 // androidMain
 actual class DriverFactory(private val context: Context) {
     actual fun createDriver(): SqlDriver = AndroidSqliteDriver(
-        Database.Schema, context, "carrecord.db"
+        Database.Schema, context, "vehicare.db"
     )
 }
 
 // iosMain
 actual class DriverFactory {
     actual fun createDriver(): SqlDriver = NativeSqliteDriver(
-        Database.Schema, "carrecord.db"
+        Database.Schema, "vehicare.db"
     )
 }
 ```
@@ -206,7 +206,7 @@ CarRepository.getAllCars(): Flow<List<Car>>
 SQLDelight CarQueries.selectAll()
     │  emits on every DB change (reactive)
     ▼
-DriverFactory → SqlDriver → carrecord.db
+DriverFactory → SqlDriver → vehicare.db
 ```
 
 ### Write flow (logging a new service entry):
@@ -262,7 +262,7 @@ Build in dependency order — each step is deliverable and testable independentl
 5. **Repository implementations** — `CarRepository`, `ServiceEntryRepository` with SQLDelight; Flow-based reads
 
 ### Wave 2 — Core Features (shared UI + ViewModel)
-6. **Design system** — `CarRecordTheme`, typography, colors, card components, spacing tokens
+6. **Design system** — `VehiCareTheme`, typography, colors, card components, spacing tokens
 7. **Car management screens** — `CarListScreen`, `AddCarScreen` + `CarListViewModel`
 8. **Service entry screens** — `AddServiceScreen`, `ServiceHistoryScreen` + `ServiceViewModel`
 9. **Navigation** — `NavHost` with routes wiring all screens together
@@ -305,7 +305,7 @@ Build in dependency order — each step is deliverable and testable independentl
 ### iOS-Specific Build Setup
 - Xcode project must invoke `embedAndSignAppleFrameworkForXcode` Gradle task as a Build Phase
 - SQLite is available on iOS but must be linked — SQLDelight's `linkSqlite = true` (default) handles this automatically
-- CMP iOS uses `UIKitView` interop for any native views (camera, maps) — not needed for CarRecord v1
+- CMP iOS uses `UIKitView` interop for any native views (camera, maps) — not needed for VehiCare v1
 
 ### Android-Specific Notes
 - Must declare notification channel in `Application.onCreate()` (Android 8.0+)
@@ -317,7 +317,7 @@ iOS local notifications can only fire at a specific date/time — they cannot re
 - **Android:** WorkManager periodic task checks mileage threshold and fires notification if needed
 - **iOS:** On app foreground, check mileage; if overdue, trigger immediate local notification (or schedule one for next open)
 
-This is the single biggest platform divergence in CarRecord. Design the `NotificationScheduler` interface to accommodate both strategies:
+This is the single biggest platform divergence in VehiCare. Design the `NotificationScheduler` interface to accommodate both strategies:
 
 ```kotlin
 expect class NotificationScheduler {

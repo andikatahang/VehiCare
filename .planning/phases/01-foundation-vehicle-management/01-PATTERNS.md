@@ -10,7 +10,7 @@
 
 The repository at `/Users/andika/Belajar-Coding/VibeCoding#1` contains **only** `.git/` and `.planning/`. Verified by directory listing on 2026-10-18. There is:
 
-- **No source code** — no `composeApp/`, no `build.gradle.kts`, no `.kt`/`.swift`/`.sq`/`.xml` files anywhere in the tree.
+- **No source code** — no `shared/`, no `build.gradle.kts`, no `.kt`/`.swift`/`.sq`/`.xml` files anywhere in the tree.
 - **No first-party analogs.** This is stated explicitly in `01-CONTEXT.md` §code_context: *"None — greenfield. Repository contains no source code yet; Phase 1 scaffolds the entire project."*
 - **No `AGENTS.md`** in the working directory (only the global `~/.config/opencode/AGENTS.md` working rules apply — no state-changing actions without approval; see §Governance).
 - **No project skills** — neither `.claude/skills/` nor `.agents/skills/` exists.
@@ -42,7 +42,7 @@ The code blocks in §Pattern Assignments are **RESEARCH.md-authored sketches** (
 | `settings.gradle.kts` | config | transform (build-time) | NONE (greenfield) — RES §Recommended Project Structure (line 355) | none |
 | `build.gradle.kts` (root) | config | transform (build-time) | NONE (greenfield) — RES §Standard Stack §plugins | none |
 | `gradle.properties` | config | transform (build-time) | NONE (greenfield) — RES §Security Domain V14 (no credentials) | none |
-| `composeApp/build.gradle.kts` | config | transform (build-time) | NONE (greenfield) — RES §Pattern 1 (lines 366–380) | none |
+| `shared/build.gradle.kts` | config | transform (build-time) | NONE (greenfield) — RES §Pattern 1 (lines 366–380) | none |
 | `local.properties` | config (local, **not committed**) | transform (build-time) | NONE (greenfield) — RES §Environment Availability | none |
 | `.github/workflows/ci.yml` | config (CI) | batch | NONE (greenfield) — RES §Code Examples (lines 690–710) | none |
 
@@ -50,55 +50,55 @@ The code blocks in §Pattern Assignments are **RESEARCH.md-authored sketches** (
 
 | Intended Path | Role | Data Flow | Closest Analog | Match |
 |---|---|---|---|---|
-| `composeApp/src/commonMain/kotlin/com/carrecord/App.kt` | component (root composable) | request-response | NONE (greenfield) — RES §Pattern 6 (lines 521–549); UISPEC §Screens | none |
-| `composeApp/src/androidMain/kotlin/com/carrecord/MainActivity.kt` *(or `androidApp/…` wizard variant)* | platform-actual (UI host) | request-response | NONE (greenfield) — RES §Architecture Patterns (system diagram, lines 262–263) | none |
-| `composeApp/src/iosMain/kotlin/com/carrecord/MainViewController.kt` | platform-actual (UI host) | request-response | NONE (greenfield) — RES §Architecture Patterns; §Anti-Patterns (line 622) | none |
+| `shared/src/commonMain/kotlin/com/vehicare/App.kt` | component (root composable) | request-response | NONE (greenfield) — RES §Pattern 6 (lines 521–549); UISPEC §Screens | none |
+| `shared/src/androidMain/kotlin/com/vehicare/MainActivity.kt` *(or `androidApp/…` wizard variant)* | platform-actual (UI host) | request-response | NONE (greenfield) — RES §Architecture Patterns (system diagram, lines 262–263) | none |
+| `shared/src/iosMain/kotlin/com/vehicare/MainViewController.kt` | platform-actual (UI host) | request-response | NONE (greenfield) — RES §Architecture Patterns; §Anti-Patterns (line 622) | none |
 | `iosApp/iosApp/iOSApp.swift` + `ContentView.swift` | platform-actual (Swift host) | request-response | NONE (greenfield) — RES §Recommended Project Structure (line 352) | none |
-| `composeApp/src/androidMain/AndroidManifest.xml` | config | transform (build-time) | NONE (greenfield) — RES §Security Domain (line 833, `allowBackup` decision) | none |
+| `shared/src/androidMain/AndroidManifest.xml` | config | transform (build-time) | NONE (greenfield) — RES §Security Domain (line 833, `allowBackup` decision) | none |
 
 ### Group C — DI
 
 | Intended Path | Role | Data Flow | Closest Analog | Match |
 |---|---|---|---|---|
-| `composeApp/src/commonMain/kotlin/com/carrecord/di/AppModule.kt` | provider (DI module) | config/wiring | NONE (greenfield) — RES §Pattern 5 (lines 489–498) | none |
-| `composeApp/src/androidMain/kotlin/com/carrecord/di/PlatformModule.android.kt` | provider (DI module, platform) | config/wiring | NONE (greenfield) — RES §Architectural Responsibility Map (line 107) | none |
+| `shared/src/commonMain/kotlin/com/vehicare/di/AppModule.kt` | provider (DI module) | config/wiring | NONE (greenfield) — RES §Pattern 5 (lines 489–498) | none |
+| `shared/src/androidMain/kotlin/com/vehicare/di/PlatformModule.android.kt` | provider (DI module, platform) | config/wiring | NONE (greenfield) — RES §Architectural Responsibility Map (line 107) | none |
 
 ### Group D — Data layer
 
 | Intended Path | Role | Data Flow | Closest Analog | Match |
 |---|---|---|---|---|
-| `composeApp/src/commonMain/sqldelight/com/carrecord/db/Vehicle.sq` | migration/schema | CRUD | NONE (greenfield) — RES §Pattern 2 (lines 391–412) | none |
-| `composeApp/src/commonMain/sqldelight/databases/1.db` | DB (generated snapshot, committed) | CRUD | NONE (greenfield) — RES §Pattern 1 (line 382) | none |
-| `composeApp/src/commonMain/sqldelight/com/carrecord/db/migrations/` | migration (dir, **empty Phase 1**) | CRUD | NONE (greenfield) — RES §Pattern 1; §Recommended Project Structure (line 347) | none |
-| `composeApp/src/commonMain/kotlin/com/carrecord/data/db/DriverFactory.kt` | platform-expect (DB) | request-response | NONE (greenfield) — RES §Code Examples (lines 632–637) | none |
-| `composeApp/src/androidMain/kotlin/com/carrecord/data/db/DriverFactory.android.kt` | platform-actual (DB) | request-response | NONE (greenfield) — RES §Code Examples (lines 639–648) | none |
-| `composeApp/src/iosMain/kotlin/com/carrecord/data/db/DriverFactory.ios.kt` | platform-actual (DB) | request-response | NONE (greenfield) — RES §Code Examples (lines 650–658) | none |
-| `composeApp/src/commonMain/kotlin/com/carrecord/data/db/DatabaseFactory.kt` | service (DB factory) | config/wiring | NONE (greenfield) — RES §Recommended Project Structure (line 329) | none |
-| `composeApp/src/commonMain/kotlin/com/carrecord/data/VehicleEntityMapper.kt` | utility (mapper) | transform | NONE (greenfield) — STATE §Architecture Constraints; RES §Anti-Patterns (line 555) | none |
-| `composeApp/src/commonMain/kotlin/com/carrecord/data/VehicleRepository.kt` | repository (interface) | CRUD + streaming | NONE (greenfield) — RES §Pattern 3 (lines 425–446) | none |
-| `composeApp/src/commonMain/kotlin/com/carrecord/data/VehicleRepositoryImpl.kt` | repository (impl) | CRUD + streaming | NONE (greenfield) — RES §Pattern 3 (lines 423–447) | none |
-| `composeApp/src/commonMain/kotlin/com/carrecord/domain/Vehicle.kt` | model (domain) | transform | NONE (greenfield) — STATE §Architecture Constraints; RES §Anti-Patterns (line 555) | none |
-| `composeApp/src/commonMain/kotlin/com/carrecord/domain/VehicleType.kt` | model (domain enum) | transform | NONE (greenfield) — D-10; UISPEC §C-5 | none |
+| `shared/src/commonMain/sqldelight/com/vehicare/db/Vehicle.sq` | migration/schema | CRUD | NONE (greenfield) — RES §Pattern 2 (lines 391–412) | none |
+| `shared/src/commonMain/sqldelight/databases/1.db` | DB (generated snapshot, committed) | CRUD | NONE (greenfield) — RES §Pattern 1 (line 382) | none |
+| `shared/src/commonMain/sqldelight/com/vehicare/db/migrations/` | migration (dir, **empty Phase 1**) | CRUD | NONE (greenfield) — RES §Pattern 1; §Recommended Project Structure (line 347) | none |
+| `shared/src/commonMain/kotlin/com/vehicare/data/db/DriverFactory.kt` | platform-expect (DB) | request-response | NONE (greenfield) — RES §Code Examples (lines 632–637) | none |
+| `shared/src/androidMain/kotlin/com/vehicare/data/db/DriverFactory.android.kt` | platform-actual (DB) | request-response | NONE (greenfield) — RES §Code Examples (lines 639–648) | none |
+| `shared/src/iosMain/kotlin/com/vehicare/data/db/DriverFactory.ios.kt` | platform-actual (DB) | request-response | NONE (greenfield) — RES §Code Examples (lines 650–658) | none |
+| `shared/src/commonMain/kotlin/com/vehicare/data/db/DatabaseFactory.kt` | service (DB factory) | config/wiring | NONE (greenfield) — RES §Recommended Project Structure (line 329) | none |
+| `shared/src/commonMain/kotlin/com/vehicare/data/VehicleEntityMapper.kt` | utility (mapper) | transform | NONE (greenfield) — STATE §Architecture Constraints; RES §Anti-Patterns (line 555) | none |
+| `shared/src/commonMain/kotlin/com/vehicare/data/VehicleRepository.kt` | repository (interface) | CRUD + streaming | NONE (greenfield) — RES §Pattern 3 (lines 425–446) | none |
+| `shared/src/commonMain/kotlin/com/vehicare/data/VehicleRepositoryImpl.kt` | repository (impl) | CRUD + streaming | NONE (greenfield) — RES §Pattern 3 (lines 423–447) | none |
+| `shared/src/commonMain/kotlin/com/vehicare/domain/Vehicle.kt` | model (domain) | transform | NONE (greenfield) — STATE §Architecture Constraints; RES §Anti-Patterns (line 555) | none |
+| `shared/src/commonMain/kotlin/com/vehicare/domain/VehicleType.kt` | model (domain enum) | transform | NONE (greenfield) — D-10; UISPEC §C-5 | none |
 
 ### Group E — Utilities & resources
 
 | Intended Path | Role | Data Flow | Closest Analog | Match |
 |---|---|---|---|---|
-| `composeApp/src/commonMain/kotlin/com/carrecord/util/PhotoStorage.kt` | utility | file-I/O | NONE (greenfield) — RES §Pattern 4 (lines 458–478) | none |
-| `composeApp/src/commonMain/composeResources/values/strings.xml` | config (i18n resource) | transform | NONE (greenfield) — D-11; UISPEC §Copywriting Contract (lines 259–342) | none |
-| `composeApp/src/commonMain/composeResources/drawable/ic_vehicle_car.xml` | resource (vector drawable) | transform | NONE (greenfield) — UISPEC §Icon Contract (lines 42–52), §C-7 | none |
-| `composeApp/src/commonMain/composeResources/drawable/ic_vehicle_motorcycle.xml` | resource (vector drawable) | transform | NONE (greenfield) — UISPEC §Icon Contract, §C-7 | none |
-| `composeApp/src/commonMain/composeResources/drawable/ic_vehicle_truck.xml` | resource (vector drawable) | transform | NONE (greenfield) — UISPEC §Icon Contract, §C-7 | none |
+| `shared/src/commonMain/kotlin/com/vehicare/util/PhotoStorage.kt` | utility | file-I/O | NONE (greenfield) — RES §Pattern 4 (lines 458–478) | none |
+| `shared/src/commonMain/composeResources/values/strings.xml` | config (i18n resource) | transform | NONE (greenfield) — D-11; UISPEC §Copywriting Contract (lines 259–342) | none |
+| `shared/src/commonMain/composeResources/drawable/ic_vehicle_car.xml` | resource (vector drawable) | transform | NONE (greenfield) — UISPEC §Icon Contract (lines 42–52), §C-7 | none |
+| `shared/src/commonMain/composeResources/drawable/ic_vehicle_motorcycle.xml` | resource (vector drawable) | transform | NONE (greenfield) — UISPEC §Icon Contract, §C-7 | none |
+| `shared/src/commonMain/composeResources/drawable/ic_vehicle_truck.xml` | resource (vector drawable) | transform | NONE (greenfield) — UISPEC §Icon Contract, §C-7 | none |
 
 ### Group F — UI: theme & navigation
 
 | Intended Path | Role | Data Flow | Closest Analog | Match |
 |---|---|---|---|---|
-| `composeApp/src/commonMain/kotlin/com/carrecord/ui/theme/Color.kt` | utility (theme token) | transform | NONE (greenfield) — UISPEC §Platform & Theme Constraints (lines 65–83) | none |
-| `composeApp/src/commonMain/kotlin/com/carrecord/ui/theme/Theme.kt` | component (theme) | request-response | NONE (greenfield) — UISPEC §Platform & Theme Constraints (light-only, no dynamic color) | none |
-| `composeApp/src/commonMain/kotlin/com/carrecord/ui/theme/Type.kt` | utility (theme token) | transform | NONE (greenfield) — UISPEC §Typography (lines 129–143) | none |
-| `composeApp/src/commonMain/kotlin/com/carrecord/ui/navigation/Routes.kt` | route | config/wiring | NONE (greenfield) — RES §Pattern 6 (lines 524–527) | none |
-| `composeApp/src/commonMain/kotlin/com/carrecord/ui/navigation/BottomTabs.kt` | component | request-response | NONE (greenfield) — D-17; UISPEC §Screens (line 201) | none |
+| `shared/src/commonMain/kotlin/com/vehicare/ui/theme/Color.kt` | utility (theme token) | transform | NONE (greenfield) — UISPEC §Platform & Theme Constraints (lines 65–83) | none |
+| `shared/src/commonMain/kotlin/com/vehicare/ui/theme/Theme.kt` | component (theme) | request-response | NONE (greenfield) — UISPEC §Platform & Theme Constraints (light-only, no dynamic color) | none |
+| `shared/src/commonMain/kotlin/com/vehicare/ui/theme/Type.kt` | utility (theme token) | transform | NONE (greenfield) — UISPEC §Typography (lines 129–143) | none |
+| `shared/src/commonMain/kotlin/com/vehicare/ui/navigation/Routes.kt` | route | config/wiring | NONE (greenfield) — RES §Pattern 6 (lines 524–527) | none |
+| `shared/src/commonMain/kotlin/com/vehicare/ui/navigation/BottomTabs.kt` | component | request-response | NONE (greenfield) — D-17; UISPEC §Screens (line 201) | none |
 
 ### Group G — UI: vehicle screens & components
 
@@ -129,11 +129,11 @@ The code blocks in §Pattern Assignments are **RESEARCH.md-authored sketches** (
 
 | Intended Path | Role | Data Flow | Closest Analog | Match |
 |---|---|---|---|---|
-| `composeApp/src/commonTest/kotlin/…/VehicleRepositoryTest.kt` | test | CRUD | NONE (greenfield) — VEH-04; RES §Pattern 3, §Pitfall 4 | none |
-| `composeApp/src/commonTest/kotlin/…/VehicleEntityMapperTest.kt` | test | transform | NONE (greenfield) — STATE §Architecture Constraints | none |
-| `composeApp/src/commonTest/kotlin/…/VehicleFormValidationTest.kt` | test | transform | NONE (greenfield) — D-09, D-13; UISPEC §States (line 235) | none |
-| `composeApp/src/androidInstrumentedTest/…/WalModeTest.kt` | test | request-response | NONE (greenfield) — DAT-03; RES §Pitfall 5 | none |
-| `composeApp/src/iosTest/…/WalModeTest.kt` | test | request-response | NONE (greenfield) — DAT-03; RES §Pitfall 5 | none |
+| `shared/src/commonTest/kotlin/…/VehicleRepositoryTest.kt` | test | CRUD | NONE (greenfield) — VEH-04; RES §Pattern 3, §Pitfall 4 | none |
+| `shared/src/commonTest/kotlin/…/VehicleEntityMapperTest.kt` | test | transform | NONE (greenfield) — STATE §Architecture Constraints | none |
+| `shared/src/commonTest/kotlin/…/VehicleFormValidationTest.kt` | test | transform | NONE (greenfield) — D-09, D-13; UISPEC §States (line 235) | none |
+| `shared/src/androidInstrumentedTest/…/WalModeTest.kt` | test | request-response | NONE (greenfield) — DAT-03; RES §Pitfall 5 | none |
+| `shared/src/iosTest/…/WalModeTest.kt` | test | request-response | NONE (greenfield) — DAT-03; RES §Pitfall 5 | none |
 
 ### Group J — Wave 0 (transient, not shipped)
 
@@ -180,9 +180,9 @@ android-targetSdk = "36"
 **Hard rules (RES, non-negotiable):**
 - `serialization` is **`1.7.3`**, NOT `"2.2.20"` — kotlinx-serialization is not versioned with Kotlin (RES line 126, §Deprecated/outdated line 729).
 - `composeCompiler` plugin version must equal `kotlin` (`org.jetbrains.kotlin.plugin.compose`) (RES line 120).
-- Verify after first sync: `./gradlew :composeApp:dependencies --configuration commonMainImplementation` shows **every** `org.jetbrains.compose.*` at `1.8.2` (RES §Pitfall 2, line 574).
+- Verify after first sync: `./gradlew :shared:dependencies --configuration commonMainImplementation` shows **every** `org.jetbrains.compose.*` at `1.8.2` (RES §Pitfall 2, line 574).
 
-#### `composeApp/build.gradle.kts`
+#### `shared/build.gradle.kts`
 
 **Governing convention:** RES §Pattern 1 lines 366–380. `schemaOutputDirectory` is **REQUIRED** — without it no migration-verification task is registered at all.
 
@@ -190,8 +190,8 @@ android-targetSdk = "36"
 // Source: SQLDelight official docs — Migrations (RES lines 368–379)
 sqldelight {
     databases {
-        create("CarRecordDatabase") {
-            packageName.set("com.carrecord.db")
+        create("VehiCareDatabase") {
+            packageName.set("com.vehicare.db")
             // REQUIRED — without this NO migration-verification task is registered at all.
             schemaOutputDirectory.set(file("src/commonMain/sqldelight/databases"))
             // Phase 1: keep queries synchronous (resolves STATE open question — RES Pitfall 6).
@@ -216,17 +216,17 @@ Also required on this module (RES §Standard Stack, §Architecture Patterns):
 
 ```yaml
       - name: Verify SQLDelight migrations (per-source-set task)
-        run: ./gradlew verifyCommonMainCarRecordDatabaseMigration
+        run: ./gradlew verifyCommonMainVehiCareDatabaseMigration
       - name: Fail if schema changed without a migration
         run: |
-          ./gradlew generateCommonMainCarRecordDatabaseSchema
-          git diff --exit-code -- composeApp/src/commonMain/sqldelight/databases
+          ./gradlew generateCommonMainVehiCareDatabaseSchema
+          git diff --exit-code -- shared/src/commonMain/sqldelight/databases
       - name: Build shared module + Android
-        run: ./gradlew :composeApp:assembleDebug
+        run: ./gradlew :shared:assembleDebug
 ```
 *(Full file with Java 21 setup: RES lines 690–710.)*
 
-> **Naming correction to propagate:** ROADMAP §Architecture Notes line 90 says `generateMainCarRecordSchema`. The KMP-correct task name is **`generateCommonMainCarRecordDatabaseSchema`** / **`verifyCommonMainCarRecordDatabaseMigration`** (RES line 358, §Pitfall 1 line 568). Use the RES names.
+> **Naming correction to propagate:** ROADMAP §Architecture Notes line 90 says `generateMainVehiCareSchema`. The KMP-correct task name is **`generateCommonMainVehiCareDatabaseSchema`** / **`verifyCommonMainVehiCareDatabaseMigration`** (RES line 358, §Pitfall 1 line 568). Use the RES names.
 
 #### `local.properties` / `gradle.properties` / `AndroidManifest.xml`
 
@@ -240,7 +240,7 @@ Also required on this module (RES §Standard Stack, §Architecture Patterns):
 
 **ANALOG: NONE (greenfield) — convention sourced from RES §Pattern 6 + §Architecture Patterns**
 
-#### `composeApp/src/commonMain/kotlin/com/carrecord/App.kt`
+#### `shared/src/commonMain/kotlin/com/vehicare/App.kt`
 
 **Governing convention:** RES §Pattern 6 lines 521–549. The root composable owns `KoinApplication` + a single `NavHost` + `Scaffold(bottomBar = BottomTabs)` — never two nav graphs, never platform UI forks (D-17).
 
@@ -267,7 +267,7 @@ fun App() {
 }
 ```
 
-**Binding additions:** theme is applied here or in `Theme.kt` as `MaterialTheme(colorScheme = CarRecordLightColors)` **unconditionally** — `isSystemInDarkTheme()` is never consulted, dynamic color disabled (UISPEC §Platform & Theme Constraints lines 60–61, §C-8).
+**Binding additions:** theme is applied here or in `Theme.kt` as `MaterialTheme(colorScheme = VehiCareLightColors)` **unconditionally** — `isSystemInDarkTheme()` is never consulted, dynamic color disabled (UISPEC §Platform & Theme Constraints lines 60–61, §C-8).
 
 #### Platform hosts
 
@@ -284,7 +284,7 @@ fun App() {
 
 **ANALOG: NONE (greenfield) — convention sourced from RES §Pattern 5**
 
-#### `composeApp/src/commonMain/kotlin/com/carrecord/di/AppModule.kt`
+#### `shared/src/commonMain/kotlin/com/vehicare/di/AppModule.kt`
 
 ```kotlin
 // Source: Koin docs — Koin Compose ViewModel for KMP (RES lines 493–497)
@@ -307,12 +307,12 @@ val appModule = module {
 
 **ANALOG: NONE (greenfield) — convention sourced from RES §Pattern 2 / §Pattern 3 / §Code Examples**
 
-#### `composeApp/src/commonMain/sqldelight/com/carrecord/db/Vehicle.sq`
+#### `shared/src/commonMain/sqldelight/com/vehicare/db/Vehicle.sq`
 
 **Governing convention:** RES §Pattern 2 lines 391–412. Pragma lives in the `.sq` preamble so the generated `Schema.create()` emits it on **both** platforms (DAT-02, DAT-03, RES §Pitfall 5).
 
 ```sql
--- composeApp/src/commonMain/sqldelight/com/carrecord/db/Vehicle.sq  (executable preamble)
+-- shared/src/commonMain/sqldelight/com/vehicare/db/Vehicle.sq  (executable preamble)
 PRAGMA journal_mode=wal;
 
 CREATE TABLE vehicle (
@@ -348,11 +348,11 @@ lastInsertId: SELECT last_insert_rowid();            -- portable insert id (NO `
 | Only `name` NOT NULL | D-09 | Fast add; all else optional |
 | `lastInsertId: SELECT last_insert_rowid()` | DAT-01 (insert id) | Portable id retrieval; `insert` is a plain `INSERT` so `executeAsOne()` on it does not exist and `RETURNING` is unavailable at minSdk 26 |
 
-> **Location rule:** schema files MUST live in `composeApp/src/commonMain/sqldelight/<package>/`. A file under `src/main/sqldelight/` is **silently ignored** by the KMP tasks and the CI check passes vacuously (RES line 358, §Anti-Patterns line 557).
+> **Location rule:** schema files MUST live in `shared/src/commonMain/sqldelight/<package>/`. A file under `src/main/sqldelight/` is **silently ignored** by the KMP tasks and the CI check passes vacuously (RES line 358, §Anti-Patterns line 557).
 
-#### `composeApp/src/commonMain/sqldelight/databases/1.db`
+#### `shared/src/commonMain/sqldelight/databases/1.db`
 
-Generated by `./gradlew generateCommonMainCarRecordDatabaseSchema`, then **committed**. Never hand-edit — it is a build output (RES §Pattern 1 line 382, §Anti-Patterns line 561). `migrations/` stays **empty in Phase 1** (RES §Recommended Project Structure line 347).
+Generated by `./gradlew generateCommonMainVehiCareDatabaseSchema`, then **committed**. Never hand-edit — it is a build output (RES §Pattern 1 line 382, §Anti-Patterns line 561). `migrations/` stays **empty in Phase 1** (RES §Recommended Project Structure line 347).
 
 #### `data/db/DriverFactory.kt` (+ `.android.kt` / `.ios.kt`)
 
@@ -365,14 +365,14 @@ expect class DriverFactory { fun createDriver(): SqlDriver }
 // androidMain
 actual class DriverFactory(private val context: Context) {
     actual fun createDriver(): SqlDriver =
-        AndroidSqliteDriver(CarRecordDatabase.Schema, context, "carrecord.db")
+        AndroidSqliteDriver(VehiCareDatabase.Schema, context, "vehicare.db")
     // Note: no need to force WAL here if `PRAGMA journal_mode=wal;` is in the .sq preamble.
 }
 
 // iosMain
 actual class DriverFactory {
     actual fun createDriver(): SqlDriver =
-        NativeSqliteDriver(CarRecordDatabase.Schema, "carrecord.db")
+        NativeSqliteDriver(VehiCareDatabase.Schema, "vehicare.db")
     // touchlab SQLiter default for this driver is already JournalMode.WAL.
 }
 ```
@@ -386,7 +386,7 @@ actual class DriverFactory {
 ```kotlin
 // Source: kotlinx.coroutines docs — Dispatchers.IO.limitedParallelism(1) (RES lines 425–446)
 class VehicleRepositoryImpl(
-    private val db: CarRecordDatabase,
+    private val db: VehiCareDatabase,
     private val ioDispatcher: CoroutineDispatcher = Dispatchers.IO.limitedParallelism(1),
 ) : VehicleRepository {
 
@@ -436,7 +436,7 @@ Plain data class + enum, **zero SQLDelight imports** (STATE line 78; RES §Archi
 
 **ANALOG: NONE (greenfield) — convention sourced from RES §Pattern 4 + D-11**
 
-#### `composeApp/src/commonMain/kotlin/com/carrecord/util/PhotoStorage.kt`
+#### `shared/src/commonMain/kotlin/com/vehicare/util/PhotoStorage.kt`
 
 **Governing convention:** RES §Pattern 4 lines 458–478 (from FileKit docs). The photo's bytes never enter the DB — only the **relative path string** does (D-05).
 
@@ -474,8 +474,8 @@ object PhotoStorage {
 
 ```kotlin
 // Usage — RES lines 679–683
-import carrecord.composeapp.generated.resources.Res
-import carrecord.composeapp.generated.resources.add_vehicle
+import vehicare.composeapp.generated.resources.Res
+import vehicare.composeapp.generated.resources.add_vehicle
 import org.jetbrains.compose.resources.stringResource
 
 Text(text = stringResource(Res.string.add_vehicle))
@@ -504,7 +504,7 @@ val Slate    = Color(0xFF5C5C61) // secondary text + inactive icons
 val Hairline = Color(0xFFE4E4E7) // outlines / dividers
 val Danger   = Color(0xFFB3261E) // destructive only
 
-val CarRecordLightColors = lightColorScheme(
+val VehiCareLightColors = lightColorScheme(
     primary = Ink, onPrimary = Paper,
     secondary = Ink, onSecondary = Paper,
     background = Paper, onBackground = Ink,
@@ -514,7 +514,7 @@ val CarRecordLightColors = lightColorScheme(
 )
 ```
 
-**Binding rules:** light only, dynamic color disabled, `Icons.AutoMirrored.Filled.ArrowBack` (never the deprecated `Icons.Filled.ArrowBack`). Typography overrides M3 slots in one `CarRecordTypography` object — declared sizes are exactly {14, 16, 20, 24sp}, weights exactly {400, 500}; do not rely on M3 defaults (UISPEC §Typography line 143). The accent value **equals** the ink token because the real accent is user-deferred (D-21, UISPEC lines 171).
+**Binding rules:** light only, dynamic color disabled, `Icons.AutoMirrored.Filled.ArrowBack` (never the deprecated `Icons.Filled.ArrowBack`). Typography overrides M3 slots in one `VehiCareTypography` object — declared sizes are exactly {14, 16, 20, 24sp}, weights exactly {400, 500}; do not rely on M3 defaults (UISPEC §Typography line 143). The accent value **equals** the ink token because the real accent is user-deferred (D-21, UISPEC lines 171).
 
 #### `ui/navigation/Routes.kt`
 
@@ -612,7 +612,7 @@ DB stores `vehicles/<name>.jpg`; resolve `FileKit.filesDir` at read time; delete
 
 ### 5. Migration enforcement
 **Source:** DAT-04; RES §Pattern 1, §Pitfall 1.
-**Apply to:** `composeApp/build.gradle.kts`, `.github/workflows/ci.yml`.
+**Apply to:** `shared/build.gradle.kts`, `.github/workflows/ci.yml`.
 `schemaOutputDirectory` must be set; CI runs the per-source-set task **and** `git diff --exit-code` on the committed `1.db`.
 
 ### 6. Centralized strings
@@ -656,7 +656,7 @@ STATE §Key Decisions and ROADMAP §Architecture Notes lock **SQLDelight 2.3.2 +
 JDK 25/26 only (Gradle 8.14 needs ≤24) and Xcode 27.0 (Kotlin 2.2.20 supports ≤16.4). RES lines 795–797: *"not fixable inside the repository."* Requires user-approved installs **or** adopting the current wizard-default stack (Kotlin 2.4.x / AGP 9.x / CMP 1.12.x / SQLDelight 2.4.1 / Koin 4.2.2 — RES §Summary line 17).
 
 ### Conflict 3 — Task naming
-ROADMAP line 90 says `generateMainCarRecordSchema`; the KMP-correct name is `generateCommonMainCarRecordDatabaseSchema` (RES line 358). `verifySqlDelightMigration` (aggregate) passes vacuously — CI must use `verifyCommonMainCarRecordDatabaseMigration` + the `git diff` guard (RES §Pitfall 1).
+ROADMAP line 90 says `generateMainVehiCareSchema`; the KMP-correct name is `generateCommonMainVehiCareDatabaseSchema` (RES line 358). `verifySqlDelightMigration` (aggregate) passes vacuously — CI must use `verifyCommonMainVehiCareDatabaseMigration` + the `git diff` guard (RES §Pitfall 1).
 
 ### Conflict 4 — `generateAsync` (STATE Open Question 5)
 STATE line 88 lists this as unresolved. RES §Pitfall 6 lines 595–599 resolves it: set `generateAsync.set(false)` in Phase 1.

@@ -1,4 +1,4 @@
-# Research Summary: CarRecord
+# Research Summary: VehiCare
 
 **Synthesized:** 2026-10-18  
 **Sources:** STACK.md · FEATURES.md · ARCHITECTURE.md · PITFALLS.md · PROJECT.md  
@@ -46,7 +46,7 @@ Must ship in v1 or users leave / the app feels incomplete:
 ### Module Structure
 
 ```
-CarRecord/
+VehiCare/
 ├── shared/commonMain/        ← ~95% of all code
 │   ├── ui/                   Compose screens + components
 │   ├── viewmodel/            ViewModels (androidx.lifecycle KMP)
@@ -98,7 +98,7 @@ Design `NotificationScheduler` with `scheduleTimeBased()` + `triggerImmediateIfO
 
 5. **Enable SQLite WAL mode from Day 1.** `PRAGMA journal_mode=WAL;` on the iOS driver prevents database corruption from background process kills (iOS `0x8badf00d` SIGKILL). This is a one-line setup with a critical safety guarantee for a local-first app with no backup.
 
-6. **Set up SQLDelight migration verification in CI before the first release commit.** Run `generateMainCarRecordSchema` to produce `1.db` snapshot; add `verifySqlDelightMigration` to CI. Every schema change in subsequent phases requires a corresponding `.sqm` file — no exceptions.
+6. **Set up SQLDelight migration verification in CI before the first release commit.** Run `generateMainVehiCareSchema` to produce `1.db` snapshot; add `verifySqlDelightMigration` to CI. Every schema change in subsequent phases requires a corresponding `.sqm` file — no exceptions.
 
 7. **Request notification permission only when the user creates their first reminder, not on app launch.** iOS one-time permission prompt denied early = reminders never work. Always show an explanation screen before triggering `requestAuthorization()`.
 

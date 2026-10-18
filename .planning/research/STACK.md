@@ -1,6 +1,6 @@
-# Stack Research: CarRecord (KMP)
+# Stack Research: VehiCare (KMP)
 
-**Project:** CarRecord — car service record tracker (iOS + Android)  
+**Project:** VehiCare — car service record tracker (iOS + Android)  
 **Researched:** 2026-10-18  
 **Overall Confidence:** HIGH (sourced from official JetBrains docs, Context7, and verified community consensus)
 
@@ -38,7 +38,7 @@
 
 **Minimum Kotlin version:** 2.1.0+ (required by the K2 compiler migration in CMP 1.8). Use 2.2.20 for best iOS/web support.
 
-**Material 3 design system** (`compose.material3`) is the right choice for CarRecord's clean, minimal aesthetic. Material You color system gives you light theme defaults without heavy configuration.
+**Material 3 design system** (`compose.material3`) is the right choice for VehiCare's clean, minimal aesthetic. Material You color system gives you light theme defaults without heavy configuration.
 
 ```toml
 # gradle/libs.versions.toml
@@ -88,8 +88,8 @@ plugins {
 
 sqldelight {
     databases {
-        register("CarRecordDatabase") {
-            packageName.set("com.carrecord.db")
+        register("VehiCareDatabase") {
+            packageName.set("com.vehicare.db")
             generateAsync.set(true) // enables suspend functions
         }
     }
@@ -132,13 +132,13 @@ expect class DriverFactory {
 // androidMain
 actual class DriverFactory(private val context: Context) {
     actual fun createDriver(): SqlDriver =
-        AndroidSqliteDriver(CarRecordDatabase.Schema, context, "carrecord.db")
+        AndroidSqliteDriver(VehiCareDatabase.Schema, context, "vehicare.db")
 }
 
 // iosMain
 actual class DriverFactory {
     actual fun createDriver(): SqlDriver =
-        NativeSqliteDriver(CarRecordDatabase.Schema, "carrecord.db")
+        NativeSqliteDriver(VehiCareDatabase.Schema, "vehicare.db")
 }
 ```
 
@@ -184,7 +184,7 @@ expect val platformNotificationModule: Module // Koin module
 - Push (future): APNs token registration from `AppDelegate` (Swift)
 - Minimal Swift: only `AppDelegate` needs to register `UNUserNotificationCenterDelegate`
 
-**For v1 (local-only reminders):** No push infrastructure needed. CarRecord's reminders are mileage-based and time-based — WorkManager (Android) and UNUserNotificationCenter (iOS) cover this completely.
+**For v1 (local-only reminders):** No push infrastructure needed. VehiCare's reminders are mileage-based and time-based — WorkManager (Android) and UNUserNotificationCenter (iOS) cover this completely.
 
 **For future push:** Use OneSignal or Firebase. **Do NOT add Firebase to `commonMain`** — Firebase has no official KMP support. Add it only to `androidMain` via an interface injected through Koin.
 
@@ -264,7 +264,7 @@ fun VehicleListScreen(vm: VehicleListViewModel = koinViewModel()) { ... }
 | Decompose | Stable | Lifecycle-aware, component model | Higher boilerplate, steeper curve, over-engineered for this app size |
 | Navigation 3 | Alpha (JetBrains 1.1.1) | Future of CMP navigation | Alpha — not production-ready yet |
 
-**Why Navigation Compose wins for CarRecord:** It's the standard going forward (JetBrains confirmed Nav 3 is the roadmap, Nav 2 gets stability work in the meantime). For a small-to-medium app, the NavHost + typed routes pattern is simple enough and well-documented.
+**Why Navigation Compose wins for VehiCare:** It's the standard going forward (JetBrains confirmed Nav 3 is the roadmap, Nav 2 gets stability work in the meantime). For a small-to-medium app, the NavHost + typed routes pattern is simple enough and well-documented.
 
 **Setup:**
 
@@ -302,7 +302,7 @@ implementation("org.jetbrains.androidx.navigation:navigation-compose:2.9.0")
 Use the official **KMP Wizard** at [kmp.jetbrains.com](https://kmp.jetbrains.com) to bootstrap. Select Android + iOS, Compose Multiplatform UI. This gives you:
 - Version catalog (`gradle/libs.versions.toml`)
 - Correct plugin setup
-- `composeApp/` shared module + `androidApp/` + `iosApp/` structure
+- `shared/` shared module + `androidApp/` + `iosApp/` structure
 
 ### Gradle Version Catalog
 
@@ -398,7 +398,7 @@ Android Studio (Ladybug 2024.2.1+ or newer) with the Kotlin Multiplatform plugin
 
 4. **AGP 9.x migration:** AGP 9.0+ requires the new `com.android.kotlin.multiplatform.library` plugin instead of `com.android.library` for shared KMP modules. The Wizard output at kmp.jetbrains.com generates the right setup for the chosen AGP version. If you stay on AGP 8.10.x, the existing setup is fine for v1.
 
-5. **Navigation 3 readiness:** JetBrains confirmed official CMP support for Navigation 3 in CMP 1.10 (the "Upcoming" section from KotlinConf 2025 slides). By the time CarRecord reaches a second major version, Nav 3 may be the better choice. Designing routes as sealed interfaces now will make migration straightforward.
+5. **Navigation 3 readiness:** JetBrains confirmed official CMP support for Navigation 3 in CMP 1.10 (the "Upcoming" section from KotlinConf 2025 slides). By the time VehiCare reaches a second major version, Nav 3 may be the better choice. Designing routes as sealed interfaces now will make migration straightforward.
 
 ---
 

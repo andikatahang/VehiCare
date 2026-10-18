@@ -88,7 +88,7 @@ No external specs/ADRs exist — requirements are fully captured above and in th
 - Bootstrap via kmp.jetbrains.com for correct Gradle version catalog and source set wiring
 - DB concurrency pattern: all writes serialized on `Dispatchers.IO.limitedParallelism(1)` to avoid iOS SIGABRT from concurrent NativeSqliteDriver access
 - WAL mode: `PRAGMA journal_mode=WAL;` on the iOS NativeSqliteDriver from first launch
-- Migration CI: run `generateMainCarRecordSchema` before first release commit; `verifySqlDelightMigration` blocks schema changes without a `.sqm` migration
+- Migration CI: run `generateMainVehiCareSchema` before first release commit; `verifySqlDelightMigration` blocks schema changes without a `.sqm` migration
 
 ### Integration Points
 - Vehicle Repository → SQLDelight database (schema generated from `.sq` files); UI composables consume domain models via Koin-injected ViewModels, never the DB directly

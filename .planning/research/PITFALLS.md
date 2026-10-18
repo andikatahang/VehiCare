@@ -67,7 +67,7 @@ Mistakes that cause app crashes, data loss, or rewrites.
 **Prevention:**
 1. Use `kotlinx.datetime` (not `java.time`) for all date/time in `commonMain`
 2. Use `kotlinx.coroutines` for all async — it is fully KMP-compatible
-3. For the CarRecord app: keep notification scheduling logic (which reminder is due?) in `commonMain`; keep platform delivery (`UNUserNotificationCenter` vs `NotificationManager`) in `iosMain`/`androidMain` via a lean `expect class NotificationScheduler`
+3. For the VehiCare app: keep notification scheduling logic (which reminder is due?) in `commonMain`; keep platform delivery (`UNUserNotificationCenter` vs `NotificationManager`) in `iosMain`/`androidMain` via a lean `expect class NotificationScheduler`
 4. Check `klibs.io` before building any utility — most common needs have KMP-ready libraries
 5. Reserve `expect/actual` for genuine platform divergence (permissions UI, file paths, notification APIs, context objects)
 
@@ -85,7 +85,7 @@ Mistakes that cause app crashes, data loss, or rewrites.
 - `generateSqlDelightSchema` has never been run
 
 **Prevention:**
-1. Set `schemaOutputDirectory` in `build.gradle.kts` from Day 1 and run `generateMainCarRecordSchema` before the first release — this creates `1.db` used by `verifySqlDelightMigration`
+1. Set `schemaOutputDirectory` in `build.gradle.kts` from Day 1 and run `generateMainVehiCareSchema` before the first release — this creates `1.db` used by `verifySqlDelightMigration`
 2. Every schema change = a new `<version>.sqm` migration file — no exceptions
 3. Add `verifySqlDelightMigration` to CI to catch missing migrations before they reach users
 4. Never use `destructiveMigration` in production (drops all user data)

@@ -1,4 +1,4 @@
-# Walking Skeleton — CarRecord
+# Walking Skeleton — VehiCare
 
 **Phase:** 1
 **Generated:** 2026-10-18
@@ -14,7 +14,7 @@ This is the thinnest slice that exercises the whole stack: Compose Multiplatform
 
 | Decision | Choice | Rationale |
 |---|---|---|
-| Framework | Kotlin Multiplatform + Compose Multiplatform (Material 3), single `composeApp` module | One shared UI for Android and iOS; D-17 forbids platform-specific UI duplication, and CMP's iOS target is stable at the selected version. |
+| Framework | Kotlin Multiplatform + Compose Multiplatform (Material 3), single `shared` module | One shared UI for Android and iOS; D-17 forbids platform-specific UI duplication, and CMP's iOS target is stable at the selected version. |
 | Build | Gradle Kotlin DSL with a single `gradle/libs.versions.toml` version catalog; `androidTarget` (AGP 8.x path) | Kotlin 2.2.20 requires the AGP 8.x + `androidTarget` configuration; the catalog is the one place versions are pinned, so the aligned-down stack cannot drift. Exact versions are resolved at the plan 01-01 Wave 0 gate. |
 | Data layer | SQLDelight (`.sq` schema + committed `databases/1.db` baseline + `migrations/`) with `AndroidSqliteDriver` / `NativeSqliteDriver` behind an `expect`/`actual` driver factory | Compile-time-verified SQL and build-time migration verification are what make DAT-04 enforceable; hand-written `ALTER TABLE` migrations drift silently. |
 | Journal mode | `PRAGMA journal_mode=wal;` declared in the `.sq` preamble | Emitted by generated `Schema.create()` on both platforms from first launch, so WAL is active without any platform-specific `onConfigure` — the failure mode that never runs on one of the two platforms. |

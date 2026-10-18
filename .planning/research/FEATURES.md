@@ -21,7 +21,7 @@ Features users expect. Missing = product feels incomplete or users leave.
 | Preset service types | Oil change, tire rotation, brake inspection — users expect these out of box | Low | Reduces friction for new entries; custom types add flexibility |
 | Custom service types | Power users have vehicle-specific needs (e.g., timing belt, differential fluid) | Low | Freeform label + icon |
 | Odometer tracking | Mileage-based reminders require knowing current mileage | Low | Entry on service log; optionally update separately |
-| Works fully offline | Core use-case: logging at a shop with no signal | Low | Local DB (SQLDelight per PROJECT.md) — non-negotiable for CarRecord |
+| Works fully offline | Core use-case: logging at a shop with no signal | Low | Local DB (SQLDelight per PROJECT.md) — non-negotiable for VehiCare |
 | Search/filter history | Users look up specific past services across multiple cars | Low | Filter by type, date range |
 | Vehicle identification fields | Year, make, model, license plate, color, nickname | Low | VIN optional; nickname helps distinguish "my truck" vs "wife's car" |
 
@@ -29,7 +29,7 @@ Features users expect. Missing = product feels incomplete or users leave.
 
 ## Differentiators
 
-Features that set CarRecord apart. Not expected, but meaningfully valued.
+Features that set VehiCare apart. Not expected, but meaningfully valued.
 
 | Feature | Value Proposition | Complexity | Notes |
 |---------|-------------------|------------|-------|
@@ -122,7 +122,7 @@ Features to deliberately NOT build in v1. Based on competitor bloat analysis and
 
 ### The Pit Log
 - Strong: enthusiast-focused, parts cabinet, iCloud optional, no subscriptions, no ads, no accounts
-- Weak: iOS-only, mod/build tracking (out of scope for CarRecord)
+- Weak: iOS-only, mod/build tracking (out of scope for VehiCare)
 - Lesson: "your garage, your data" positioning works — it's what enthusiast users want
 
 ### Common Failure Modes Across Competitors

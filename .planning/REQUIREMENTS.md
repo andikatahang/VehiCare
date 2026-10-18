@@ -1,4 +1,4 @@
-# Requirements: CarRecord
+# Requirements: VehiCare
 
 **Defined:** 2026-10-18
 **Core Value:** Every vehicle's full service history and upcoming reminders, always accessible offline, in a clean and minimal interface.
