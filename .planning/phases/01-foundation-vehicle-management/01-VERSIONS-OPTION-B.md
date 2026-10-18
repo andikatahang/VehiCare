@@ -1,9 +1,19 @@
 # 01 — VERSIONS (Option B: current-generation stack)
 
+> ## ⚠️ SUPERSEDED — DO NOT USE THE PINS BELOW
+>
+> The user exercised the `option-b` gate, then **overrode the version pins in this file** with an explicit instruction: adopt the version set that already ships with the user-supplied Android Studio KMP project at `~/Proyek Aplikasi/VehiCare`, and keep it rather than re-pinning.
+>
+> Four pins therefore differ from this document: **Kotlin 2.4.20** (not 2.4.21), **AGP 9.1.1** (not 9.3.1), **Compose Multiplatform 1.12.1** (not 1.12.2), and **material3 1.12.0-alpha03** (not 1.9.0). Everything else here is in force. `compileSdk`/`targetSdk` 37, `minSdk` 26 and iOS 16.0 are unchanged.
+>
+> **The authoritative source of truth is now `gradle/libs.versions.toml`, plus the "Version set actually in use" table in `01-01-SUMMARY.md`.** Every pin in the adopted set is backed by an executed build (`:androidApp:assembleDebug` and `:shared:compileKotlinIosSimulatorArm64` both passed on 2026-10-18), which is stronger evidence than this file's research-based claims.
+>
+> This file is retained unchanged below as research evidence. Its `## Unresolved` risks remain useful context.
+
 **Phase:** 01-foundation-vehicle-management
 **Generated:** 2026-10-18
 **Purpose:** the single, verified version contract for plan **01-01** (Wave 0 build gate). Every pin below was re-verified on 2026-10-18 against live repository metadata, published artifacts, or official documentation — nothing is carried over from `01-RESEARCH.md`'s aligned-down set or from a wizard default.
-**Writer rule:** use exactly these versions. Do not "nearest-match", do not relax a pin, and do not add a dependency whose version is not sourced from this document. If something forces a change, republish this file.
+**Writer rule:** ~~use exactly these versions. Do not "nearest-match", do not relax a pin, and do not add a dependency whose version is not sourced from this document. If something forces a change, republish this file.~~ **Superseded — see the notice above.**
 
 ---
 
@@ -109,7 +119,7 @@ Catalog rules:
 
 ---
 
-## 3. Module skeleton — Q1 answer + `composeApp/build.gradle.kts`
+## 3. Module skeleton — Q1 answer + `shared/build.gradle.kts`
 
 ### Q1 — which plugin applies the Android target in the KMP module
 
@@ -119,13 +129,13 @@ Module map (mandatory split):
 
 | Module | Plugins (from catalog) | Role |
 |---|---|---|
-| `:composeApp` | `kotlinMultiplatform`, `androidLibrary`, `composeMultiplatform`, `composeCompiler`, `kotlinSerialization`, `sqldelight` | All shared code, UI, navigation, DB, drivers; Android **library** target via `androidLibrary {}`; iOS static framework `ComposeApp` |
-| `:androidApp` | `androidApplication`, `composeCompiler` only | `MainActivity`, manifest, launcher resources, `applicationId = "com.carrecord"` |
-| `iosApp/` (Xcode) | — | Unchanged consumer of the `ComposeApp` framework via `embedAndSignAppleFrameworkForXcode` |
+| `:shared` | `kotlinMultiplatform`, `androidLibrary`, `composeMultiplatform`, `composeCompiler`, `kotlinSerialization`, `sqldelight` | All shared code, UI, navigation, DB, drivers; Android **library** target via `androidLibrary {}`; iOS static framework `Shared` |
+| `:androidApp` | `androidApplication`, `composeCompiler` only | `MainActivity`, manifest, launcher resources, `applicationId = "com.vehicare"` |
+| `iosApp/` (Xcode) | — | Unchanged consumer of the `Shared` framework via `embedAndSignAppleFrameworkForXcode` |
 
-`settings.gradle.kts` must `include(":composeApp", ":androidApp")`. `gradle.properties` must contain `android.useAndroidX=true` and `android.nonTransitiveRClass=true` (official-template parity; AGP 9 requires the AndroidX mode). Recommended: `org.gradle.jvmargs=-Xmx4096M -Dfile.encoding=UTF-8`, `kotlin.daemon.jvmargs=-Xmx3072M`, `org.gradle.caching=true`. Pin the wrapper with `./gradlew wrapper --gradle-version 9.5.1` (already in the local wrapper cache).
+`settings.gradle.kts` must `include(":shared", ":androidApp")`. `gradle.properties` must contain `android.useAndroidX=true` and `android.nonTransitiveRClass=true` (official-template parity; AGP 9 requires the AndroidX mode). Recommended: `org.gradle.jvmargs=-Xmx4096M -Dfile.encoding=UTF-8`, `kotlin.daemon.jvmargs=-Xmx3072M`, `org.gradle.caching=true`. Pin the wrapper with `./gradlew wrapper --gradle-version 9.5.1` (already in the local wrapper cache).
 
-### `composeApp/build.gradle.kts` (complete)
+### `shared/build.gradle.kts` (complete)
 
 ```kotlin
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
@@ -141,7 +151,7 @@ plugins {
 
 kotlin {
     androidLibrary {
-        namespace = "com.carrecord.shared"
+        namespace = "com.vehicare.shared"
         // Q3: block form is the only way to express the minor API level here —
         // KotlinMultiplatformAndroidLibraryExtension has no `compileSdkMinor` property.
         compileSdk {
@@ -164,7 +174,7 @@ kotlin {
         iosSimulatorArm64(),
     ).forEach { iosTarget ->
         iosTarget.binaries.framework {
-            baseName = "ComposeApp"
+            baseName = "Shared"
             isStatic = true
         }
     }
@@ -206,8 +216,8 @@ kotlin {
 
 sqldelight {
     databases {
-        create("CarRecordDatabase") {
-            packageName.set("com.carrecord.db")
+        create("VehiCareDatabase") {
+            packageName.set("com.vehicare.db")
             schemaOutputDirectory.set(file("src/commonMain/sqldelight/databases"))
             generateAsync.set(false)
         }
@@ -231,7 +241,7 @@ plugins {
 }
 
 android {
-    namespace = "com.carrecord"
+    namespace = "com.vehicare"
     compileSdk {
         version = release(libs.versions.android.compileSdk.get().toInt()) {
             minorApiLevel = 0
@@ -239,7 +249,7 @@ android {
     }
 
     defaultConfig {
-        applicationId = "com.carrecord"
+        applicationId = "com.vehicare"
         minSdk = libs.versions.android.minSdk.get().toInt()
         targetSdk = libs.versions.android.targetSdk.get().toInt()
         versionCode = 1
@@ -268,7 +278,7 @@ kotlin {
 }
 
 dependencies {
-    implementation(project(":composeApp"))
+    implementation(project(":shared"))
     implementation(libs.androidx.activity.compose)
     implementation(libs.compose.uiToolingPreview)
 }
@@ -276,18 +286,18 @@ dependencies {
 
 Not in the build files but part of the split (file-path changes, see §7):
 
-- `MainActivity` lives at `androidApp/src/main/kotlin/com/carrecord/MainActivity.kt` (package `com.carrecord`).
+- `MainActivity` lives at `androidApp/src/main/kotlin/com/vehicare/MainActivity.kt` (package `com.vehicare`).
 - Manifest + launcher resources live under `androidApp/src/main/` (`AndroidManifest.xml`, `res/mipmap-anydpi-v26/ic_launcher.xml`, `res/drawable/ic_launcher_foreground.xml`, `res/values/ic_launcher_background.xml`) — same content as the old plan specified, new location.
-- The `:composeApp` module needs no Android manifest.
+- The `:shared` module needs no Android manifest.
 
 ---
 
 ## 4. Q2 — SQLDelight migration task names (verified for 2.4.1)
 
-Per-source-set task names are **unchanged by the version bump and by the module split** because the database lives in `commonMain` of `:composeApp`:
+Per-source-set task names are **unchanged by the version bump and by the module split** because the database lives in `commonMain` of `:shared`:
 
-- `./gradlew :composeApp:generateCommonMainCarRecordDatabaseSchema` → writes the schema snapshot into `schemaOutputDirectory` (`composeApp/src/commonMain/sqldelight/databases/`).
-- `./gradlew :composeApp:verifyCommonMainCarRecordDatabaseMigration` → replays `.sqm` migrations against the snapshot.
+- `./gradlew :shared:generateCommonMainVehiCareDatabaseSchema` → writes the schema snapshot into `schemaOutputDirectory` (`shared/src/commonMain/sqldelight/databases/`).
+- `./gradlew :shared:verifyCommonMainVehiCareDatabaseMigration` → replays `.sqm` migrations against the snapshot.
 
 Both are registered by `SqlDelightDatabase.kt` in 2.4.1 (source-verified). The aggregate `verifySqlDelightMigration` task is **not** a substitute (it is registered unconditionally and passes vacuously; the `git diff --exit-code` guard on the schema snapshot remains load-bearing). One 2.4.x risk to watch: "Implement stricter MigrationFile versioning (#5730)" (see Unresolved #3).
 
@@ -335,16 +345,16 @@ and fix by bumping/removing the offending library — never by adding `resolutio
 ## 7. Deltas vs old plans (`01-RESEARCH.md`, `SKELETON.md`, `01-01…01-10-PLAN.md`)
 
 1. **Whole version generation replaced.** Kotlin 2.2.20 / AGP 8.11.1 / CMP 1.8.2 / Gradle 8.14.6 / SQLDelight 2.2.1 / Koin 4.1.1 / nav 2.9.0 / lifecycle 2.9.4 / coroutines 1.10.2 / serialization 1.7.3 / FileKit 0.11.0 / Coil 3.3.0 / SDK 36 → **Kotlin 2.4.21 / AGP 9.3.1 / CMP 1.12.2 / Gradle 9.5.1 / SQLDelight 2.4.1 / Koin 4.2.2 / nav 2.9.2 / lifecycle 2.11.0 / coroutines 1.11.0 / serialization 1.11.0 / FileKit 0.16.0 / Coil 3.6.3 / SDK 37.0**. The old set's JDK 21 + Xcode 16.4 install requirements are dropped (Gradle 9.5.1 runs on the installed JDK 25/26); Xcode 27 remains a watch item (Unresolved #1).
-2. **Module layout: single `:composeApp` → `:composeApp` (KMP library) + `:androidApp` (application).** Forced by AGP 9 (no `androidTarget()`, no KMP+`com.android.application` co-existence). Gradle task paths move: `:composeApp:assembleDebug` → `:androidApp:assembleDebug`; `:composeApp:installDebug` → `:androidApp:installDebug`; `:composeApp:testDebugUnitTest` → `:androidApp:testDebugUnitTest`. Unchanged: `:composeApp:compileKotlinIosSimulatorArm64`, `:composeApp:linkDebugFrameworkIosSimulatorArm64`, `:composeApp:iosSimulatorArm64Test`, and both SQLDelight tasks (still on `:composeApp`).
+2. **Module layout: single `:shared` → `:shared` (KMP library) + `:androidApp` (application).** Forced by AGP 9 (no `androidTarget()`, no KMP+`com.android.application` co-existence). Gradle task paths move: `:shared:assembleDebug` → `:androidApp:assembleDebug`; `:shared:installDebug` → `:androidApp:installDebug`; `:shared:testDebugUnitTest` → `:androidApp:testDebugUnitTest`. Unchanged: `:shared:compileKotlinIosSimulatorArm64`, `:shared:linkDebugFrameworkIosSimulatorArm64`, `:shared:iosSimulatorArm64Test`, and both SQLDelight tasks (still on `:shared`).
 3. **Android DSL:** `androidTarget { }` + `com.android.application` → `kotlin { androidLibrary { } }` via `com.android.kotlin.multiplatform.library`; app module uses built-in Kotlin (no `org.jetbrains.kotlin.android`). The `android.newDsl=false` escape hatch exists but is deprecated and removed in AGP 10 — not used.
-4. **Android file moves:** `composeApp/src/androidMain/AndroidManifest.xml`, `MainActivity`, and launcher resources → `androidApp/src/main/…`; library namespace `com.carrecord.shared`, app namespace + applicationId `com.carrecord`.
+4. **Android file moves:** `shared/src/androidMain/AndroidManifest.xml`, `MainActivity`, and launcher resources → `androidApp/src/main/…`; library namespace `com.vehicare.shared`, app namespace + applicationId `com.vehicare`.
 5. **SDK levels:** compileSdk/targetSdk 36 → **37** with the block DSL (`release(37) { minorApiLevel = 0 }`); minSdk stays 26. Reason: only `android-37.0` is installed; the block form is required on the KMP extension.
 6. **Gradle wrapper:** 8.14.6 → **9.5.1** (AGP 9.3 needs ≥ 9.5.0; KGP 2.4.21 supports ≤ 9.7.0; 9.5.1 is already cached locally; Gradle 9.8.1 is outside the verified range).
 7. **Compose accessors → explicit catalog coordinates.** CMP 1.12.2 deprecates **all** `compose.*` DSL accessors ("Specify dependency directly") and `compose.materialIconsCore` no longer exists; the contract uses catalog aliases (`compose-runtime`, `compose-foundation`, `compose-ui`, `compose-material3`, `compose-components-resources`, `compose-uiTooling(+Preview)`) exactly like the official KMP-App-Template.
 8. **material3 pinned explicitly to 1.9.0** (plugin-embedded stable pairing; newest line 1.12.0-alpha03 is an alpha — Unresolved #4).
 9. **Koin BOM dropped**; `koin-core` / `koin-compose` / `koin-compose-viewmodel` are direct `version.ref` pins at 4.2.2.
 10. **New direct deps consume the required slots:** `kotlinx-coroutines-core` (1.11.0 — the serialized-IO lane and `Dispatchers` use) and `kotlinx-serialization-json` (1.11.0 — `@Serializable` nav routes).
-11. **Single Compose stack check moves** to `:androidApp:dependencies --configuration debugRuntimeClasspath` (§6); the old `:composeApp:dependencies --configuration commonMainImplementation` form only proves declared deps and no longer front-runs the runtime classpath.
+11. **Single Compose stack check moves** to `:androidApp:dependencies --configuration debugRuntimeClasspath` (§6); the old `:shared:dependencies --configuration commonMainImplementation` form only proves declared deps and no longer front-runs the runtime classpath.
 12. **First iOS build downloads Kotlin/Native prebuilt 2.4.21** (the local konan cache has 2.4.20 only). Expected, not a failure — do not "fix" it by downgrading Kotlin.
 
 ---
@@ -368,15 +378,15 @@ All fetched/verified 2026-10-18. Repository metadata (existence + newest version
 - https://developer.android.com/reference/tools/gradle-api/9.3/com/android/build/api/dsl/CompileSdkSpec — `version = release(33) { minorApiLevel = 1 }` block syntax
 - https://developer.android.com/reference/tools/gradle-api/9.3/com/android/build/api/dsl/ApplicationDefaultConfig — `targetSdk` property + `targetSdk {}` block (AGP 9.3)
 - https://github.com/Kotlin/KMP-App-Template — `shared/build.gradle.kts`, `androidApp/build.gradle.kts`, `gradle/libs.versions.toml`, `settings.gradle.kts`, `gradle.properties` (blessed split-module pattern on AGP 9)
-- https://github.com/sqldelight/sqldelight/blob/2.4.1/gradle-plugin/src/main/kotlin/app/cash/sqldelight/gradle/SqlDelightDatabase.kt — per-source-set task registration (`generateCommonMainCarRecordDatabaseSchema`, `verifyCommonMainCarRecordDatabaseMigration`)
+- https://github.com/sqldelight/sqldelight/blob/2.4.1/gradle-plugin/src/main/kotlin/app/cash/sqldelight/gradle/SqlDelightDatabase.kt — per-source-set task registration (`generateCommonMainVehiCareDatabaseSchema`, `verifyCommonMainVehiCareDatabaseMigration`)
 - https://sqldelight.github.io/sqldelight/2.4.1/ — migrations workflows (`<version>.sqm` naming, `schemaOutputDirectory`, `verifySqlDelightMigration` runs as part of `check`)
 
 Local machine checks (read-only, 2026-10-18): `~/Library/Android/sdk/platforms` = `android-36.1`, `android-37.0`; build-tools 36.0.0/36.1.0/37.0.0; `~/.gradle/wrapper/dists` contains 9.1.0, 9.2.0, 9.3.0, 9.5.0, **9.5.1**; JDK 25.0.4 + 26.0.1 installed; `~/.konan/kotlin-native-prebuilt-macos-aarch64-2.4.20` cached (2.4.21 will download).
 
 ## Unresolved
 
-1. **Xcode 27.0 ↔ Kotlin 2.4.21.** This machine has only Xcode 27.0; the JetBrains compatibility table was verified only through the Xcode 26 line. Proof/failure will come from the first `:composeApp:linkDebugFrameworkIosSimulatorArm64` run; a Kotlin bump or a side-by-side Xcode would be the fix.
+1. **Xcode 27.0 ↔ Kotlin 2.4.21.** This machine has only Xcode 27.0; the JetBrains compatibility table was verified only through the Xcode 26 line. Proof/failure will come from the first `:shared:linkDebugFrameworkIosSimulatorArm64` run; a Kotlin bump or a side-by-side Xcode would be the fix.
 2. **AGP patch pick: 9.3.1 vs 9.3.2/9.3.3.** The newer 9.3.x patches exist on Google Maven, but the KGP-verified table stops at 9.3.1 and CMP 1.12.2's CI matrix only tests AGP ≤ 9.2.0. Pinned the last patch inside the verified window; bump only after a fully green build.
-3. **SQLDelight 2.4.x stricter MigrationFile versioning (#5730).** The exact `.sq`/`.sqm` validation semantics introduced in 2.4.0 were not confirmable from release notes alone. Proof: the first authored `.sqm` + `verifyCommonMainCarRecordDatabaseMigration` run in plan 01-03/01-05.
+3. **SQLDelight 2.4.x stricter MigrationFile versioning (#5730).** The exact `.sq`/`.sqm` validation semantics introduced in 2.4.0 were not confirmable from release notes alone. Proof: the first authored `.sqm` + `verifyCommonMainVehiCareDatabaseMigration` run in plan 01-03/01-05.
 4. **material3 1.9.0 vs 1.12.0-alpha03.** Stable 1.9.0 is the plugin-embedded default and the pin; the CMP 1.12.2 release notes advertise the 1.12.0-alpha03 line. Revisit only when a stable material3 for the 1.12 line ships.
 5. **Bare `compileSdk = 37` (without `minorApiLevel`) hash resolution is undocumented** for the KMP `androidLibrary` extension (it has no `compileSdkMinor` property). The contract mandates the block form everywhere; re-verify if anyone later switches to the property form.
