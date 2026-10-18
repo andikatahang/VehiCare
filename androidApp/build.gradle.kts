@@ -13,6 +13,10 @@ kotlin {
 dependencies {
     implementation(project(":shared"))
 
+    // The shared `App(platformModule: Module)` signature exposes `org.koin.core.module.Module`,
+    // so the type must be resolvable on the app classpath too (same catalog version as :shared).
+    implementation(libs.koin.core)
+
     implementation(libs.androidx.activity.compose)
 
     implementation(libs.compose.uiToolingPreview)
