@@ -1,0 +1,86 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+
+# Least privilege: CI only needs to read the repository. This project has no remote
+# services and no secrets; every step below runs without credentials (T-01-32).
+permissions:
+  contents: read
+
+jobs:
+  migration-guard:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK (Temurin 21)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      # The per-source-set task is what enforces DAT-04. Never substitute the aggregate
+      # verification task here: it is registered unconditionally and passes vacuously on a
+      # repo with no migrations (RESEARCH Pitfall 1).
+      - name: Verify SQLDelight migrations (per-source-set task)
+        run: ./gradlew verifyCommonMainVehiCareDatabaseMigration
+
+      # Second (load-bearing) guard: a table changed but no `.sqm` was authored makes the
+      # regenerated schema baseline differ from the committed `1.db`, and this diff fails.
+      - name: Fail if schema changed without a migration
+        run: |
+          ./gradlew generateCommonMainVehiCareDatabaseSchema
+          git diff --exit-code -- shared/src/commonMain/sqldelight/databases
+
+  android:
+    runs-on: ubuntu-latest
+    needs: migration-guard
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK (Temurin 21)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Build the Android application
+        run: ./gradlew :androidApp:assembleDebug
+
+      - name: Run shared Android host tests
+        run: ./gradlew :shared:testAndroidHostTest
+
+  ios:
+    runs-on: macos-latest
+    needs: migration-guard
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up JDK (Temurin 21)
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select --switch /Applications/Xcode.app
+
+      - name: Link the shared framework for iOS
+        run: ./gradlew :shared:linkDebugFrameworkIosSimulatorArm64
+
+      - name: Run shared iOS simulator tests
+        run: ./gradlew :shared:iosSimulatorArm64Test
