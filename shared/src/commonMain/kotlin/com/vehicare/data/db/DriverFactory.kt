@@ -8,9 +8,10 @@ import app.cash.sqldelight.db.SqlDriver
  * This is the only genuinely platform-divergent piece of the data layer: the Android driver
  * needs an application `Context`, the iOS driver resolves the app container itself.
  *
- * No `journal_mode` configuration lives on this seam — WAL is declared in the `Vehicle.sq`
- * preamble so the generated schema emits the pragma identically on every driver, instead of
- * letting the criterion become platform-dependent.
+ * WAL is established on the first connection, per platform — it cannot be a `PRAGMA` line in
+ * the `.sq` preamble: the generated `Schema.create()` replays such statements through the
+ * driver's non-query path, which rejects row-returning statements, and `journal_mode=wal`
+ * returns a row.
  */
 @Suppress("EXPECT_ACTUAL_CLASSIFIERS_ARE_IN_BETA_WARNING")
 expect class DriverFactory {

@@ -1,4 +1,7 @@
-PRAGMA journal_mode=wal;
+-- WAL is deliberately NOT set in this file: every unlabeled statement here is replayed inside
+-- the generated Schema.create() through driver.execute(), and `PRAGMA journal_mode=wal` returns
+-- a row — which the SQLiter non-query path rejects, aborting the first launch on iOS. The driver
+-- factories establish WAL on the first connection instead (see com.vehicare.data.db.DriverFactory).
 
 CREATE TABLE vehicle (
     id         INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
