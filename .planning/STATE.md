@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: Ready to execute
-last_updated: "2026-10-18T17:41:17.830Z"
+last_updated: "2026-10-18T18:02:33.604Z"
 progress:
   total_phases: 3
   completed_phases: 0
   total_plans: 10
-  completed_plans: 4
-  percent: 0
+  completed_plans: 5
+  percent: 50
 ---
 
 # STATE: VehiCare
@@ -22,14 +22,14 @@ progress:
 ## Current Position
 
 Phase: 01 (foundation-vehicle-management) — EXECUTING
-Plan: 2 of 10
+Plan: 6 of 10
 
 | Field | Value |
 |-------|-------|
 | **Active Phase** | Phase 1: Foundation & Vehicle Management |
-| **Active Plan** | 01-04 (01-01–01-03 complete and verified) |
-| **Status** | Wave 2 in progress — plan 01-03 (WAL schema, driver factories, serialized-IO repository) done and verified; next executable plan is 01-04 |
-| **Progress** | ███░░░░░░░ 30% |
+| **Active Plan** | 01-06 (01-01–01-05 complete and verified) |
+| **Status** | Wave 3 done — plan 01-05 (CI migration guard + real-driver WAL proofs) executed and verified; next executable plan is 01-06 (wave 4) |
+| **Progress** | █████░░░░░ 50% |
 
 ```
 Phase 1 [In Progress] → Phase 2 [Not Started] → Phase 3 [Not Started]
@@ -54,14 +54,11 @@ Phase 1 [In Progress] → Phase 2 [Not Started] → Phase 3 [Not Started]
 | Metric | Value |
 |--------|-------|
 | Phases completed | 0 / 3 |
-| Plans completed | 3 / 10 |
+| Plans completed | 5 / 10 |
 | Requirements covered | 4 / 21 |
 | Sessions | 5 |
 
-Per-plan: `Phase 1 / 01` — ~28min, 3 tasks, 63 files · `Phase 1 / 02` — 17min, 3 tasks, 15 files · `Phase 1 / 03` — 20min, 3 tasks, 17 files.
-
----
-| Phase 1 P04 | 24 min | 3 tasks | 17 files |
+Per-plan: `Phase 1 / 01` — ~28min, 3 tasks, 63 files · `Phase 1 / 02` — 17min, 3 tasks, 15 files · `Phase 1 / 03` — 20min, 3 tasks, 17 files · `Phase 1 / 04` — 24min, 3 tasks, 17 files · `Phase 1 / 05` — 11min, 3 tasks, 3 files.
 
 ## Accumulated Context
 
@@ -135,24 +132,25 @@ Unchanged from the contract: Gradle 9.5.1 · SQLDelight 2.4.1 · Koin 4.2.2 · N
 ### Todos
 
 - [ ] Answer open questions 1–4, 6 and 7 before the Phase 1 schema is finalized
-- [ ] Set up CI before the first release commit (`generateCommonMainVehiCareDatabaseSchema` + `verifyCommonMainVehiCareDatabaseMigration`)
+- [x] Set up CI before the first release commit (`generateCommonMainVehiCareDatabaseSchema` + `verifyCommonMainVehiCareDatabaseMigration`) → done in plan 01-05 (`.github/workflows/ci.yml`, probe-proven guard)
 - [x] Bootstrap the project — done by the user in Android Studio at `~/Proyek Aplikasi/VehiCare`
 - [x] Decide waves 2–8 → align first; alignment pass completed 2026-10-18
 - [x] Resolve the `androidDeviceTest` source-set wiring → verified empirically (see `01-01-SUMMARY.md` D-7)
 - [x] Author the D-22 placeholder launcher icon → adaptive-only, 0 rasters (see D-6)
 - [x] Wave 2 / plan 01-02 (shared UI foundation) → verified by an Android APK build, a Kotlin/Native framework link and a real `xcodebuild` simulator build
 - [x] Wave 2 / plan 01-03 (WAL schema, driver factories, serialized-IO repository) → verified by real-driver iOS tests, mapper tests on both targets, and a reproducible `1.db` baseline; the WAL mechanism was corrected after the `.sq` preamble proved to crash iOS driver creation (see `01-03-SUMMARY.md`)
+- [x] Wave 3 / plan 01-05 (CI migration guard + WAL proofs) → verified by the guard-fire probe (diff guard exit 1, verify task vacuous) and `WalModeTest` green on the iOS driver and on an API 28 emulator (see `01-05-SUMMARY.md`)
 
 ### Blockers
 
-None. Plans 01-01–01-03 are complete and verified by executed builds and tests on both platforms (01-03: mapper 4/4 on both targets, 5/5 real-driver iOS repository tests, reproducible `1.db` baseline). The next executable plan is **01-04**. Runtime launch on a device/emulator remains for `/gsd-verify-work` (`workflow.human_verify_mode` = end-of-phase).
+None. Plans 01-01–01-05 are complete and verified by executed builds and tests: 01-05 armed CI (per-source-set migration task + baseline diff guard, aggregate-task vacuity probe-proven) and proved WAL from first launch on the iOS driver (`iosSimulatorArm64Test`) and on an API 28 Android emulator (`connectedAndroidDeviceTest`, 6/6). The next executable plan is **01-06**. Runtime launch on a device/emulator remains for `/gsd-verify-work` (`workflow.human_verify_mode` = end-of-phase).
 
 ---
 
 ## Session Continuity
 
-**Last session:** 2026-10-18T17:41:17.827Z
-**Next action:** Execute plan **01-04** — type-safe routes, bottom-tab shell, Settings placeholder, and the minimal vehicle list/add-form slice reading through `VehicleRepository`; wire `App(platformModule(applicationContext))` in `MainActivity`. No pre-work remains.
+**Last session:** 2026-10-18T18:02:33.601Z
+**Next action:** Execute plan **01-06** — the D-14 identity-card vehicle list: `VehicleTypeCircle` + `LicensePlateChip` primitives, blank-segment-aware meta line, `EmptyState` with first-add guidance, four-state list screen and the D-19 FAB wired to the Add/Detail destinations. No pre-work remains.
 
 ## Decisions
 
@@ -164,3 +162,6 @@ None. Plans 01-01–01-03 are complete and verified by executed builds and tests
 - [Phase ?]: koin-core added to androidApp dependencies because App(platformModule: Module) exposes org.koin.core.module.Module to the host (Rule 3 blocking fix)
 - [Phase ?]: Android appVersionName reads the version via the Koin-registered Context (KoinPlatformTools.defaultContext().get()) — no hidden APIs, no buildConfig in :shared
 - [Phase ?]: Screen composables are alias-imported as *Screen in App.kt so they coexist with same-named @Serializable route types
+- [Phase 01]: Baseline-diff CI guard is the load-bearing DAT-04 control — Per-source-set verifyCommonMainVehiCareDatabaseMigration passed vacuously (exit 0) on a probe column with no .sqm; only generate...Schema && git diff --exit-code on the committed 1.db baseline detected drift (exit 1). CI keeps both guards.
+- [Phase 01]: Temurin 21 for CI — The RESEARCH Environment row fixing the GitHub Actions runner is ubuntu-latest + Temurin 21 (Any CI with Java 21); it supports Gradle 9.5.1 / AGP 9.1.1 / Kotlin 2.4.20 even though the Wave 0 gate landed option-b
+- [Phase 01]: Android WAL persistence assert uses a bare second driver — A second connection routed through DriverFactory re-runs the WAL pragma and can never fail, so the persistence claim uses a bare AndroidSqliteDriver that never executes the pragma (plan forbids weakening the Android test)

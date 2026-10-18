@@ -31,7 +31,7 @@
 4. User can view a list of all their vehicles on the home screen
 5. SQLite WAL mode is active from first launch, and all schema changes are blocked in CI without a corresponding `.sqm` migration file
 
-**Plans:** 4/10 plans executed
+**Plans:** 5/10 plans executed
 Plans:
 **Wave 1**
 
@@ -45,7 +45,7 @@ Plans:
 **Wave 3** *(blocked on Wave 2 completion)*
 
 - [x] 01-04-PLAN.md — nav shell (routes, bottom tabs, Settings placeholder), the Walking Skeleton end-to-end slice, `SKELETON.md`, `README.md`
-- [ ] 01-05-PLAN.md — CI migration enforcement, per-platform WAL proof tests, and a probe-revert exercise proving the guard fires
+- [x] 01-05-PLAN.md — CI migration enforcement, per-platform WAL proof tests, and a probe-revert exercise proving the guard fires
 
 **Wave 4** *(blocked on Wave 3 completion)*
 
@@ -105,7 +105,7 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation & Vehicle Management | 4/10 | In Progress|  |
+| 1. Foundation & Vehicle Management | 5/10 | In Progress|  |
 | 2. Service Log | 0/? | Not started | — |
 | 3. Reminders & Dashboard | 0/? | Not started | — |
 
