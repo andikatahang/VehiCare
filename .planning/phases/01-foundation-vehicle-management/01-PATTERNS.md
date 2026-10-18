@@ -332,6 +332,7 @@ insert: INSERT INTO vehicle(name, make, model, year, plate, type, photo_path)
         VALUES (?, ?, ?, ?, ?, ?, ?);
 update: UPDATE vehicle SET name=?, make=?, model=?, year=?, plate=?, type=?, photo_path=? WHERE id=?;
 delete: DELETE FROM vehicle WHERE id=?;
+lastInsertId: SELECT last_insert_rowid();            -- portable insert id (NO `RETURNING` — needs SQLite ≥ 3.35)
 ```
 
 **Schema ↔ decision trace:**
@@ -345,6 +346,7 @@ delete: DELETE FROM vehicle WHERE id=?;
 | `photo_path TEXT` = **relative path only** | D-05 | Never a BLOB, never `content://`/absolute URI |
 | `ORDER BY id DESC` | D-16 | Newest first; also removes any need for a date library (RES OQ-4) |
 | Only `name` NOT NULL | D-09 | Fast add; all else optional |
+| `lastInsertId: SELECT last_insert_rowid()` | DAT-01 (insert id) | Portable id retrieval; `insert` is a plain `INSERT` so `executeAsOne()` on it does not exist and `RETURNING` is unavailable at minSdk 26 |
 
 > **Location rule:** schema files MUST live in `composeApp/src/commonMain/sqldelight/<package>/`. A file under `src/main/sqldelight/` is **silently ignored** by the KMP tasks and the CI check passes vacuously (RES line 358, §Anti-Patterns line 557).
 
@@ -397,7 +399,8 @@ class VehicleRepositoryImpl(
     override suspend fun save(vehicle: Vehicle): Long = withContext(ioDispatcher) {
         db.transactionWithResult {
             if (vehicle.id == 0L) {
-                db.vehicleQueries.insert(/* … */).executeAsOne()
+                db.vehicleQueries.insert(/* … */)
+                db.vehicleQueries.lastInsertId().executeAsOne()   // portable id — never RETURNING
             } else {
                 db.vehicleQueries.update(/* … */)
                 vehicle.id
@@ -409,6 +412,7 @@ class VehicleRepositoryImpl(
 
 **Binding rules:**
 - **Never** call `Dispatchers.IO` inline — inject it (RES §Anti-Patterns line 559, §Pattern 3).
+- **Insert id is read with `lastInsertId: SELECT last_insert_rowid();` inside the same `transactionWithResult` block** — the `insert` query is a plain `INSERT` (no `RETURNING`), so `insert(...).executeAsOne()` does not exist. `INSERT ... RETURNING` is forbidden: it needs SQLite ≥ 3.35 and the Android driver uses the OS SQLite (< 3.35 across API 26–33 at minSdk 26). See RES §Pattern 3 gotcha.
 - Multi-statement writes wrap in `transactionWithResult { }` (RES line 449).
 - Row delete + photo-file delete go through the **same** repository flow so no orphan files remain (D-07, RES §Pitfall 4 line 586, §Security Domain line 830).
 - `delete` MUST call `PhotoStorage.delete(relativePath)` — a `delete` that only calls `vehicleQueries.delete(id)` is the named warning sign (RES §Pitfall 4 line 587).

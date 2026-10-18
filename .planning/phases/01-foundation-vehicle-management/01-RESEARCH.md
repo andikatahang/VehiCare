@@ -436,7 +436,8 @@ class VehicleRepositoryImpl(
     override suspend fun save(vehicle: Vehicle): Long = withContext(ioDispatcher) {
         db.transactionWithResult {
             if (vehicle.id == 0L) {
-                db.vehicleQueries.insert(/* … */).executeAsOne()
+                db.vehicleQueries.insert(/* … */)
+                db.vehicleQueries.lastInsertId().executeAsOne()   // portable id retrieval — see gotcha
             } else {
                 db.vehicleQueries.update(/* … */)
                 vehicle.id
@@ -447,6 +448,10 @@ class VehicleRepositoryImpl(
 ```
 
 Wrap multi-statement writes (vehicle row + photo-path bookkeeping) in `transactionWithResult { }` — SQLDelight emits `BEGIN`/`COMMIT` in the right place and rolls back on exception.
+
+> **Gotcha (insert id — do NOT use `RETURNING`):** the `insert` query is a plain `INSERT` with no `RETURNING` clause, so SQLDelight generates a `Unit`-returning mutation and `insert(...).executeAsOne()` does not exist. Do not "fix" this with `INSERT ... RETURNING id` — `RETURNING` requires SQLite ≥ 3.35 and the Android driver runs the OS SQLite, which is < 3.35 across API 26–33 (minSdk 26). Instead add a portable helper query to `Vehicle.sq` — `lastInsertId: SELECT last_insert_rowid();` — and call `lastInsertId().executeAsOne()` **inside the same `transactionWithResult` block** immediately after the insert, so the id is read on the same connection/transaction and cannot race another writer.
+
+
 
 ### Pattern 4: Photo persisted as a file, DB holds only the relative path (D-05, D-07)
 
@@ -742,37 +747,36 @@ jobs:
 
 **If this table were empty, no user confirmation would be needed.** It is not empty — A1 in particular is a locked-decision-level fork that should be confirmed at the Wave 0 checkpoint before plans are executed.
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Which version set ships — locked pins or current stack? (HEADLINE)**
+> **All resolved during planning.** Every question below is closed and the resolution is encoded in the phase plans, so nothing blocks execution. The resolutions are:
+> OQ-1/OQ-2 → plan **01-01 Task 1** (Wave 0 `checkpoint:decision` gate that settles the version set and the environment gap with the user). OQ-3 → keep the standalone JetBrains `navigation-compose 2.9.0`. OQ-4 → **omit** `kotlinx-datetime` from Phase 1. OQ-5 → photo filename `vehicles/<vehicleId>-<epochMillis>.jpg` (plan **01-08**). OQ-6 → a single `NavHost` with typed routes (plan **01-04**).
+
+1. **Which version set ships — locked pins or current stack? (HEADLINE) — RESOLVED**
+   - Resolution: **deferred to the Wave 0 gate, not pre-committed.** Plan **01-01 Task 1** is a `checkpoint:decision` that presents three options (option-a aligned-down locked pins + approved JDK 21 / Xcode 16.4 installs; option-b adopt the installed KMP-wizard generation wholesale; option-c defer/block). The phase does not assume an answer: every remaining plan is written against the option-a alias set but Task 2/3 explicitly branch "per option-a or option-b as selected", and Task 1's action records the outcome into `01-01-SUMMARY.md`. Generation mixing is forbidden either way.
    - What we know: the locked set (Kotlin 2.2.20 / CMP 1.8.2 / SQLDelight 2.3.2 / Koin 4.2.0) is internally inconsistent and needs JDK 21 + Xcode 16.4 to build; the current wizard set builds on what's installed. Both are internally consistent *as sets*; only the pins are broken as locked.
-   - What's unclear: whether the user values "the locked numbers" over "no environment changes".
-   - Recommendation: Wave 0 spike + explicit checkpoint. Default to **aligned-down locked pins** (SQLDelight 2.2.1 / Koin 4.1.1) *if* the user approves JDK 21 + Xcode 16.4 installs; otherwise adopt the current wizard stack wholesale. Do not mix generations.
+   - Recommendation (default pre-selected at the gate): **aligned-down locked pins** (SQLDelight 2.2.1 / Koin 4.1.1) *if* the user approves JDK 21 + Xcode 16.4 installs; otherwise adopt the current wizard stack wholesale. Do not mix generations.
 
-2. **How is the environment gap closed?**
+2. **How is the environment gap closed? — RESOLVED**
+   - Resolution: **closed at the same Wave 0 gate** (plan **01-01 Task 1**), which is the only human decision point in the phase and blocks all file authoring until it resumes. The `user_setup` block in 01-01 frontmatter enumerates the human-only steps (JDK 21 via `JAVA_HOME`, Xcode 16.4 via `xcode-select`, Android SDK via `local.properties -> sdk.dir`), because global working rules forbid the agent installing them. If option-b is chosen the gap is avoided rather than closed. Recorded in `01-01-SUMMARY.md`.
    - What we know: Xcode 27 (needs ≤16.4 for Kotlin 2.2.20), JDK 25/26 (needs ≤24 for Gradle 8.14), no `cmdline-tools`, no `ANDROID_HOME`/`local.properties`.
-   - What's unclear: whether the user will install a second JDK/Xcode (global rules require explicit approval for installs) or prefer option (b).
-   - Recommendation: present as a single yes/no gate at Wave 0; document both paths in the plan so switching is cheap.
 
-3. **Navigation library: JetBrains `navigation-compose` vs CMP-bundled navigation?**
+3. **Navigation library: JetBrains `navigation-compose` vs CMP-bundled navigation? — RESOLVED**
+   - Resolution: **keep the standalone JetBrains `navigation-compose 2.9.0`** (alias `libs.navigation.compose`, declared in plan **01-01** Task 2 and consumed by plan **01-04**). Its published POM depends exactly on CMP 1.8.2, so under the default version set it produces no partial upgrade. Not reconsidered within Phase 1.
    - What we know: locked choice is JetBrains `navigation-compose 2.9.0`, whose POM depends exactly on CMP 1.8.2 — a clean match. CMP 1.8 also ships its own navigation entry points.
-   - What's unclear: whether the team wants to track the CMP-bundled nav API instead of the standalone artifact.
-   - Recommendation: keep the locked standalone artifact (it is the one with published 2.9.0 metadata matched to CMP 1.8.2); revisit only if a nav bug forces it.
+   - Revisit only if a nav bug forces it.
 
-4. **Should `kotlinx-datetime` be added in Phase 1?**
-   - What we know: Phase 1 needs no calendar math — `year` is a digits-only text field (D-13) and ordering is by autoincrement `id` (D-16). STATE.md flags a 0.7.x compatibility concern.
-   - What's unclear: whether any Phase-2 planning wants `LocalDate` already on the classpath.
-   - Recommendation: **omit** it in Phase 1 (removes a compat risk for zero benefit); add in Phase 2 when service dates are actually modelled.
+4. **Should `kotlinx-datetime` be added in Phase 1? — RESOLVED**
+   - Resolution: **omit** it. No Phase 1 plan declares a `kotlinx-datetime` dependency; the version catalog in plan **01-01** Task 2 contains no such alias. Phase 1 ordering uses the autoincrement `id` (`selectAll ... ORDER BY id DESC`, plan 01-03) and `year` is digits-only text (D-13), so no calendar math exists. Add it in Phase 2 when service dates are actually modelled.
+   - What we know: Phase 1 needs no calendar math; STATE.md flags a 0.7.x compatibility concern.
 
-5. **Photo filename strategy — `<id>.jpg` vs content hash?**
+5. **Photo filename strategy — `<id>.jpg` vs content hash? — RESOLVED**
+   - Resolution: **`vehicles/<vehicleId>-<epochMillis>.jpg`** with old-file deletion on replace. Encoded in plan **01-08** Task 2 (`compute the filename as "<vehicleId>-<epochMillis>.jpg" ... the epochMillis suffix is what defeats Coil's disk cache staleness after a replace; do not reuse a filename`) and in 01-08's artifact list. Supersede/remove/abandon each delete the superseded file, so no orphan cleanup pass is needed.
    - What we know: D-05 says relative path only; detail is agent discretion.
-   - What's unclear: whether replace-photo should reuse the filename (simpler, needs cache-busting for Coil) or write a new hashed name and delete the old (no cache-busting, needs orphan cleanup).
-   - Recommendation: `<vehicleId>-<epochMillis>.jpg` with old-file deletion on replace — avoids Coil cache staleness while keeping D-07 satisfied; the relative path column absorbs the change.
 
-6. **Does the bottom tab-bar need to persist selection / handle deep links?**
+6. **Does the bottom tab-bar need to persist selection / handle deep links? — RESOLVED**
+   - Resolution: **a single `NavHost` with typed routes** (plan **01-04** Task 1, RESEARCH Pattern 6). `BottomTabs` tracks the current back-stack destination so tab selection stays in sync both ways. Plan **01-09** Task 3 further scopes the bar to the two tab roots (`VehicleListRoute` / `SettingsRoute`) and hides it on the pushed sub-screens. Deep-link wiring is additive and requires no restructuring, so it is left out of Phase 1.
    - What we know: D-17 ships Vehicles (functional) + Settings (placeholder) with a reserved "Service history (coming soon)" slot on Detail (D-18).
-   - What's unclear: whether later phases need typed deep links from notifications.
-   - Recommendation: design the shell with a single `NavHost` and typed routes now (Pattern 6); deep-link wiring is additive and does not require restructuring.
 
 ## Environment Availability
 
