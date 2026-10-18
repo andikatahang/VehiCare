@@ -1,0 +1,70 @@
+<resources>
+    <!-- App / shell -->
+    <string name="app_name">VehiCare</string>
+    <string name="tab_vehicles">Vehicles</string>
+    <string name="tab_settings">Settings</string>
+    <string name="title_vehicles">Vehicles</string>
+    <string name="title_settings">Settings</string>
+    <string name="title_add_vehicle">Add vehicle</string>
+    <string name="title_edit_vehicle">Edit vehicle</string>
+    <string name="title_vehicle_fallback">Vehicle</string>
+
+    <!-- Actions -->
+    <string name="action_add_vehicle">Add vehicle</string>
+    <string name="action_update_vehicle">Update vehicle</string>
+    <string name="action_edit">Edit</string>
+    <string name="action_delete_vehicle">Delete vehicle</string>
+    <string name="action_cancel">Cancel</string>
+    <string name="action_try_again">Try again</string>
+    <string name="action_back_to_vehicles">Back to vehicles</string>
+    <string name="action_add_photo">Add photo</string>
+    <string name="action_replace_photo">Replace photo</string>
+    <string name="action_remove_photo">Remove photo</string>
+
+    <!-- List states -->
+    <string name="empty_vehicles_heading">No vehicles yet</string>
+    <string name="empty_vehicles_body">Add your first vehicle to start tracking its service history.</string>
+    <string name="loading_vehicles">Loading your vehicles…</string>
+
+    <!-- Errors (problem + solution path) -->
+    <string name="error_load_vehicles">Couldn\'t load your vehicles. Check that your device has free storage space, then try again.</string>
+    <string name="error_save_vehicle">Couldn\'t save this vehicle. Check that your device has free storage space, then try again.</string>
+    <string name="error_delete_vehicle">Couldn\'t delete this vehicle. Try again.</string>
+    <string name="error_add_photo">Couldn\'t add that photo. Try picking it again.</string>
+    <string name="error_name_required">Enter a name for this vehicle.</string>
+
+    <!-- Form fields -->
+    <string name="field_name">Name</string>
+    <string name="field_make">Make</string>
+    <string name="field_model">Model</string>
+    <string name="field_year">Year</string>
+    <string name="field_plate">License plate</string>
+    <string name="field_type">Vehicle type</string>
+    <string name="field_photo">Photo</string>
+    <string name="field_required_marker">*</string>
+
+    <!-- Vehicle types (D-10 fixed list) -->
+    <string name="type_car">Car</string>
+    <string name="type_motorcycle">Motorcycle</string>
+    <string name="type_truck">Truck</string>
+
+    <!-- Detail -->
+    <string name="detail_service_history_coming_soon">Service history (coming soon)</string>
+    <string name="detail_not_found">This vehicle is no longer available.</string>
+    <string name="value_empty">—</string>
+
+    <!-- Settings -->
+    <string name="settings_app_version">App version</string>
+
+    <!-- Dialogs / feedback -->
+    <string name="dialog_delete_title">Delete vehicle</string>
+    <string name="dialog_delete_message">Delete %1$s and all its records?</string>
+    <string name="snackbar_vehicle_deleted">Vehicle deleted.</string>
+
+    <!-- Accessibility -->
+    <string name="cd_back">Back</string>
+    <string name="cd_add_vehicle">Add vehicle</string>
+    <string name="cd_vehicle_photo">Photo of %1$s</string>
+    <string name="cd_vehicle_type_icon">%1$s</string>
+    <string name="cd_license_plate">License plate %1$s</string>
+</resources>
