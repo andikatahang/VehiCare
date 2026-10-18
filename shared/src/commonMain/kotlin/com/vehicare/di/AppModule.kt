@@ -6,6 +6,8 @@ import com.vehicare.data.db.DatabaseFactory
 import com.vehicare.data.db.DriverFactory
 import com.vehicare.data.db.createDriverFactory
 import com.vehicare.db.VehiCareDatabase
+import com.vehicare.ui.vehicles.VehicleListViewModel
+import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
 /**
@@ -26,4 +28,5 @@ val appModule = module {
     }
     single<VehiCareDatabase> { get<DatabaseFactory>().database }
     single<VehicleRepository> { VehicleRepositoryImpl(get()) }
+    viewModel { VehicleListViewModel(get()) }
 }
