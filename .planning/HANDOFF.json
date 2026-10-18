@@ -1,39 +1,41 @@
 {
   "version": "1.0",
-  "timestamp": "2026-10-18T16:51:19.599Z",
+  "timestamp": "2026-10-18T17:59:31.808Z",
   "phase": "01",
   "phase_name": "foundation-vehicle-management",
   "phase_dir": ".planning/phases/01-foundation-vehicle-management",
-  "plan": 4,
+  "plan": 5,
   "task": null,
   "total_tasks": 3,
   "status": "paused",
   "completed_tasks": [
     {"id": "01-01", "name": "Build foundation (KMP scaffold, version catalog, module split)", "status": "done", "commit": "5bac349"},
     {"id": "01-02", "name": "Shared UI layer: strings, vectors, theme tokens, platform hosts", "status": "done", "commit": "6267bff"},
-    {"id": "01-03", "name": "WAL storage layer: schema, drivers, mapper, repository, Koin", "status": "done", "commit": "df82393", "detail": "Task commits 934ea49, 0a4e7ac, b850f1f, 7681ce5 (TDD RED), 5e9f9ad (WAL fix), 7306790 (TDD GREEN); Self-Check PASSED"}
+    {"id": "01-03", "name": "WAL storage layer: schema, drivers, mapper, repository, Koin", "status": "done", "commit": "df82393"},
+    {"id": "01-04", "name": "Walking Skeleton: Koin + NavHost + bottom tabs, thinnest E2E vehicle slice", "status": "done", "commit": "b06b42d", "note": "Orchestrator spot-check passed; post-merge build+test gate green (:androidApp:assembleDebug, :shared:compileKotlinIosSimulatorArm64, :shared:testAndroidHostTest, :shared:iosSimulatorArm64Test)"},
+    {"id": "01-05", "name": "WAL mode + migration CI enforcement", "status": "in_progress", "progress": "Executor subagent ses_eafe39fe4ffe5kPBlL3BJSd79s running in background at pause: commits 32b8ddf (CI workflow with per-source-set migration enforcement + cross-platform build) and d41d059 (real-driver WAL proof tests on both platforms) landed; close-out (remaining task work + SUMMARY.md + STATE/ROADMAP docs commit) had NOT landed at pause time. Terminal state is 'interrupted-or-complete' until verified via SUMMARY + git log."}
   ],
   "remaining_tasks": [
-    {"id": "01-04", "name": "Walking Skeleton: Koin + NavHost + bottom tabs, thinnest E2E vehicle slice", "status": "not_started", "note": "MUST wire App(platformModule(applicationContext)) in MainActivity (flagged by 01-03)"},
-    {"id": "01-05", "name": "WAL mode proof + migration CI enforcement", "status": "not_started"},
+    {"id": "01-05-closeout", "name": "Finish plan 01-05: remaining task work + SUMMARY.md + docs close-out commit", "status": "in_progress"},
+    {"id": "01-05-wave-gate", "name": "Wave 3 close: post-merge build+test gate for 01-05 (Gradle canonical tasks) + wave-close heartbeat", "status": "not_started"},
     {"id": "01-06", "name": "Identity-card vehicle list (VehicleCard, EmptyState, 4 states, FAB)", "status": "not_started"},
     {"id": "01-07", "name": "Real Add/Edit form with validation", "status": "not_started"},
-    {"id": "01-08", "name": "Gallery photo capability end-to-end", "status": "not_started", "note": "Replace the photoDeleter no-op seam with PhotoStorage::delete (flagged by 01-03)"},
+    {"id": "01-08", "name": "Gallery photo capability end-to-end", "status": "not_started"},
     {"id": "01-09", "name": "Vehicle Detail screen", "status": "not_started"},
-    {"id": "01-10", "name": "Confirmed deletion (records + photo)", "status": "not_started"}
+    {"id": "01-10", "name": "Confirmed deletion (records + photo)", "status": "not_started"},
+    {"id": "phase-closeout", "name": "Aggregation → code-review gate → security gate → verification → UAT (human_verify_mode=end-of-phase)", "status": "not_started"}
   ],
   "blockers": [],
   "human_actions_pending": [
-    {"action": "Runtime visual check for plan 01-02: launch the app on an Android API 26+ target and iOS 16+ simulator, confirm the same shared UI renders; commands are in 01-02-SUMMARY.md", "context": "workflow.human_verify_mode=end-of-phase defers runtime checks to phase verification", "blocking": false},
-    {"action": "After all 10 plans complete: run /gsd-verify-work 01 for phase-level UAT", "context": "phase completion gate", "blocking": true}
+    {"action": "After all 10 plans complete: run /gsd-verify-work 01 for phase-level UAT", "context": "workflow.human_verify_mode=end-of-phase defers runtime checks to phase verification", "blocking": true}
   ],
   "decisions": [
-    {"decision": "Session relocated to /Users/andika/Proyek Aplikasi/VehiCare", "rationale": "The OpenCode session working directory pointed at a path that no longer exists (folders were renamed); user confirmed VehiCare as the target and the session was moved", "phase": "01"},
-    {"decision": "All executor plans run sequentially on the main working tree (no worktree isolation)", "rationale": "OpenCode runtime cannot isolate subagents in git worktrees; per execute-phase runtime-compatibility rules, executors serialize on the main tree", "phase": "01"},
-    {"decision": "Wave-based execution preserved (waves 2-8) with orchestrator spot-checks after each plan", "rationale": "Preserve GSD wave gates and per-plan verification despite sequential execution", "phase": "01"},
-    {"decision": "Wave 2 post-wave build+test gate passed (GATE_EXIT=0)", "rationale": "Ran :androidApp:assembleDebug + :shared:testAndroidHostTest + :shared:iosSimulatorArm64Test at HEAD df82393 (background) — all green, no cross-plan integration failures", "phase": "01"}
+    {"decision": "All executor plans run sequentially on the main working tree (no worktree isolation)", "rationale": "OpenCode runtime has no worktree isolation for subagents; per execute-phase runtime-compatibility rules executors serialize on the main tree", "phase": "01"},
+    {"decision": "Wave-based execution preserved with orchestrator spot-checks + post-merge gates after each plan", "rationale": "Preserves GSD wave gates and per-plan verification despite sequential execution", "phase": "01"},
+    {"decision": "Post-merge gates run Gradle canonical task paths instead of the Xcode sniff", "rationale": "KMP project: build = :androidApp:assembleDebug + :shared:compileKotlinIosSimulatorArm64; tests = :shared:testAndroidHostTest + :shared:iosSimulatorArm64Test (all proven green after 01-04)", "phase": "01"},
+    {"decision": "Executor model inherent / MVP_MODE=true / TDD_MODE=false / AUTO_MODE=false", "rationale": "From .planning/config.json and gsd-tools mode resolution", "phase": "01"}
   ],
   "uncommitted_files": [],
-  "next_action": "Run /gsd-resume-work, then /gsd-execute-phase 1 — resumes at Wave 3. Wave 2 (01-02, 01-03) is complete and gate-verified; nothing is in flight (no background executors). First dispatch will be plan 01-04 — its prompt must carry the 01-03 flagged note: wire App(platformModule(applicationContext)) in MainActivity.",
-  "context_notes": "OpenCode runtime. gsd-tools shim: node /Users/andika/.config/opencode/gsd-core/bin/gsd-tools.cjs — there is NO repo-local gsd-core. gradle/libs.versions.toml is the authoritative version source; 01-RESEARCH.md and 01-VERSIONS-OPTION-B.md carry deliberately stale version claims. MVP_MODE=true, TDD_MODE=false, AUTO_MODE=false. No incomplete plan contains checkpoint tasks. 01-03 DEVIATION OF RECORD: the plan's WAL mechanism (.sq preamble pragma) crashed iOS driver creation (SQLiter rejects the row-returning pragma; 0/5 iosTest); fixed by setting WAL at driver construction — Android via row-safe executeQuery; iOS relies on SQLiter's JournalMode.WAL default (source-verified). Four now-obsolete grep criteria were retracted with evidence in 01-03-SUMMARY.md; 01-05 guards both platforms. Also flagged: 01-08 replaces the photoDeleter no-op seam; keep schema generation and tests in separate Gradle invocations. Wave 2 post-wave gate log: /private/var/folders/7r/t866q6mx75z9wc2w4gfp1j240000gn/T/opencode/gsd-wave2-gate.log"
+  "next_action": "Run /gsd-resume-work, then continue /gsd-execute-phase 1. BEFORE dispatching anything: safe-resume gate on 01-05 — test -f .planning/phases/01-foundation-vehicle-management/01-05-SUMMARY.md; if missing while 01-05 commits exist (32b8ddf, d41d059), run the safe-resume options (close out manually / re-execute / mark-and-skip). If present: spot-check 01-05, run its post-merge Gradle gate, close Wave 3, then continue waves 4–8 (01-06 … 01-10). Known anomaly to fix at wave-3 close: commit b06b42d updated STATE.md frontmatter (completed_plans: 4 ✓) and ROADMAP ([x] 01-04 ✓) but left the body 'Current Position' narrative stale ('Plan: 2 of 10', Active Plan 01-04, Wave 2 text) — normalize it in a housekeeping docs commit once the 01-05 close-out has rewritten STATE.md again.",
+  "context_notes": "OpenCode runtime. gsd-tools shim: node /Users/andika/.config/opencode/gsd-core/bin/gsd-tools.cjs — there is NO repo-local gsd-core. gradle/libs.versions.toml is the authoritative version source; 01-RESEARCH.md and 01-VERSIONS-OPTION-B.md carry deliberately stale version claims. MVP_MODE=true, TDD_MODE=false, AUTO_MODE=false. Plan 01-04's deviations are documented in 01-04-SUMMARY.md (koin-core on androidApp classpath; getKoin() replaced by KoinPlatformTools.defaultContext().get(); MainActivity wiring + compile-gate screen stubs in Task 1; SKELETON.md normalized to shipped code). No incomplete remaining plan (01-06..01-10) contains checkpoint tasks (all autonomous: true). Placeholder-content grep across phase docs: only benign wording (D-22 placeholder icon, Settings placeholder tab) — no false-completion summaries."
 }
