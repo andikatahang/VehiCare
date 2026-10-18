@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  D-22 placeholder launcher foreground — deliberately NOT final artwork.
+  A minimal "V" monogram drawn on the 108dp adaptive-icon canvas. Every stroke
+  stays inside the centre 66dp safe zone (extents x 29..79, y 33..79) so no
+  launcher mask (circle, squircle, rounded square) can clip the mark.
+  Ink #FF1C1C1E on the Paper background — D-21's ink-on-white language.
+  Custom artwork remains a deferred polish task.
+-->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:pathData="M34,38 L54,74 L74,38"
+        android:strokeColor="#FF1C1C1E"
+        android:strokeWidth="10"
+        android:strokeLineCap="round"
+        android:strokeLineJoin="round" />
+</vector>

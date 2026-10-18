@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- D-22 placeholder background: the Paper value (#FFFFFFFF), so the mark reads
+     as ink on white rather than as the default Android robot. -->
+<resources>
+    <color name="ic_launcher_background">#FFFFFFFF</color>
+</resources>

@@ -79,6 +79,18 @@ kotlin {
             implementation(libs.sqldelight.native.driver)
             implementation(libs.filekit.dialogs.compose)
         }
+        // The AGP KMP library plugin registers this source set dynamically via
+        // `withDeviceTestBuilder`, so there is no type-safe `androidDeviceTest` accessor.
+        // `named(...)` is resolved lazily, which works whether or not the set is registered
+        // by the time this block runs.
+        named("androidDeviceTest") {
+            dependencies {
+                implementation(libs.kotlin.testJunit)
+                implementation(libs.androidx.testExt.junit)
+                implementation(libs.androidx.testRunner)
+                implementation(libs.androidx.espresso.core)
+            }
+        }
     }
 }
 
