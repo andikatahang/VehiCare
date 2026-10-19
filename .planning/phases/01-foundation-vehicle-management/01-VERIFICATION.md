@@ -259,7 +259,16 @@ The following runtime checks were deliberately deferred to end-of-phase (per the
 - No project file was modified by verification except this report. The user's uncommitted change to `iosApp/iosApp.xcodeproj/project.pbxproj` was read-only throughout and remains an in-progress user change, not a defect.
 - Nothing was committed — that is the orchestrator's step.
 
+## Acknowledged Gaps
+
+Recorded at Phase 1 completion (verify-work, 2026-10-19) after the completion gate — the developer confirmed "proceed anyway"; re-verification was declined, so this item is **acknowledged, not resolved**.
+
+- **`status: human_needed`** (this file's frontmatter). The six runtime checks H-1…H-6 above were executed and **all passed** — see `01-UAT.md` (`status: complete`; 6/6 passed, 0 issues, 0 skipped). The `status` field predates the UAT run and was not flipped to `passed`.
+  - **Consequence:** gates that require `status: passed` remain blocked for this phase until a re-verification updates it (canonical fix: re-run the verify step). Carried forward as debt from this transition — review via `/gsd-audit-uat`.
+  - Open code-review findings (`01-REVIEW.md`: CR-01, WR-01…03, IN-01…06) remain separately tracked; they are not part of this acknowledgment.
+
 ---
 
 _Verified: 2026-10-19T08:29:32Z_
 _Verifier: the agent (gsd-verifier)_
+_Acknowledged gaps recorded: 2026-10-19 (verify-work completion — andikatahang)_
