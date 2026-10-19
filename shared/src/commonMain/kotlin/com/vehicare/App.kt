@@ -2,7 +2,11 @@ package com.vehicare
 
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.compose.NavHost
@@ -24,9 +28,13 @@ import com.vehicare.ui.vehicles.VehicleListRoute as VehicleListScreen
 import com.vehicare.ui.theme.VehiCareTheme
 import com.vehicare.ui.settings.SettingsScreen
 import io.github.vinceglb.filekit.coil.addPlatformFileSupport
+import kotlinx.coroutines.launch
+import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.KoinApplication
 import org.koin.core.module.Module
 import org.koin.dsl.module
+import vehicare.shared.generated.resources.Res
+import vehicare.shared.generated.resources.snackbar_vehicle_deleted
 
 /**
  * Fallback for hosts that supply no platform-specific bindings (iOS): an empty module handed to
@@ -67,8 +75,17 @@ fun App(platformModule: Module = noPlatformModule) {
             val isTabRoot = currentDestination?.hasRoute(VehicleListRoute::class) == true ||
                 currentDestination?.hasRoute(SettingsRoute::class) == true
 
+            // The success message for a deletion lives here, not on the Detail screen that causes
+            // it: that screen — and any Snackbar host of its own — is popped the moment the delete
+            // succeeds, so a message hosted there would vanish with it. Hosting it on the shell and
+            // showing it on the shell's scope is what lets "Vehicle deleted." appear over the list
+            // (UI-SPEC §Interaction rules → Delete succeeds).
+            val snackbarHostState = remember { SnackbarHostState() }
+            val scope = rememberCoroutineScope()
+
             Scaffold(
                 bottomBar = { if (isTabRoot) BottomTabs(navController) },
+                snackbarHost = { SnackbarHost(snackbarHostState) },
             ) { innerPadding ->
                 NavHost(
                     navController = navController,
@@ -93,12 +110,22 @@ fun App(platformModule: Module = noPlatformModule) {
                     }
                     composable<VehicleDetailRoute> { backStackEntry ->
                         val detailRoute = backStackEntry.toRoute<VehicleDetailRoute>()
+                        val deletedMessage = stringResource(Res.string.snackbar_vehicle_deleted)
                         VehicleDetailScreen(
                             vehicleId = detailRoute.id,
                             // Edit reuses the one Add/Edit form (D-08) — there is no second form —
                             // and returns here, where the streaming state already shows the change.
                             onEdit = { navController.navigate(VehicleEditRoute(detailRoute.id)) },
                             onBack = { navController.popBackStack() },
+                            // A deletion that really happened (the ViewModel reports success only
+                            // after the repository returned): the message is launched on the
+                            // shell's scope first, so the pop to the list cannot take it away,
+                            // then the stack returns to the list — Flow-driven, so the deleted
+                            // card is already gone (T-01-62).
+                            onDeleted = {
+                                scope.launch { snackbarHostState.showSnackbar(deletedMessage) }
+                                navController.popBackStack()
+                            },
                         )
                     }
                 }

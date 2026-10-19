@@ -24,11 +24,18 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
@@ -40,6 +47,7 @@ import com.vehicare.ui.theme.Ink
 import com.vehicare.ui.theme.Mist
 import com.vehicare.ui.theme.Slate
 import com.vehicare.ui.vehicles.components.ComingSoonSlot
+import com.vehicare.ui.vehicles.components.ConfirmDeleteDialog
 import com.vehicare.ui.vehicles.components.FieldRow
 import com.vehicare.ui.vehicles.components.LicensePlateChip
 import com.vehicare.ui.vehicles.components.VehicleTypeCircle
@@ -55,6 +63,7 @@ import vehicare.shared.generated.resources.action_edit
 import vehicare.shared.generated.resources.cd_back
 import vehicare.shared.generated.resources.cd_vehicle_photo
 import vehicare.shared.generated.resources.detail_not_found
+import vehicare.shared.generated.resources.error_delete_vehicle
 import vehicare.shared.generated.resources.field_make
 import vehicare.shared.generated.resources.field_model
 import vehicare.shared.generated.resources.field_plate
@@ -73,7 +82,15 @@ import vehicare.shared.generated.resources.title_vehicle_fallback
  * There is no fourth state and no blank area anywhere.
  *
  * The state comes from the ViewModel's streaming flow, so an edit made on the form appears here as
- * soon as the user returns, with nothing on this screen refreshing anything by hand.
+ * soon as the user returns, and a confirmed deletion makes the row disappear — with nothing on
+ * this screen refreshing anything by hand.
+ *
+ * Deleting is gated twice over: the destructive button only opens [ConfirmDeleteDialog], and while
+ * a deletion is in flight the button is disabled and a second confirm is dropped by the ViewModel,
+ * so an irreversible action can be started once and only once per confirmation.
+ *
+ * @param onDeleted invoked after a deletion really happened, so the shell can report it and return
+ *   to the list. A failure never reaches it.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -81,11 +98,14 @@ fun VehicleDetailRoute(
     vehicleId: Long,
     onEdit: () -> Unit,
     onBack: () -> Unit,
+    onDeleted: () -> Unit,
 ) {
     val viewModel = koinViewModel<VehicleDetailViewModel>(
         parameters = { parametersOf(vehicleId) },
     )
     val state = viewModel.uiState.collectAsState().value
+    val deleting = viewModel.deleting.collectAsState().value
+    val deleteFailed = viewModel.deleteFailed.collectAsState().value
 
     // A title bar must never render empty, so the fallback names the destination while the row is
     // still being read or has turned out to be gone.
@@ -95,6 +115,26 @@ fun VehicleDetailRoute(
         ?.name
         ?.takeIf { it.isNotBlank() }
         ?: fallbackTitle
+
+    val snackbarHostState = remember { SnackbarHostState() }
+    val deleteErrorText = stringResource(Res.string.error_delete_vehicle)
+
+    // UI-SPEC Detail "Delete fails": the failure is reported and nothing else changes — the dialog
+    // is already closed, the vehicle stays on screen and nothing is removed locally, because the
+    // repository said the row is still stored. The flag is one-shot: it retires with the message
+    // (the call after `showSnackbar` returns is exactly its dismiss path), so a recomposition can
+    // never replay it.
+    LaunchedEffect(deleteFailed) {
+        if (deleteFailed) {
+            snackbarHostState.showSnackbar(deleteErrorText)
+            viewModel.onDeleteErrorShown()
+        }
+    }
+
+    // The confirmation gate (UI-SPEC §Interaction rules → Detail → Delete): the destructive button
+    // opens this state and nothing else, and the dialog's confirm action is the screen's only call
+    // site of the ViewModel's delete entry point.
+    var showDeleteDialog by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -121,6 +161,7 @@ fun VehicleDetailRoute(
                 },
             )
         },
+        snackbarHost = { SnackbarHost(snackbarHostState) },
     ) { innerPadding ->
         when (val current = state) {
             VehicleDetailUiState.Loading -> Box(
@@ -158,7 +199,25 @@ fun VehicleDetailRoute(
             is VehicleDetailUiState.Content -> VehicleDetailContent(
                 vehicle = current.vehicle,
                 contentPadding = innerPadding,
-                onDelete = { viewModel.delete(onDeleted = onBack) },
+                // The visible half of the single-flight guard: a deletion that is already running
+                // cannot be started again from here.
+                deleteEnabled = !deleting,
+                onDeleteClick = { showDeleteDialog = true },
+            )
+        }
+
+        if (showDeleteDialog) {
+            ConfirmDeleteDialog(
+                // The same name the title bar shows, so a vehicle saved without a name still reads
+                // as a sentence instead of "Delete  and all its records?".
+                vehicleName = title,
+                onConfirm = {
+                    // Close first, then start the deletion: the dialog is never left on screen
+                    // describing an action that has already been decided.
+                    showDeleteDialog = false
+                    viewModel.delete(onDeleted = onDeleted)
+                },
+                onDismiss = { showDeleteDialog = false },
             )
         }
     }
@@ -176,7 +235,8 @@ fun VehicleDetailRoute(
 private fun VehicleDetailContent(
     vehicle: Vehicle,
     contentPadding: PaddingValues,
-    onDelete: () -> Unit,
+    deleteEnabled: Boolean,
+    onDeleteClick: () -> Unit,
 ) {
     val photoPath = vehicle.photoPath?.takeIf { it.isNotBlank() }
     val fallbackName = stringResource(Res.string.title_vehicle_fallback)
@@ -243,11 +303,13 @@ private fun VehicleDetailContent(
         ComingSoonSlot()
         Spacer(modifier = Modifier.height(48.dp))
 
-        // Rendered here and wired to the ViewModel's delete entry point; **plan 01-10 owns its
-        // behaviour**, the confirmation dialog and the failure path. Until that plan lands the call
-        // is an explicit no-op stub, so nothing can be destroyed by accident (T-01-56).
+        // The screen's only destructive control, and the lowest-weight element on it: it opens the
+        // confirmation dialog and does nothing else. The dialog is the only path to the ViewModel's
+        // delete entry point, and the button is disabled while a deletion is already running.
+        // Deletion is irreversible in Phase 1 — no recovery surface exists behind it.
         OutlinedButton(
-            onClick = onDelete,
+            onClick = onDeleteClick,
+            enabled = deleteEnabled,
             modifier = Modifier
                 .fillMaxWidth()
                 .defaultMinSize(minHeight = 48.dp),
