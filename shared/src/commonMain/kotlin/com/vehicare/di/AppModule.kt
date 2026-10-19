@@ -8,6 +8,7 @@ import com.vehicare.data.db.createDriverFactory
 import com.vehicare.db.VehiCareDatabase
 import com.vehicare.ui.vehicles.VehicleEditViewModel
 import com.vehicare.ui.vehicles.VehicleListViewModel
+import com.vehicare.util.PhotoStorage
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
@@ -28,7 +29,11 @@ val appModule = module {
         DatabaseFactory(driverFactory.createDriver())
     }
     single<VehiCareDatabase> { get<DatabaseFactory>().database }
-    single<VehicleRepository> { VehicleRepositoryImpl(get()) }
+    // Deleting a vehicle removes its photo file through the real storage seam (D-07), replacing the
+    // no-op default plan 01-03 left in place while the write side did not exist yet (T-01-18).
+    single<VehicleRepository> {
+        VehicleRepositoryImpl(get(), photoDeleter = PhotoStorage::delete)
+    }
     viewModel { VehicleListViewModel(get()) }
     // The form's id comes from the route: `parametersOf(vehicleId)` at the call site, destructured
     // here. 0L is the add case; anything else loads that row for edit.

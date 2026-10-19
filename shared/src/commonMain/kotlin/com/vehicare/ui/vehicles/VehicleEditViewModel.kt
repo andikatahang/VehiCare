@@ -4,11 +4,14 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.vehicare.data.VehicleRepository
 import com.vehicare.domain.Vehicle
+import com.vehicare.util.PhotoStorage
+import io.github.vinceglb.filekit.PlatformFile
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.launch
+import kotlin.time.Clock
 
 /**
  * The shared Add/Edit form's state matrix (UI-SPEC States & Interaction Contract).
@@ -29,6 +32,9 @@ sealed interface VehicleEditUiState {
      * @param nameEdited  the name has been typed then possibly cleared on purpose; until it flips,
      *   the required-field message stays hidden (UI-SPEC Add/Edit `Invalid` row)
      * @param saveFailed  one-shot failure flag the screen consumes to show the save-error Snackbar
+     * @param importing   a picked photo is being copied into app storage right now — the picker and
+     *   the submit button stay disabled while that runs
+     * @param photoError  one-shot failure flag the screen consumes to show the photo-import message
      */
     data class Ready(
         val values: VehicleFormValues,
@@ -36,6 +42,8 @@ sealed interface VehicleEditUiState {
         val saving: Boolean,
         val nameEdited: Boolean,
         val saveFailed: Boolean = false,
+        val importing: Boolean = false,
+        val photoError: Boolean = false,
     ) : VehicleEditUiState
 
     /** The row this destination was opened for no longer exists. */
@@ -50,6 +58,11 @@ sealed interface VehicleEditUiState {
  * The repository is the only storage seam touched here — no driver, no query, no generated type can
  * appear above the data layer (T-01-40). No field value is ever logged (T-01-43): a failure surfaces
  * as the one-shot [VehicleEditUiState.Ready.saveFailed] flag the screen turns into user-facing copy.
+ *
+ * The photo lifecycle lives here as well (VEH-02): [onPhotoPicked] copies the picked file into
+ * app-private storage and this form only ever holds its **relative** location (D-05), while the two
+ * bookkeeping fields below decide which file may be deleted and when — the one part of this screen
+ * that can lose data if it is got wrong (T-01-49).
  *
  * @param vehicleId `0L` means add; any other id is loaded for edit and saved in place.
  */
@@ -85,6 +98,27 @@ class VehicleEditViewModel(
      * the optional fields — and the photo path especially — are exposed to (T-01-44).
      */
     private var initialLoadApplied: Boolean = false
+
+    /**
+     * The stored file the *saved row* still references after this form replaced or removed its
+     * photo, and which may therefore only be deleted once a save has made that change durable.
+     *
+     * It only ever holds a location that came from the database. A file persisted during this
+     * session is unreferenced the moment it is replaced, so that one is removed straight away
+     * instead. A failed save leaves this field alone, so the row and its file keep agreeing, and
+     * the abandonment path deliberately never touches it (T-01-49).
+     */
+    private var supersededPath: String? = null
+
+    /**
+     * True while the held `photoPath` points at a copy this session persisted that no row has saved
+     * yet: the only file [onCleared] is allowed to remove, and the reason a successful save clears
+     * this flag.
+     */
+    private var persistedButUnsaved: Boolean = false
+
+    /** Last stamp [nextPhotoFileName] handed out, so two picks in one millisecond differ. */
+    private var lastPhotoStamp: Long = 0L
 
     init {
         if (!isAdd) {
@@ -143,13 +177,16 @@ class VehicleEditViewModel(
         // The double-submit guard, checked on the live state: a second tap cannot enqueue a second
         // insert (T-01-41). The name gate is re-checked here so the state machine — not only the
         // disabled button — owns the "only a name-bearing form submits" rule (D-09).
-        if (current.saving || !VehicleFormValidation.isSubmittable(current.values)) return
+        if (current.saving || current.importing || !VehicleFormValidation.isSubmittable(current.values)) {
+            return
+        }
 
         _uiState.value = current.copy(saving = true, saveFailed = false)
         val submitted = current.values
         viewModelScope.launch {
             try {
                 repo.save(VehicleFormValidation.toVehicle(vehicleId, submitted))
+                markPhotoSaved()
                 clearSaving()
                 onSaved()
             } catch (cancelled: CancellationException) {
@@ -166,6 +203,122 @@ class VehicleEditViewModel(
     fun onSaveErrorShown() {
         val current = _uiState.value as? VehicleEditUiState.Ready ?: return
         if (current.saveFailed) _uiState.value = current.copy(saveFailed = false)
+    }
+
+    /**
+     * Imports a picked gallery image: copies it into app storage and holds the returned **relative**
+     * location in the form. The picker's own file is read from and then never referenced again —
+     * its location goes stale as soon as the process dies (D-05, T-01-51).
+     *
+     * A failure flags [VehicleEditUiState.Ready.photoError] and changes nothing else: every field,
+     * including a photo that was already attached, survives an import that did not work.
+     *
+     * The supersede bookkeeping runs only once the new copy exists, so a failed import can never
+     * leave the form pointing at a file that was already scheduled for removal.
+     */
+    fun onPhotoPicked(picked: PlatformFile) {
+        val current = _uiState.value as? VehicleEditUiState.Ready ?: return
+        // One import at a time: a second one could otherwise supersede a copy that is still being
+        // written, and a pick during a save would be recorded against the wrong row.
+        if (current.importing || current.saving) return
+        val fileName = nextPhotoFileName()
+
+        _uiState.value = current.copy(importing = true, photoError = false)
+        viewModelScope.launch {
+            val relativePath = try {
+                PhotoStorage.persist(picked, fileName)
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (_: Exception) {
+                val latest = _uiState.value as? VehicleEditUiState.Ready
+                if (latest != null) {
+                    _uiState.value = latest.copy(importing = false, photoError = true)
+                }
+                return@launch
+            }
+
+            val latest = _uiState.value as? VehicleEditUiState.Ready ?: return@launch
+            val previous = latest.values.photoPath
+            if (previous != null) {
+                if (persistedButUnsaved) {
+                    // Copied this session and never saved, so no row references it: remove it now.
+                    PhotoStorage.delete(previous)
+                } else {
+                    // The saved row still references it, so only a successful save may remove it.
+                    supersededPath = previous
+                }
+            }
+            persistedButUnsaved = true
+            _uiState.value = latest.copy(
+                values = latest.values.copy(photoPath = relativePath),
+                importing = false,
+            )
+        }
+    }
+
+    /**
+     * Detaches the photo from the form. Nothing the saved row references is removed here: on an edit
+     * the previous file is only queued in [supersededPath] and goes once a save is durable, while a
+     * copy made during this session — which nothing references — is removed straight away.
+     */
+    fun onPhotoRemoved() {
+        val current = _uiState.value as? VehicleEditUiState.Ready ?: return
+        val previous = current.values.photoPath ?: return
+        if (persistedButUnsaved) {
+            PhotoStorage.delete(previous)
+            persistedButUnsaved = false
+        } else {
+            supersededPath = previous
+        }
+        _uiState.value = current.copy(values = current.values.copy(photoPath = null))
+    }
+
+    /**
+     * Lets the screen retire the photo-import flag once its message has been shown, so the message
+     * does not re-fire on every recomposition.
+     */
+    fun onPhotoImportFailed() {
+        val current = _uiState.value as? VehicleEditUiState.Ready ?: return
+        if (current.photoError) _uiState.value = current.copy(photoError = false)
+    }
+
+    /**
+     * The abandon case: a photo copied into app storage before any row referenced it is litter once
+     * the form is torn down without a successful save, and this is the only place that can still
+     * remove it.
+     *
+     * [supersededPath] is deliberately not touched here — it always names a file the saved row
+     * still references, and removing it because a form was closed would destroy the user's only
+     * copy. [PhotoStorage.delete] is non-suspend precisely so this call is legal from here.
+     */
+    override fun onCleared() {
+        if (persistedButUnsaved) {
+            val held = (_uiState.value as? VehicleEditUiState.Ready)?.values?.photoPath
+            PhotoStorage.delete(held)
+        }
+        super.onCleared()
+    }
+
+    /**
+     * A name no earlier pick in this session can collide with: the vehicle id plus a stamp that
+     * always advances, so a replaced photo is a genuinely new file and no image cache can serve the
+     * superseded one (RESEARCH OQ-5).
+     */
+    private fun nextPhotoFileName(): String {
+        val stamp = maxOf(Clock.System.now().toEpochMilliseconds(), lastPhotoStamp + 1L)
+        lastPhotoStamp = stamp
+        return "$vehicleId-$stamp.jpg"
+    }
+
+    /**
+     * The row now references the held photo, so a teardown may no longer remove it — and the file
+     * the row referenced before this session's change is now unreferenced and is removed.
+     */
+    private fun markPhotoSaved() {
+        persistedButUnsaved = false
+        val stale = supersededPath ?: return
+        supersededPath = null
+        PhotoStorage.delete(stale)
     }
 
     private fun clearSaving() {
