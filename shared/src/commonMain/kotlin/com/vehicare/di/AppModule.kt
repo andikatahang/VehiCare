@@ -30,5 +30,7 @@ val appModule = module {
     single<VehiCareDatabase> { get<DatabaseFactory>().database }
     single<VehicleRepository> { VehicleRepositoryImpl(get()) }
     viewModel { VehicleListViewModel(get()) }
-    viewModel { VehicleEditViewModel(get()) }
+    // The form's id comes from the route: `parametersOf(vehicleId)` at the call site, destructured
+    // here. 0L is the add case; anything else loads that row for edit.
+    viewModel { (vehicleId: Long) -> VehicleEditViewModel(get(), vehicleId) }
 }
