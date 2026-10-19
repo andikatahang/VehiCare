@@ -43,7 +43,9 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import com.vehicare.ui.theme.Slate
+import com.vehicare.ui.vehicles.components.PhotoField
 import com.vehicare.ui.vehicles.components.VehicleTypePicker
+import io.github.vinceglb.filekit.PlatformFile
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
 import org.koin.core.parameter.parametersOf
@@ -53,6 +55,7 @@ import vehicare.shared.generated.resources.action_back_to_vehicles
 import vehicare.shared.generated.resources.action_update_vehicle
 import vehicare.shared.generated.resources.cd_back
 import vehicare.shared.generated.resources.detail_not_found
+import vehicare.shared.generated.resources.error_add_photo
 import vehicare.shared.generated.resources.error_name_required
 import vehicare.shared.generated.resources.error_save_vehicle
 import vehicare.shared.generated.resources.field_make
@@ -69,12 +72,13 @@ import vehicare.shared.generated.resources.title_edit_vehicle
  * The one Add/Edit form (D-08, D-17): `vehicleId == 0L` adds, any other id edits that row in place.
  *
  * This is the only screen that ever edits a vehicle — plan 01-09's Detail screen navigates here
- * rather than authoring a second form, and plan 01-08 appends the photo block to the very same
- * `Column` (C-1 keeps the photo last).
+ * rather than authoring a second form, and the photo block appended after the Type row (C-1) is
+ * part of this same `Column`.
  *
  * Every state is explicit: an edit that is still loading shows a progress indicator, a row that no
  * longer exists says so and offers the way back — never a blank or half-populated form. A failed
- * save keeps every field exactly as the user left it and reports the failure in a Snackbar.
+ * save keeps every field exactly as the user left it and reports the failure in a Snackbar, and a
+ * failed photo import reports itself the same way while leaving the form untouched.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -89,6 +93,8 @@ fun VehicleEditRoute(
     val snackbarHostState = remember { SnackbarHostState() }
     val saveErrorText = stringResource(Res.string.error_save_vehicle)
     val saveFailed = (state as? VehicleEditUiState.Ready)?.saveFailed == true
+    val photoErrorText = stringResource(Res.string.error_add_photo)
+    val photoFailed = (state as? VehicleEditUiState.Ready)?.photoError == true
 
     // UI-SPEC Add/Edit "Save failed": the form is retained and the failure is reported. The flag is
     // one-shot — the ViewModel clears it once the Snackbar has been shown, so a recomposition can
@@ -97,6 +103,16 @@ fun VehicleEditRoute(
         if (saveFailed) {
             snackbarHostState.showSnackbar(saveErrorText)
             viewModel.onSaveErrorShown()
+        }
+    }
+
+    // UI-SPEC Photo field: an import that did not work says so instead of being silently dropped,
+    // through the same host — the flag retires with the message (the call after `showSnackbar`
+    // returns is exactly its dismiss path).
+    LaunchedEffect(photoFailed) {
+        if (photoFailed) {
+            snackbarHostState.showSnackbar(photoErrorText)
+            viewModel.onPhotoImportFailed()
         }
     }
 
@@ -157,6 +173,8 @@ fun VehicleEditRoute(
                 isAdd = isAdd,
                 contentPadding = innerPadding,
                 onFieldChange = viewModel::onFieldChange,
+                onPhotoPicked = viewModel::onPhotoPicked,
+                onPhotoRemoved = viewModel::onPhotoRemoved,
                 onSave = { viewModel.save(onSaved = onDone) },
             )
         }
@@ -164,8 +182,10 @@ fun VehicleEditRoute(
 }
 
 /**
- * The C-1 field order — Name → Make → Model → Year → License plate → Type — in one `Column` with
- * `lg` 24px between field groups. The photo block plan 01-08 owns is appended after the Type row.
+ * The C-1 field order — Name → Make → Model → Year → License plate → Type → Photo — in one
+ * `Column` with `lg` 24px between field groups. The photo block is last (UI-SPEC rationale: the
+ * heaviest interaction must never sit between the user and a fast add); the submit button stays
+ * below it and closes the form.
  */
 @Composable
 private fun VehicleEditForm(
@@ -173,6 +193,8 @@ private fun VehicleEditForm(
     isAdd: Boolean,
     contentPadding: PaddingValues,
     onFieldChange: ((VehicleFormValues) -> VehicleFormValues) -> Unit,
+    onPhotoPicked: (PlatformFile) -> Unit,
+    onPhotoRemoved: () -> Unit,
     onSave: () -> Unit,
 ) {
     val values = state.values
@@ -283,6 +305,17 @@ private fun VehicleEditForm(
                 enabled = !saving,
             )
         }
+
+        PhotoField(
+            photoPath = values.photoPath,
+            name = values.name,
+            onPicked = onPhotoPicked,
+            onRemove = onPhotoRemoved,
+            error = state.photoError,
+            // A save or an import both leave the values mid-flight, so neither may be interrupted by
+            // a new pick or a removal (T-01-49's ordering depends on it).
+            enabled = !saving && !state.importing,
+        )
 
         Button(
             onClick = onSave,
