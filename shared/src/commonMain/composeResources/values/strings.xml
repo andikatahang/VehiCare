@@ -67,4 +67,74 @@
     <string name="cd_vehicle_photo">Photo of %1$s</string>
     <string name="cd_vehicle_type_icon">%1$s</string>
     <string name="cd_license_plate">License plate %1$s</string>
+
+    <!-- Phase 2: service log (UI-SPEC §Copywriting Contract) -->
+
+    <!-- Titles -->
+    <string name="title_service_history">Service history</string>
+    <string name="title_add_service">Add service</string>
+    <string name="title_edit_service">Edit service</string>
+    <string name="title_service_entry">Service entry</string>
+    <!-- Added now; the existing coming-soon key stays until ComingSoonSlot.kt is deleted (plan 02-05). -->
+    <string name="detail_service_history">Service history</string>
+
+    <!-- Actions -->
+    <string name="action_add_service">Add service</string>
+    <string name="action_update_service">Update service</string>
+    <string name="action_add_part">Add part</string>
+    <string name="action_set_date">Set date</string>
+    <string name="action_add_type">Add type</string>
+    <string name="action_delete_service_entry">Delete service entry</string>
+    <string name="action_back_to_history">Back to service history</string>
+
+    <!-- Fields -->
+    <string name="field_service_date">Service date</string>
+    <string name="field_mileage">Mileage</string>
+    <string name="field_service_type">Service type</string>
+    <string name="field_cost">Cost</string>
+    <string name="field_notes">Notes</string>
+    <string name="field_workshop">Workshop</string>
+    <string name="field_mechanic">Mechanic</string>
+    <string name="field_parts">Parts</string>
+    <string name="field_part_name">Part name</string>
+    <string name="field_quantity">Qty</string>
+    <string name="field_photos">Photos</string>
+
+    <!-- Values / formats -->
+    <string name="value_mileage_km">%1$s km</string>
+    <string name="service_photo_count">%1$d of 5 photos</string>
+
+    <!-- History / summary / states -->
+    <string name="sort_date">Date</string>
+    <string name="sort_mileage">Mileage</string>
+    <string name="empty_service_history_heading">No service entries yet</string>
+    <string name="empty_service_history_body">Log your first service to start building this vehicle\'s history.</string>
+    <string name="loading_service_history">Loading service history</string>
+    <string name="loading_service_entry">Loading this service entry</string>
+    <string name="detail_entry_not_found">This service entry is no longer available.</string>
+    <string name="service_summary_last">Last service %1$s</string>
+    <string name="service_summary_none">No entries yet</string>
+    <plurals name="service_summary_entries">
+        <item quantity="one">%1$d entry</item>
+        <item quantity="other">%1$d entries</item>
+    </plurals>
+
+    <!-- Warnings / errors -->
+    <string name="warn_mileage_lower">Lower than the last recorded mileage — check this</string>
+    <string name="error_mileage_required">Enter the mileage.</string>
+    <string name="error_load_history">Couldn\'t load the service history. Check that your device has free storage space, then try again.</string>
+    <string name="error_load_entry">Couldn\'t load this service entry. Check that your device has free storage space, then try again.</string>
+    <string name="error_save_entry">Couldn\'t save this service entry. Check that your device has free storage space, then try again.</string>
+    <string name="error_delete_entry">Couldn\'t delete this service entry. Try again.</string>
+
+    <!-- Dialogs / feedback -->
+    <string name="dialog_add_type_title">Add service type</string>
+    <string name="dialog_delete_entry_title">Delete service entry</string>
+    <string name="dialog_delete_entry_message">Delete this entry? This can\'t be undone.</string>
+    <string name="snackbar_entry_deleted">Service entry deleted.</string>
+
+    <!-- Accessibility -->
+    <string name="cd_add_service">Add service</string>
+    <string name="cd_remove_photo">Remove photo %1$d</string>
+    <string name="cd_remove_part">Remove part %1$d</string>
 </resources>
