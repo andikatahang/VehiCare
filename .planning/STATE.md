@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: Ready to execute
-last_updated: "2026-10-18T18:02:33.604Z"
+last_updated: "2026-10-19T05:02:24.546Z"
 progress:
   total_phases: 3
   completed_phases: 0
   total_plans: 10
-  completed_plans: 5
-  percent: 50
+  completed_plans: 6
+  percent: 0
 ---
 
 # STATE: VehiCare
@@ -22,14 +22,14 @@ progress:
 ## Current Position
 
 Phase: 01 (foundation-vehicle-management) — EXECUTING
-Plan: 6 of 10
+Plan: 7 of 10
 
 | Field | Value |
 |-------|-------|
 | **Active Phase** | Phase 1: Foundation & Vehicle Management |
-| **Active Plan** | 01-06 (01-01–01-05 complete and verified) |
-| **Status** | Wave 3 done — plan 01-05 (CI migration guard + real-driver WAL proofs) executed and verified; next executable plan is 01-06 (wave 4) |
-| **Progress** | █████░░░░░ 50% |
+| **Active Plan** | 01-07 (01-01–01-06 complete and verified) |
+| **Status** | Wave 4 done — plan 01-06 (D-14 identity-card vehicle list: primitives, card, empty state, four-state screen, D-19 FAB) executed; next executable plan is 01-07 (wave 5) |
+| **Progress** | ██████░░░░ 60% |
 
 ```
 Phase 1 [In Progress] → Phase 2 [Not Started] → Phase 3 [Not Started]
@@ -54,11 +54,11 @@ Phase 1 [In Progress] → Phase 2 [Not Started] → Phase 3 [Not Started]
 | Metric | Value |
 |--------|-------|
 | Phases completed | 0 / 3 |
-| Plans completed | 5 / 10 |
-| Requirements covered | 4 / 21 |
-| Sessions | 5 |
+| Plans completed | 6 / 10 |
+| Requirements covered | 5 / 21 |
+| Sessions | 6 |
 
-Per-plan: `Phase 1 / 01` — ~28min, 3 tasks, 63 files · `Phase 1 / 02` — 17min, 3 tasks, 15 files · `Phase 1 / 03` — 20min, 3 tasks, 17 files · `Phase 1 / 04` — 24min, 3 tasks, 17 files · `Phase 1 / 05` — 11min, 3 tasks, 3 files.
+Per-plan: `Phase 1 / 01` — ~28min, 3 tasks, 63 files · `Phase 1 / 02` — 17min, 3 tasks, 15 files · `Phase 1 / 03` — 20min, 3 tasks, 17 files · `Phase 1 / 04` — 24min, 3 tasks, 17 files · `Phase 1 / 05` — 11min, 3 tasks, 3 files · `Phase 1 / 06` — 10min, 3 tasks, 8 files.
 
 ## Accumulated Context
 
@@ -140,17 +140,18 @@ Unchanged from the contract: Gradle 9.5.1 · SQLDelight 2.4.1 · Koin 4.2.2 · N
 - [x] Wave 2 / plan 01-02 (shared UI foundation) → verified by an Android APK build, a Kotlin/Native framework link and a real `xcodebuild` simulator build
 - [x] Wave 2 / plan 01-03 (WAL schema, driver factories, serialized-IO repository) → verified by real-driver iOS tests, mapper tests on both targets, and a reproducible `1.db` baseline; the WAL mechanism was corrected after the `.sq` preamble proved to crash iOS driver creation (see `01-03-SUMMARY.md`)
 - [x] Wave 3 / plan 01-05 (CI migration guard + WAL proofs) → verified by the guard-fire probe (diff guard exit 1, verify task vacuous) and `WalModeTest` green on the iOS driver and on an API 28 emulator (see `01-05-SUMMARY.md`)
+- [x] Wave 4 / plan 01-06 (D-14 identity-card vehicle list) → verified by an Android APK build, a Kotlin/Native framework link and meta-line unit tests on both targets (see `01-06-SUMMARY.md`)
 
 ### Blockers
 
-None. Plans 01-01–01-05 are complete and verified by executed builds and tests: 01-05 armed CI (per-source-set migration task + baseline diff guard, aggregate-task vacuity probe-proven) and proved WAL from first launch on the iOS driver (`iosSimulatorArm64Test`) and on an API 28 Android emulator (`connectedAndroidDeviceTest`, 6/6). The next executable plan is **01-06**. Runtime launch on a device/emulator remains for `/gsd-verify-work` (`workflow.human_verify_mode` = end-of-phase).
+None. Plans 01-01–01-06 are complete and verified by executed builds and tests: 01-06 shipped the D-14 identity-card list in its final form (identity cards with a blank-segment-aware meta line, D-15 empty state, four-state screen, D-19 FAB) with `:androidApp:assembleDebug`, `:shared:compileKotlinIosSimulatorArm64` and both test tasks green (see `01-06-SUMMARY.md`). The next executable plan is **01-07**. Runtime launch on a device/emulator remains for `/gsd-verify-work` (`workflow.human_verify_mode` = end-of-phase).
 
 ---
 
 ## Session Continuity
 
-**Last session:** 2026-10-18T18:02:33.601Z
-**Next action:** Execute plan **01-06** — the D-14 identity-card vehicle list: `VehicleTypeCircle` + `LicensePlateChip` primitives, blank-segment-aware meta line, `EmptyState` with first-add guidance, four-state list screen and the D-19 FAB wired to the Add/Detail destinations. No pre-work remains.
+**Last session:** 2026-10-19T05:02:24.542Z
+**Next action:** Execute plan **01-07** (wave 5) — replace the name-only slice with the real Add/Edit form (D-08): name/make/model/year/plate plus a Car · Motorcycle · Truck type picker, name-required inline validation, year digits-only input, and the honest Saving/Save-failed contract (VEH-01, VEH-03). Depends on 01-06, which is complete.
 
 ## Decisions
 
@@ -165,3 +166,10 @@ None. Plans 01-01–01-05 are complete and verified by executed builds and tests
 - [Phase 01]: Baseline-diff CI guard is the load-bearing DAT-04 control — Per-source-set verifyCommonMainVehiCareDatabaseMigration passed vacuously (exit 0) on a probe column with no .sqm; only generate...Schema && git diff --exit-code on the committed 1.db baseline detected drift (exit 1). CI keeps both guards.
 - [Phase 01]: Temurin 21 for CI — The RESEARCH Environment row fixing the GitHub Actions runner is ubuntu-latest + Temurin 21 (Any CI with Java 21); it supports Gradle 9.5.1 / AGP 9.1.1 / Kotlin 2.4.20 even though the Wave 0 gate landed option-b
 - [Phase 01]: Android WAL persistence assert uses a bare second driver — A second connection routed through DriverFactory re-runs the WAL pragma and can never fail, so the persistence claim uses a bare AndroidSqliteDriver that never executes the pragma (plan forbids weakening the Android test)
+- [Phase 01]: labelRes()/iconRes() live in the UI layer — the domain enum stays plain Kotlin with no Compose Resources dependency
+- [Phase 01]: Type glyph loads with vectorResource (not painterResource) to match the shipped BottomTabs and the verified UI-SPEC vector path; iconRes() interface unchanged
+- [Phase 01]: Meta line is a pure internal vehicleMetaLine helper unit-tested in commonTest per the acceptance criteria
+- [Phase 01]: LicensePlateChip announces 'License plate {plate}' so the merged card reads it as a labelled value
+- [Phase 01]: FAB placed via Box overlay with explicit 16px/8px insets — the M3 Scaffold FAB slot cannot express the declared 8px bottom inset
+- [Phase 01]: Coil PlatformFile support registered once in App() so a Detail-first composition also gets a FileKit-aware loader
+- [Phase 01]: EmptyState centers its block (plan text) rather than reading the 64px top-offset literally
