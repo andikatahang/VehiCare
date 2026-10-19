@@ -215,7 +215,6 @@ class PhotoStorageTest {
     @OptIn(ExperimentalForeignApi::class, BetaInteropApi::class)
     private fun ByteArray.toUIImage(): UIImage =
         UIImage(data = usePinned { pinned -> NSData.create(pinned.addressOf(0), size.toULong()) })
-            ?: error("the stored photo must still be a decodable image")
 
     @OptIn(ExperimentalForeignApi::class)
     private fun NSData.toByteArray(): ByteArray {
