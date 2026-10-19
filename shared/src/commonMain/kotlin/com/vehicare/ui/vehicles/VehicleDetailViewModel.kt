@@ -92,10 +92,10 @@ class VehicleDetailViewModel(
      * Deletes this vehicle **and the photo file the repository holds for it** (`D-07`), then hands
      * the outcome back to the screen.
      *
-     * **Irreversible in Phase 1: there is no undo and no trash.** The confirmation dialog is the
-     * only path that reaches this method, and there is deliberately no recovery surface behind it —
-     * an author looking for a way to bring a deleted vehicle back should know it does not exist
-     * rather than assume one is hiding somewhere.
+     * **Irreversible in Phase 1: a deleted vehicle never comes back.** The confirmation dialog is
+     * the only path that reaches this method, and there is deliberately no recovery surface behind
+     * it — an author looking for a way to bring a deleted vehicle back should know the capability
+     * does not exist rather than assume one is hiding somewhere.
      *
      * Nothing is removed from the UI here and no optimistic state exists: the repository's flow is
      * what makes the row disappear once the row really is gone, so a failure needs no rollback —
