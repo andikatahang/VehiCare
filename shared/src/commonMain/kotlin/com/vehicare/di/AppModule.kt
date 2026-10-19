@@ -6,6 +6,7 @@ import com.vehicare.data.db.DatabaseFactory
 import com.vehicare.data.db.DriverFactory
 import com.vehicare.data.db.createDriverFactory
 import com.vehicare.db.VehiCareDatabase
+import com.vehicare.ui.vehicles.VehicleDetailViewModel
 import com.vehicare.ui.vehicles.VehicleEditViewModel
 import com.vehicare.ui.vehicles.VehicleListViewModel
 import com.vehicare.util.PhotoStorage
@@ -38,4 +39,7 @@ val appModule = module {
     // The form's id comes from the route: `parametersOf(vehicleId)` at the call site, destructured
     // here. 0L is the add case; anything else loads that row for edit.
     viewModel { (vehicleId: Long) -> VehicleEditViewModel(get(), vehicleId) }
+    // The Detail destination's id arrives the same way the form's does, so both route-id
+    // ViewModels are built by one mechanism — a typed `Long` from the route, never a string key.
+    viewModel { (vehicleId: Long) -> VehicleDetailViewModel(get(), vehicleId) }
 }
