@@ -918,19 +918,25 @@ object PhotoStorage {
 
 **If this table were empty:** it is not — A1–A6 are the discretionary/untested spots; everything else in this research was verified or cited.
 
-## Open Questions
+## Open Questions (RESOLVED)
 
-1. **Phase 2 UI-SPEC is pending (config `ui_phase: true`).**
+> **All resolved during planning.** Every question below is closed and its resolution is encoded in the phase plans or explicitly deferred to phase verification, so nothing blocks execution. The resolutions are:
+> OQ-1 → `02-UI-SPEC.md` landed and is the binding copy/layout contract; plan **02-02** authors the string set from its §Copywriting Contract, and every consuming plan treats the UI-SPEC as the contract. OQ-2 → **deferred to phase verification**: device-level Android migration coverage is a manual, local follow-up (the instruction is recorded in plan **02-01**'s verification section), not a plan task; CI gains no emulator job. OQ-3 → creation-order recency ships as researched (`MAX(id)`, decision A5); no schema addition.
+
+1. **Phase 2 UI-SPEC is pending (config `ui_phase: true`). — RESOLVED**
+   - Resolution: **landed.** `02-UI-SPEC.md` fixes copy, layout and the state/accessibility contracts before any plan authors `strings.xml`; plan **02-02** carries the §Copywriting Contract keys, and the D-28/D-35 strings appear there verbatim. The consuming plans (02-03/02-04/02-05/02-06) cite the UI-SPEC as the contract — this research's wording is the fallback only.
    - What we know: 01-UI-SPEC tokens/rules carry forward; D-28 and D-35 lock two strings verbatim; this research recommends the rest (FAB "Add service", sort labels "Date"/"Mileage", snackbar "Service entry deleted.", empty state "No service entries yet" + CTA, summary row "N entries · Last service <date>").
    - What's unclear: final copy for empty state / summary row, thumbnail sizing, whether history rows show an em-dash for a null cost or omit the trailing value.
    - Recommendation: let the Phase 2 UI-SPEC fix copy/layout before plan tasks author `strings.xml`; plans should treat this research's wording as the fallback, not the contract.
 
-2. **Android device-test coverage for the migration is local-only.**
+2. **Android device-test coverage for the migration is local-only. — RESOLVED (deferred to phase verification)**
+   - Resolution: **deferred to phase verification, not a plan task.** No plan authors or extends `androidDeviceTest`; the `1.sqm` path stays proven compile-time (`verifyCommonMainVehiCareDatabaseMigration`) and by committed-baseline diff in CI, which has **no emulator job**. The manual follow-up instruction is recorded in plan **02-01**'s `<verification>` section: on the `Medium_Phone` AVD, install a Phase-1 build, create a vehicle, then install the Phase-2 build over it and confirm the v1 database migrates in place (vehicle intact, entry saves). A CI emulator job stays a later-phase question (cost/complexity).
    - What we know: CI runs host tests + iOS simulator tests; there is **no emulator job** (verified in `ci.yml`). The `1.sqm` path is proven compile-time (verify task) and by baseline diff, not by running the migration on an Android SQLite.
    - What's unclear: whether a device-level migration test is worth adding now.
    - Recommendation: add/extend `androidDeviceTest` coverage for "open v1 db → migrate → service tables exist" and run `:shared:connectedAndroidDeviceTest` locally with the `Medium_Phone` AVD before phase verification; defer a CI emulator job to a later phase (cost/complexity).
 
-3. **Learned-type recency on edit (A5).**
+3. **Learned-type recency on edit (A5). — RESOLVED**
+   - Resolution: **creation-order recency ships** — `selectLearnedTypes` groups on `lower(service_type)` and ranks by `MAX(id)` (plan **02-01**), matching decision A5: editing an old entry to a new type does not bump it, and no `updated_at` column is added. Revisit only if UAT shows surprise; the change would be additive.
    - What we know: `MAX(id)` ranks by creation; D-24 says "newest-used first".
    - What's unclear: whether "used" should include "edited an old entry to this type".
    - Recommendation: ship creation-order recency (simple, no schema addition); revisit only if UAT shows surprise.
