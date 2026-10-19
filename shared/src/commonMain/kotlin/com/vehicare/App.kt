@@ -8,6 +8,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
+import coil3.ImageLoader
+import coil3.compose.setSingletonImageLoaderFactory
 import com.vehicare.di.appModule
 import com.vehicare.ui.navigation.BottomTabs
 import com.vehicare.ui.navigation.SettingsRoute
@@ -19,6 +21,7 @@ import com.vehicare.ui.vehicles.VehicleEditRoute as VehicleEditScreen
 import com.vehicare.ui.vehicles.VehicleListRoute as VehicleListScreen
 import com.vehicare.ui.theme.VehiCareTheme
 import com.vehicare.ui.settings.SettingsScreen
+import io.github.vinceglb.filekit.coil.addPlatformFileSupport
 import org.koin.compose.KoinApplication
 import org.koin.core.module.Module
 import org.koin.dsl.module
@@ -39,6 +42,16 @@ private val noPlatformModule: Module = module {}
  */
 @Composable
 fun App(platformModule: Module = noPlatformModule) {
+    // Teach Coil's process-wide image loader about FileKit's `PlatformFile`, so an image model
+    // built from the stored relative photo path is a first-class Coil model (UI-SPEC Icon Contract
+    // / RESEARCH Don't Hand-Roll: decode through Coil, never by hand). Registered here — the single
+    // rendering path — so every screen that shows a photo gets it, before any image is requested.
+    setSingletonImageLoaderFactory { context ->
+        ImageLoader.Builder(context)
+            .components { addPlatformFileSupport() }
+            .build()
+    }
+
     VehiCareTheme {
         KoinApplication(application = { modules(appModule, platformModule) }) {
             val navController = rememberNavController()
@@ -52,7 +65,10 @@ fun App(platformModule: Module = noPlatformModule) {
                     modifier = Modifier.padding(innerPadding),
                 ) {
                     composable<VehicleListRoute> {
-                        VehicleListScreen()
+                        VehicleListScreen(
+                            onAddVehicle = { navController.navigate(VehicleEditRoute()) },
+                            onOpenVehicle = { id -> navController.navigate(VehicleDetailRoute(id)) },
+                        )
                     }
                     composable<SettingsRoute> {
                         SettingsScreen()
