@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: Ready to execute
-last_updated: "2026-10-19T12:59:52.642Z"
+status: Executing Phase 02
+last_updated: "2026-10-19T14:03:45.084Z"
 progress:
   total_phases: 3
   completed_phases: 1
-  total_plans: 10
-  completed_plans: 10
-  percent: 33
+  total_plans: 16
+  completed_plans: 11
+  percent: 69
 ---
 
 # STATE: VehiCare
@@ -21,18 +21,18 @@ progress:
 
 ## Current Position
 
-Phase: 02 (service-log) — READY TO PLAN
-Plan: Not started
+Phase: 02 (service-log) — EXECUTING
+Plan: 2 of 6
 
 | Field | Value |
 |-------|-------|
-| **Active Phase** | Phase 2: Service Log (ready to plan) |
-| **Active Plan** | Not started (Phase 2 not yet planned) |
-| **Status** | Phase 1 complete (2026-10-19) — UAT 6/6 passed; security threat-secure (72/72, `threats_open: 0`); ready to discuss/plan Phase 2 |
-| **Progress** | `[████████████████████] 10/10 plans (100%)` |
+| **Active Phase** | Phase 2: Service Log (executing) |
+| **Active Plan** | 02-02 next — 02-01 (data core) complete 2026-10-19 |
+| **Status** | 02-01 complete — schema v2 + migration + repository under both CI guards; iOS + Android test targets green |
+| **Progress** | `[███████░░░] 11/16 plans (69%)` |
 
 ```
-Phase 1 [Complete] → Phase 2 [Next — ready to plan] → Phase 3 [Not Started]
+Phase 1 [Complete] → Phase 2 [Executing — 1/6 plans] → Phase 3 [Not Started]
                       ↑
                       Current
 ```
@@ -44,7 +44,7 @@ Phase 1 [Complete] → Phase 2 [Next — ready to plan] → Phase 3 [Not Started
 | Phase | Name | Status |
 |-------|------|--------|
 | 1 | Foundation & Vehicle Management | Complete (2026-10-19) |
-| 2 | Service Log | Ready to plan |
+| 2 | Service Log | Executing — 1/6 plans (02-01 complete) |
 | 3 | Reminders & Dashboard | Not started |
 
 ---
@@ -54,11 +54,11 @@ Phase 1 [Complete] → Phase 2 [Next — ready to plan] → Phase 3 [Not Started
 | Metric | Value |
 |--------|-------|
 | Phases completed | 1 / 3 |
-| Plans completed | 10 / 10 |
-| Requirements covered | 9 / 21 |
-| Sessions | 10 |
+| Plans completed | 11 / 16 |
+| Requirements covered | 15 / 21 |
+| Sessions | 11 |
 
-Per-plan: `Phase 1 / 01` — ~28min, 3 tasks, 63 files · `Phase 1 / 02` — 17min, 3 tasks, 15 files · `Phase 1 / 03` — 20min, 3 tasks, 17 files · `Phase 1 / 04` — 24min, 3 tasks, 17 files · `Phase 1 / 05` — 11min, 3 tasks, 3 files · `Phase 1 / 06` — 10min, 3 tasks, 8 files · `Phase 1 / 07` — 21min, 3 tasks, 6 files · `Phase 1 / 08` — 21min, 3 tasks, 6 files · `Phase 1 / 09` — 4min, 3 tasks, 6 files · `Phase 1 / 10` — 12min, 3 tasks, 5 files.
+Per-plan: `Phase 1 / 01` — ~28min, 3 tasks, 63 files · `Phase 1 / 02` — 17min, 3 tasks, 15 files · `Phase 1 / 03` — 20min, 3 tasks, 17 files · `Phase 1 / 04` — 24min, 3 tasks, 17 files · `Phase 1 / 05` — 11min, 3 tasks, 3 files · `Phase 1 / 06` — 10min, 3 tasks, 8 files · `Phase 1 / 07` — 21min, 3 tasks, 6 files · `Phase 1 / 08` — 21min, 3 tasks, 6 files · `Phase 1 / 09` — 4min, 3 tasks, 6 files · `Phase 1 / 10` — 12min, 3 tasks, 5 files · `Phase 2 / 01` — 11min, 3 tasks, 14 files.
 
 ## Accumulated Context
 
@@ -135,6 +135,7 @@ Unchanged from the contract: Gradle 9.5.1 · SQLDelight 2.4.1 · Koin 4.2.2 · N
 ### Todos
 
 - [ ] Answer open questions 1–4, 6 and 7 when their phase needs them (Q1 km/miles and Q3 advance-notice shape the Phase 2 schema)
+- [x] Wave 1 / plan 02-01 (service-log data core) → verified by both CI guards locally (`verify…Migration` + regenerate-then-diff clean), 8 real-driver iOS repository tests, and 11 mapper/vocabulary host tests (see `02-01-SUMMARY.md`)
 - [ ] Optional (debt): re-verify Phase 1 to flip `01-VERIFICATION.md` → `passed`; fix `01-REVIEW.md` findings (CR-01, WR-01…03) before shipping
 - [x] Set up CI before the first release commit (`generateCommonMainVehiCareDatabaseSchema` + `verifyCommonMainVehiCareDatabaseMigration`) → done in plan 01-05 (`.github/workflows/ci.yml`, probe-proven guard)
 - [x] Bootstrap the project — done by the user in Android Studio at `~/Proyek Aplikasi/VehiCare`
@@ -158,8 +159,8 @@ No blockers. **Phase 1 closed 2026-10-19** — UAT 6/6 passed (`01-UAT.md`), sec
 
 ## Session Continuity
 
-**Last session:** 2026-10-19T10:55:50.487Z
-**Next action:** Phase 1 complete — 10/10 plans, all nine requirements (DAT-01–04, VEH-01–05), UAT 6/6 passed, security threat-secure. Next: `/clear`, then `/gsd-discuss-phase 2` (Service Log) — or `/gsd-plan-phase 2` to skip discussion. Debt: `01-VERIFICATION.md` `human_needed` acknowledged (see Blockers).
+**Last session:** 2026-10-19T14:03:45.080Z
+**Next action:** 02-01 (service-log data core) complete — schema v2 + `1.sqm` + `2.db` committed under both CI guards; `ServiceEntryRepository` ready for the UI plans. Next: `/gsd-execute-phase 2` continues with 02-02 (kotlinx-datetime + `ServiceDates`/`RupiahFormat` + Phase 2 strings). Debt: `01-VERIFICATION.md` `human_needed` acknowledged (see Blockers).
 
 ## Decisions
 
@@ -203,3 +204,6 @@ No blockers. **Phase 1 closed 2026-10-19** — UAT 6/6 passed (`01-UAT.md`), sec
 - [Phase 01]: The post-delete success Snackbar is shown on the shell's scope before navController.popBackStack() — The Detail screen is popped the instant the delete succeeds, so the message is hosted by App() and launched first — and the Flow-driven list already lacks the deleted card (T-01-62)
 - [Phase 01]: delete() rethrows CancellationException and reports failure without optimism — A torn-down scope is not a failed deletion; a real failure keeps the vehicle visible and stored, and deleteFailed is retired one-shot after showSnackbar returns — no local removal ever needs a rollback (T-01-60)
 - [Phase 01]: VehicleDeletionTest binds VehicleRepositoryImpl(database, photoDeleter = PhotoStorage::delete) — The identical AppModule binding, so the real-filesystem assertion proves the shipped seam (D-07); ordering facts run on Dispatchers.setMain(StandardTestDispatcher) with CompletableDeferred gates, never sleeps
+- [Phase 02]: Generated row types are Service_entry / Service_part / Service_photo; the mapper aliases them as *Entity — SQLDelight derives the class name from the table name (same derivation as Phase 1's VehicleEntity alias); the block-comment plan name ServiceEntry does not exist, so aliases keep the boundary intact
+- [Phase 02]: observePreviousMileage reads the entry's stored date first, then binds the self-excluding query — Keeps (vehicleId, entryId) as the interface while leaving the id != / id < tie-break in SQL; no date parameter leaks to the UI
+- [Phase 02]: photoDeleter stays a no-op until plan 02-03 wires PhotoStorage::delete — The plan assigns DI wiring to 02-03; delete ordering is already proven with an injected recording deleter in iosTest

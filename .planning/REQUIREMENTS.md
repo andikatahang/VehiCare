@@ -15,13 +15,13 @@
 
 ### Service Log
 
-- [ ] **SVC-01**: User can create a service entry with date, mileage, service type, cost, and notes
-- [ ] **SVC-02**: User can add parts replaced or repaired to a service entry (part name, quantity)
-- [ ] **SVC-03**: User can attach one or more photos (receipts, work done) to a service entry
+- [x] **SVC-01**: User can create a service entry with date, mileage, service type, cost, and notes
+- [x] **SVC-02**: User can add parts replaced or repaired to a service entry (part name, quantity)
+- [x] **SVC-03**: User can attach one or more photos (receipts, work done) to a service entry
 - [ ] **SVC-04**: User can record the workshop name and mechanic for a service entry
-- [ ] **SVC-05**: User can view the full service history for a vehicle, sorted by date or mileage
-- [ ] **SVC-06**: User can edit an existing service entry
-- [ ] **SVC-07**: User can delete a service entry
+- [x] **SVC-05**: User can view the full service history for a vehicle, sorted by date or mileage
+- [x] **SVC-06**: User can edit an existing service entry
+- [x] **SVC-07**: User can delete a service entry
 
 ### Reminders
 
@@ -88,13 +88,13 @@ Which phases cover which requirements. Updated during roadmap creation.
 | VEH-03 | Phase 1: Foundation & Vehicle Management | Complete |
 | VEH-04 | Phase 1: Foundation & Vehicle Management | Complete |
 | VEH-05 | Phase 1: Foundation & Vehicle Management | Complete |
-| SVC-01 | Phase 2: Service Log | Pending |
-| SVC-02 | Phase 2: Service Log | Pending |
-| SVC-03 | Phase 2: Service Log | Pending |
+| SVC-01 | Phase 2: Service Log | Complete |
+| SVC-02 | Phase 2: Service Log | Complete |
+| SVC-03 | Phase 2: Service Log | Complete |
 | SVC-04 | Phase 2: Service Log | Pending |
-| SVC-05 | Phase 2: Service Log | Pending |
-| SVC-06 | Phase 2: Service Log | Pending |
-| SVC-07 | Phase 2: Service Log | Pending |
+| SVC-05 | Phase 2: Service Log | Complete |
+| SVC-06 | Phase 2: Service Log | Complete |
+| SVC-07 | Phase 2: Service Log | Complete |
 | REM-01 | Phase 3: Reminders & Dashboard | Pending |
 | REM-02 | Phase 3: Reminders & Dashboard | Pending |
 | REM-03 | Phase 3: Reminders & Dashboard | Pending |
