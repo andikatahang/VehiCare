@@ -2,8 +2,8 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: Phase complete — ready for verification
-last_updated: "2026-10-19T07:48:36.892Z"
+status: Ready to plan
+last_updated: "2026-10-19T09:42:04.123Z"
 progress:
   total_phases: 3
   completed_phases: 1
@@ -21,20 +21,20 @@ progress:
 
 ## Current Position
 
-Phase: 01 (foundation-vehicle-management) — EXECUTING
-Plan: 10 of 10
+Phase: 02 (service-log) — READY TO PLAN
+Plan: Not started
 
 | Field | Value |
 |-------|-------|
-| **Active Phase** | Phase 1: Foundation & Vehicle Management |
-| **Active Plan** | 01-10 (01-01–01-10 complete — Phase 1 fully executed) |
-| **Status** | Wave 8 done — plan 01-10 (the confirmed, irreversible delete flow: `ConfirmDeleteDialog` with the locked copy as the only path to `VehicleDetailViewModel.delete`, the single-flight non-optimistic delete that removes the row and the photo file through the `PhotoStorage` seam, the in-flight-disabled destructive action, the failure Snackbar with one-shot retirement, and the shell-hosted `snackbar_vehicle_deleted` success message shown before the pop) executed; all 10 plans of Phase 1 are done — end-of-phase `/gsd-verify-work` remains |
-| **Progress** | ██████████ 100% |
+| **Active Phase** | Phase 2: Service Log (ready to plan) |
+| **Active Plan** | Not started (Phase 2 not yet planned) |
+| **Status** | Phase 1 complete (2026-10-19) — UAT 6/6 passed; security threat-secure (72/72, `threats_open: 0`); ready to discuss/plan Phase 2 |
+| **Progress** | `[████████████████████] 10/10 plans (100%)` |
 
 ```
-Phase 1 [In Progress] → Phase 2 [Not Started] → Phase 3 [Not Started]
-   ↑
-   Current
+Phase 1 [Complete] → Phase 2 [Next — ready to plan] → Phase 3 [Not Started]
+                      ↑
+                      Current
 ```
 
 ---
@@ -43,8 +43,8 @@ Phase 1 [In Progress] → Phase 2 [Not Started] → Phase 3 [Not Started]
 
 | Phase | Name | Status |
 |-------|------|--------|
-| 1 | Foundation & Vehicle Management | In progress |
-| 2 | Service Log | Not started |
+| 1 | Foundation & Vehicle Management | Complete (2026-10-19) |
+| 2 | Service Log | Ready to plan |
 | 3 | Reminders & Dashboard | Not started |
 
 ---
@@ -53,7 +53,7 @@ Phase 1 [In Progress] → Phase 2 [Not Started] → Phase 3 [Not Started]
 
 | Metric | Value |
 |--------|-------|
-| Phases completed | 0 / 3 |
+| Phases completed | 1 / 3 |
 | Plans completed | 10 / 10 |
 | Requirements covered | 9 / 21 |
 | Sessions | 10 |
@@ -83,6 +83,9 @@ Per-plan: `Phase 1 / 01` — ~28min, 3 tasks, 63 files · `Phase 1 / 02` — 17m
 | `Dispatchers.IO.limitedParallelism(1)` for DB writes | Prevents iOS `SIGABRT` from concurrent `NativeSqliteDriver` access |
 | iOS mileage reminders: foreground-check | iOS cannot evaluate mileage in background; use `triggerImmediateIfOverdue()` |
 | Notification permission gated to first reminder | A one-time iOS prompt denied on cold launch breaks reminders permanently |
+| Two must-have literal wordings overridden by the developer (G-1 Compose single-version; G-2 WAL "declared in SQL") | Both protected intents independently re-verified against the codebase; recorded in `01-VERIFICATION.md` with `accepted_by` |
+| WAL established at driver construction (Android row-safe pragma; iOS SQLiter `JournalMode.WAL` default) | The `.sq`-preamble mechanism crashes iOS driver creation; capability proven by real-driver `WalModeTest` on both platforms |
+| Baseline-diff CI guard is the load-bearing migration control | The aggregate verify task passed vacuously on a probe column; `generateCommonMainVehiCareDatabaseSchema` + `git diff --exit-code` on the committed `1.db` caught the drift |
 
 ### Version Set (in force)
 
@@ -131,7 +134,8 @@ Unchanged from the contract: Gradle 9.5.1 · SQLDelight 2.4.1 · Koin 4.2.2 · N
 
 ### Todos
 
-- [ ] Answer open questions 1–4, 6 and 7 before the Phase 1 schema is finalized
+- [ ] Answer open questions 1–4, 6 and 7 when their phase needs them (Q1 km/miles and Q3 advance-notice shape the Phase 2 schema)
+- [ ] Optional (debt): re-verify Phase 1 to flip `01-VERIFICATION.md` → `passed`; fix `01-REVIEW.md` findings (CR-01, WR-01…03) before shipping
 - [x] Set up CI before the first release commit (`generateCommonMainVehiCareDatabaseSchema` + `verifyCommonMainVehiCareDatabaseMigration`) → done in plan 01-05 (`.github/workflows/ci.yml`, probe-proven guard)
 - [x] Bootstrap the project — done by the user in Android Studio at `~/Proyek Aplikasi/VehiCare`
 - [x] Decide waves 2–8 → align first; alignment pass completed 2026-10-18
@@ -148,14 +152,14 @@ Unchanged from the contract: Gradle 9.5.1 · SQLDelight 2.4.1 · Koin 4.2.2 · N
 
 ### Blockers
 
-None. Plans 01-01–01-10 are complete and verified by executed builds and tests: 01-10 closed VEH-04 (the confirmed, irreversible delete: `ConfirmDeleteDialog` with the locked copy as the only path to `VehicleDetailViewModel.delete`, the single-flight non-optimistic delete that removes the row and the photo file through the `PhotoStorage` seam, the in-flight-disabled destructive action, the one-shot failure Snackbar, and the shell-hosted `snackbar_vehicle_deleted` message shown before the pop), proven by 8 real-filesystem `VehicleDeletionTest` cases, with `:androidApp:assembleDebug`, `:shared:compileKotlinIosSimulatorArm64`, `:shared:testAndroidHostTest` and `:shared:iosSimulatorArm64Test` all green. All 10 plans are executed and all nine requirements Phase 1 maps (DAT-01–04, VEH-01–05) are covered; the phase awaits the end-of-phase human check via `/gsd-verify-work` (`workflow.human_verify_mode` = end-of-phase).
+No blockers. **Phase 1 closed 2026-10-19** — UAT 6/6 passed (`01-UAT.md`), security audit threat-secure (`01-SECURITY.md`, 72/72 threats closed, `threats_open: 0`). **Carried-forward debt (acknowledged at completion):** `01-VERIFICATION.md` remains `status: human_needed` — all six human checks passed via UAT; the stale field was acknowledged, not re-verified — gates requiring `status: passed` stay blocked until a re-verification (canonical fix; review via `/gsd-audit-uat`). Open code-review findings (`01-REVIEW.md`: CR-01, WR-01…03, IN-01…06) are tracked separately for the review-fix path.
 
 ---
 
 ## Session Continuity
 
-**Last session:** 2026-10-19T07:47:34.976Z
-**Next action:** Phase 1 execution is complete — 10/10 plans, all nine phase requirements (DAT-01–04, VEH-01–05) covered. Next is the end-of-phase verification pass (`/gsd-verify-work`): the human end-to-end check (create a vehicle with a photo, delete it from Detail, confirm — land on the list with the `Vehicle deleted.` message and no card; cancel removes nothing; the photo file is gone from app storage) and the first runtime launch on device/emulator remain outstanding per `workflow.human_verify_mode` = end-of-phase. After verification, Phase 2 (Service Log) can be planned.
+**Last session:** 2026-10-19 (verify-work completion — Phase 1 closed; transition applied)
+**Next action:** Phase 1 complete — 10/10 plans, all nine requirements (DAT-01–04, VEH-01–05), UAT 6/6 passed, security threat-secure. Next: `/clear`, then `/gsd-discuss-phase 2` (Service Log) — or `/gsd-plan-phase 2` to skip discussion. Debt: `01-VERIFICATION.md` `human_needed` acknowledged (see Blockers).
 
 ## Decisions
 
