@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: Ready to execute
-last_updated: "2026-10-19T05:02:24.546Z"
+last_updated: "2026-10-19T06:33:28.959Z"
 progress:
   total_phases: 3
   completed_phases: 0
   total_plans: 10
-  completed_plans: 6
+  completed_plans: 7
   percent: 0
 ---
 
@@ -22,14 +22,14 @@ progress:
 ## Current Position
 
 Phase: 01 (foundation-vehicle-management) — EXECUTING
-Plan: 7 of 10
+Plan: 8 of 10
 
 | Field | Value |
 |-------|-------|
 | **Active Phase** | Phase 1: Foundation & Vehicle Management |
-| **Active Plan** | 01-07 (01-01–01-06 complete and verified) |
-| **Status** | Wave 4 done — plan 01-06 (D-14 identity-card vehicle list: primitives, card, empty state, four-state screen, D-19 FAB) executed; next executable plan is 01-07 (wave 5) |
-| **Progress** | ██████░░░░ 60% |
+| **Active Plan** | 01-08 (01-01–01-07 complete and verified) |
+| **Status** | Wave 5 done — plan 01-07 (real Add/Edit form: pure rules, Loading/Ready/NotFound state machine, type picker, five-field screen) executed; next executable plan is 01-08 (wave 6, the photo block on this same screen) |
+| **Progress** | ███████░░░ 70% |
 
 ```
 Phase 1 [In Progress] → Phase 2 [Not Started] → Phase 3 [Not Started]
@@ -54,11 +54,11 @@ Phase 1 [In Progress] → Phase 2 [Not Started] → Phase 3 [Not Started]
 | Metric | Value |
 |--------|-------|
 | Phases completed | 0 / 3 |
-| Plans completed | 6 / 10 |
-| Requirements covered | 5 / 21 |
-| Sessions | 6 |
+| Plans completed | 7 / 10 |
+| Requirements covered | 7 / 21 |
+| Sessions | 7 |
 
-Per-plan: `Phase 1 / 01` — ~28min, 3 tasks, 63 files · `Phase 1 / 02` — 17min, 3 tasks, 15 files · `Phase 1 / 03` — 20min, 3 tasks, 17 files · `Phase 1 / 04` — 24min, 3 tasks, 17 files · `Phase 1 / 05` — 11min, 3 tasks, 3 files · `Phase 1 / 06` — 10min, 3 tasks, 8 files.
+Per-plan: `Phase 1 / 01` — ~28min, 3 tasks, 63 files · `Phase 1 / 02` — 17min, 3 tasks, 15 files · `Phase 1 / 03` — 20min, 3 tasks, 17 files · `Phase 1 / 04` — 24min, 3 tasks, 17 files · `Phase 1 / 05` — 11min, 3 tasks, 3 files · `Phase 1 / 06` — 10min, 3 tasks, 8 files · `Phase 1 / 07` — 21min, 3 tasks, 6 files.
 
 ## Accumulated Context
 
@@ -141,17 +141,18 @@ Unchanged from the contract: Gradle 9.5.1 · SQLDelight 2.4.1 · Koin 4.2.2 · N
 - [x] Wave 2 / plan 01-03 (WAL schema, driver factories, serialized-IO repository) → verified by real-driver iOS tests, mapper tests on both targets, and a reproducible `1.db` baseline; the WAL mechanism was corrected after the `.sq` preamble proved to crash iOS driver creation (see `01-03-SUMMARY.md`)
 - [x] Wave 3 / plan 01-05 (CI migration guard + WAL proofs) → verified by the guard-fire probe (diff guard exit 1, verify task vacuous) and `WalModeTest` green on the iOS driver and on an API 28 emulator (see `01-05-SUMMARY.md`)
 - [x] Wave 4 / plan 01-06 (D-14 identity-card vehicle list) → verified by an Android APK build, a Kotlin/Native framework link and meta-line unit tests on both targets (see `01-06-SUMMARY.md`)
+- [x] Wave 5 / plan 01-07 (real Add/Edit form) → verified by 12 rule cases in `VehicleFormValidationTest` on both targets, plus an Android APK build and a Kotlin/Native framework link (see `01-07-SUMMARY.md`)
 
 ### Blockers
 
-None. Plans 01-01–01-06 are complete and verified by executed builds and tests: 01-06 shipped the D-14 identity-card list in its final form (identity cards with a blank-segment-aware meta line, D-15 empty state, four-state screen, D-19 FAB) with `:androidApp:assembleDebug`, `:shared:compileKotlinIosSimulatorArm64` and both test tasks green (see `01-06-SUMMARY.md`). The next executable plan is **01-07**. Runtime launch on a device/emulator remains for `/gsd-verify-work` (`workflow.human_verify_mode` = end-of-phase).
+None. Plans 01-01–01-07 are complete and verified by executed builds and tests: 01-07 shipped the real five-field Add/Edit form (pure `VehicleFormValidation`, the `Loading`/`Ready`/`NotFound` state machine with a double-submit guard and a one-shot save-failure flag, the Car · Motorcycle · Truck picker, and the final form screen) with `:androidApp:assembleDebug`, `:shared:compileKotlinIosSimulatorArm64` and both test tasks green, 12/12 rule cases passing (see `01-07-SUMMARY.md`). The next executable plan is **01-08**. Runtime launch on a device/emulator remains for `/gsd-verify-work` (`workflow.human_verify_mode` = end-of-phase).
 
 ---
 
 ## Session Continuity
 
-**Last session:** 2026-10-19T05:02:24.542Z
-**Next action:** Execute plan **01-07** (wave 5) — replace the name-only slice with the real Add/Edit form (D-08): name/make/model/year/plate plus a Car · Motorcycle · Truck type picker, name-required inline validation, year digits-only input, and the honest Saving/Save-failed contract (VEH-01, VEH-03). Depends on 01-06, which is complete.
+**Last session:** 2026-10-19T06:33:28.956Z
+**Next action:** Execute plan **01-08** (wave 6) — extend the Add/Edit screen with the photo block (pick/capture, preview, replace/remove) wired through `VehicleFormValues.photoPath`, and complete `PhotoStorage`. Depends on 01-07, which is complete and left the form as the single Add/Edit screen it will extend.
 
 ## Decisions
 
@@ -173,3 +174,9 @@ None. Plans 01-01–01-06 are complete and verified by executed builds and tests
 - [Phase 01]: FAB placed via Box overlay with explicit 16px/8px insets — the M3 Scaffold FAB slot cannot express the declared 8px bottom inset
 - [Phase 01]: Coil PlatformFile support registered once in App() so a Detail-first composition also gets a FileKit-aware loader
 - [Phase 01]: EmptyState centers its block (plan text) rather than reading the 64px top-offset literally
+- [Phase 01]: Edit form consumes only the repository's first emission — Cheapest rule provably free of silent data loss on optional/photo fields when a reload races an in-flight edit (T-01-44).
+- [Phase 01]: A read failure on load maps to NotFound, not a blank form — The UI-SPEC state contract declares three states; an unreadable row surfaces as the same not-available surface, with no exception detail logged (T-01-43).
+- [Phase 01]: save() re-checks isSubmittable, not only the disabled button — The state machine owns the name gate so a programmatic call cannot insert a nameless row (D-09, defence in depth).
+- [Phase 01]: Ready.saveFailed and VehicleTypePicker(enabled) added beyond the plan's interfaces block — The plan's own acceptance criteria require a save-failure Snackbar and inputs disabled while saving; both are defaulted so no call site breaks.
+- [Phase 01]: VehicleTypePicker re-colours SingleChoiceSegmentedButtonRow from the app palette — M3's default selected container resolves to an out-of-palette lavender secondaryContainer (C-8); selection is also carried by icon and Role.RadioButton semantics, never colour alone.
+- [Phase 01]: App.kt needed no edit for this plan — 01-06 already passes vehicleId and onDone to the edit entry; verified one KoinApplication, one NavHost and four composable<> entries.

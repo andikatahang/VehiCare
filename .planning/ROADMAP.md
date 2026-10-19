@@ -31,7 +31,7 @@
 4. User can view a list of all their vehicles on the home screen
 5. SQLite WAL mode is active from first launch, and all schema changes are blocked in CI without a corresponding `.sqm` migration file
 
-**Plans:** 6/10 plans executed
+**Plans:** 7/10 plans executed
 Plans:
 **Wave 1**
 
@@ -53,7 +53,7 @@ Plans:
 
 **Wave 5** *(blocked on Wave 4 completion)*
 
-- [ ] 01-07-PLAN.md — the single Add/Edit form: all fields, validation rules, type picker, digits-only year
+- [x] 01-07-PLAN.md — the single Add/Edit form: all fields, validation rules, type picker, digits-only year
 
 **Wave 6** *(blocked on Wave 5 completion)*
 
@@ -105,7 +105,7 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation & Vehicle Management | 6/10 | In Progress|  |
+| 1. Foundation & Vehicle Management | 7/10 | In Progress|  |
 | 2. Service Log | 0/? | Not started | — |
 | 3. Reminders & Dashboard | 0/? | Not started | — |
 
