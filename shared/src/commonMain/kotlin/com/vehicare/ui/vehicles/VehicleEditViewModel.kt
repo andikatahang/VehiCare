@@ -150,14 +150,14 @@ class VehicleEditViewModel(
         viewModelScope.launch {
             try {
                 repo.save(VehicleFormValidation.toVehicle(vehicleId, submitted))
-                settleSaving(saveFailed = false)
+                clearSaving()
                 onSaved()
             } catch (cancelled: CancellationException) {
                 throw cancelled
             } catch (failure: Exception) {
                 // Values stay exactly as they were: the user's input survives a failed save and the
                 // screen reports the failure instead of discarding it (T-01-45).
-                settleSaving(saveFailed = true)
+                markSaveFailed()
             }
         }
     }
@@ -168,9 +168,14 @@ class VehicleEditViewModel(
         if (current.saveFailed) _uiState.value = current.copy(saveFailed = false)
     }
 
-    private fun settleSaving(saveFailed: Boolean) {
+    private fun clearSaving() {
         val current = _uiState.value as? VehicleEditUiState.Ready ?: return
-        _uiState.value = current.copy(saving = false, saveFailed = saveFailed)
+        _uiState.value = current.copy(saving = false, saveFailed = false)
+    }
+
+    private fun markSaveFailed() {
+        val current = _uiState.value as? VehicleEditUiState.Ready ?: return
+        _uiState.value = current.copy(saving = false, saveFailed = true)
     }
 }
 
