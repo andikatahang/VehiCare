@@ -81,12 +81,12 @@ Plans:
 4. User can view the full service history for a vehicle sorted by date or mileage
 5. User can edit or delete any existing service entry
 
-**Plans:** 1/6 plans executed
+**Plans:** 2/6 plans executed
 Plans:
 **Wave 1**
 
 - [x] 02-01-PLAN.md — the data core: schema v2 + `1.sqm` migration + regenerated `2.db`, domain models, mapper, repository with real-driver tests
-- [ ] 02-02-PLAN.md — kotlinx-datetime 0.8.0, `ServiceDates` + `RupiahFormat` with unit tests, and the complete Phase 2 string set
+- [x] 02-02-PLAN.md — kotlinx-datetime 0.8.0, `ServiceDates` + `RupiahFormat` with unit tests, and the complete Phase 2 string set
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
@@ -127,7 +127,7 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation & Vehicle Management | 10/10 | Complete    | 2026-10-19 |
-| 2. Service Log | 1/6 | In Progress | — |
+| 2. Service Log | 2/6 | In Progress | — |
 | 3. Reminders & Dashboard | 0/? | Not started | — |
 
 ---

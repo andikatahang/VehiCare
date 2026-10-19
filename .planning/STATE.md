@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: Executing Phase 02
-last_updated: "2026-10-19T14:03:45.084Z"
+last_updated: "2026-10-19T14:19:42.331Z"
 progress:
   total_phases: 3
   completed_phases: 1
   total_plans: 16
-  completed_plans: 11
-  percent: 69
+  completed_plans: 12
+  percent: 33
 ---
 
 # STATE: VehiCare
@@ -22,17 +22,17 @@ progress:
 ## Current Position
 
 Phase: 02 (service-log) — EXECUTING
-Plan: 2 of 6
+Plan: 3 of 6
 
 | Field | Value |
 |-------|-------|
 | **Active Phase** | Phase 2: Service Log (executing) |
-| **Active Plan** | 02-02 next — 02-01 (data core) complete 2026-10-19 |
-| **Status** | 02-01 complete — schema v2 + migration + repository under both CI guards; iOS + Android test targets green |
-| **Progress** | `[███████░░░] 11/16 plans (69%)` |
+| **Active Plan** | 02-03 next — 02-02 (shared utilities) complete 2026-10-19 |
+| **Status** | 02-02 complete — kotlinx-datetime 0.8.0 wired, `ServiceDates`/`RupiahFormat` tested on both targets, full Phase 2 string set in place |
+| **Progress** | `[████████░░] 12/16 plans (75%)` |
 
 ```
-Phase 1 [Complete] → Phase 2 [Executing — 1/6 plans] → Phase 3 [Not Started]
+Phase 1 [Complete] → Phase 2 [Executing — 2/6 plans] → Phase 3 [Not Started]
                       ↑
                       Current
 ```
@@ -44,7 +44,7 @@ Phase 1 [Complete] → Phase 2 [Executing — 1/6 plans] → Phase 3 [Not Starte
 | Phase | Name | Status |
 |-------|------|--------|
 | 1 | Foundation & Vehicle Management | Complete (2026-10-19) |
-| 2 | Service Log | Executing — 1/6 plans (02-01 complete) |
+| 2 | Service Log | Executing — 2/6 plans (02-01, 02-02 complete) |
 | 3 | Reminders & Dashboard | Not started |
 
 ---
@@ -54,11 +54,11 @@ Phase 1 [Complete] → Phase 2 [Executing — 1/6 plans] → Phase 3 [Not Starte
 | Metric | Value |
 |--------|-------|
 | Phases completed | 1 / 3 |
-| Plans completed | 11 / 16 |
+| Plans completed | 12 / 16 |
 | Requirements covered | 15 / 21 |
-| Sessions | 11 |
+| Sessions | 12 |
 
-Per-plan: `Phase 1 / 01` — ~28min, 3 tasks, 63 files · `Phase 1 / 02` — 17min, 3 tasks, 15 files · `Phase 1 / 03` — 20min, 3 tasks, 17 files · `Phase 1 / 04` — 24min, 3 tasks, 17 files · `Phase 1 / 05` — 11min, 3 tasks, 3 files · `Phase 1 / 06` — 10min, 3 tasks, 8 files · `Phase 1 / 07` — 21min, 3 tasks, 6 files · `Phase 1 / 08` — 21min, 3 tasks, 6 files · `Phase 1 / 09` — 4min, 3 tasks, 6 files · `Phase 1 / 10` — 12min, 3 tasks, 5 files · `Phase 2 / 01` — 11min, 3 tasks, 14 files.
+Per-plan: `Phase 1 / 01` — ~28min, 3 tasks, 63 files · `Phase 1 / 02` — 17min, 3 tasks, 15 files · `Phase 1 / 03` — 20min, 3 tasks, 17 files · `Phase 1 / 04` — 24min, 3 tasks, 17 files · `Phase 1 / 05` — 11min, 3 tasks, 3 files · `Phase 1 / 06` — 10min, 3 tasks, 8 files · `Phase 1 / 07` — 21min, 3 tasks, 6 files · `Phase 1 / 08` — 21min, 3 tasks, 6 files · `Phase 1 / 09` — 4min, 3 tasks, 6 files · `Phase 1 / 10` — 12min, 3 tasks, 5 files · `Phase 2 / 01` — 11min, 3 tasks, 14 files · `Phase 2 / 02` — 15min, 2 tasks, 7 files.
 
 ## Accumulated Context
 
@@ -159,8 +159,8 @@ No blockers. **Phase 1 closed 2026-10-19** — UAT 6/6 passed (`01-UAT.md`), sec
 
 ## Session Continuity
 
-**Last session:** 2026-10-19T14:03:45.080Z
-**Next action:** 02-01 (service-log data core) complete — schema v2 + `1.sqm` + `2.db` committed under both CI guards; `ServiceEntryRepository` ready for the UI plans. Next: `/gsd-execute-phase 2` continues with 02-02 (kotlinx-datetime + `ServiceDates`/`RupiahFormat` + Phase 2 strings). Debt: `01-VERIFICATION.md` `human_needed` acknowledged (see Blockers).
+**Last session:** 2026-10-19T14:19:42.327Z
+**Next action:** 02-02 (shared utilities + Phase 2 strings) complete — kotlinx-datetime 0.8.0, `ServiceDates`, `RupiahFormat` and the full string set are ready. Next: `/gsd-execute-phase 2` continues with 02-03 (Add/Edit form). Debt: `01-VERIFICATION.md` `human_needed` acknowledged (see Blockers).
 
 ## Decisions
 
@@ -207,3 +207,6 @@ No blockers. **Phase 1 closed 2026-10-19** — UAT 6/6 passed (`01-UAT.md`), sec
 - [Phase 02]: Generated row types are Service_entry / Service_part / Service_photo; the mapper aliases them as *Entity — SQLDelight derives the class name from the table name (same derivation as Phase 1's VehicleEntity alias); the block-comment plan name ServiceEntry does not exist, so aliases keep the boundary intact
 - [Phase 02]: observePreviousMileage reads the entry's stored date first, then binds the self-excluding query — Keeps (vehicleId, entryId) as the interface while leaving the id != / id < tie-break in SQL; no date parameter leaks to the UI
 - [Phase 02]: photoDeleter stays a no-op until plan 02-03 wires PhotoStorage::delete — The plan assigns DI wiring to 02-03; delete ordering is already proven with an injected recording deleter in iosTest
+- [Phase 02]: ServiceDates keeps today() on the system zone while storage/display pin UTC start-of-day — The user's wall-clock date and a zone-independent stored date are different requirements; one seam documents and tests the asymmetry (RESEARCH Pitfall 1), preventing cross-phase off-by-one imports.
+- [Phase 02]: RupiahFormat routes both Rp and km formats through one private groupDigits helper with no locale API — D-29 requires identical dot grouping on Android and iOS; a single pure-Kotlin helper plus the 12-digit parse cap prevents platform drift and Long overflow (T-02-02-03).
+- [Phase 02]: The full Phase 2 string block was appended in one change; detail_service_history_coming_soon retirement waits for plan 02-05 — Every later UI plan compiles against Res.string keys with no string edits; the old key must stay until ComingSoonSlot.kt is deleted in the same commit, or the build breaks for an unexecuted plan.
