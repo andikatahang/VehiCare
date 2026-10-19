@@ -161,7 +161,7 @@ class PhotoStorageTest {
 
         assertTrue(
             storedWidth <= 1280 && storedHeight <= 1280,
-            "a full-resolution camera photo must be downscaled, was ${storedWidth}x$storedHeight",
+            "a full-resolution gallery photo must be downscaled, was ${storedWidth}x$storedHeight",
         )
         assertTrue(
             storedWidth < sourceWidth || storedHeight < sourceHeight,
