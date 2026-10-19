@@ -81,7 +81,28 @@ Plans:
 4. User can view the full service history for a vehicle sorted by date or mileage
 5. User can edit or delete any existing service entry
 
-**Plans:** TBD
+**Plans:** 6 plans
+Plans:
+**Wave 1**
+
+- [ ] 02-01-PLAN.md — the data core: schema v2 + `1.sqm` migration + regenerated `2.db`, domain models, mapper, repository with real-driver tests
+- [ ] 02-02-PLAN.md — kotlinx-datetime 0.8.0, `ServiceDates` + `RupiahFormat` with unit tests, and the complete Phase 2 string set
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 02-03-PLAN.md — the Add/Edit form: type picker/dialog, date field, parts editor, photo strip, validation, edit ViewModel with per-path photo bookkeeping
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
+- [ ] 02-04-PLAN.md — the read-only entry detail + the delete path: shared confirm dialog, vehicle→entries cascade, deletion proven against a real filesystem
+
+**Wave 4** *(blocked on Wave 3 completion)*
+
+- [ ] 02-05-PLAN.md — the Service history screen: `Date | Mileage` sort control, keyed rows, shared empty state, "Add service" FAB
+
+**Wave 5** *(blocked on Wave 4 completion)*
+
+- [ ] 02-06-PLAN.md — the vehicle-Detail Service history summary row replacing the coming-soon placeholder, and the placeholder's retirement
 
 ### Phase 3: Reminders & Dashboard
 
@@ -106,7 +127,7 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation & Vehicle Management | 10/10 | Complete    | 2026-10-19 |
-| 2. Service Log | 0/? | Not started | — |
+| 2. Service Log | 0/6 | Not started | — |
 | 3. Reminders & Dashboard | 0/? | Not started | — |
 
 ---
