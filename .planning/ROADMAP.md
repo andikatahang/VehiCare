@@ -9,7 +9,7 @@
 
 ## Phases
 
-- [ ] **Phase 1: Foundation & Vehicle Management** — KMP project scaffold, SQLDelight schema with WAL + migration CI, full vehicle CRUD
+- [x] **Phase 1: Foundation & Vehicle Management** — KMP project scaffold, SQLDelight schema with WAL + migration CI, full vehicle CRUD (completed 2026-10-19)
 - [ ] **Phase 2: Service Log** — Complete service entry logging, history view, parts, photos, edit/delete
 - [ ] **Phase 3: Reminders & Dashboard** — Mileage and time-based reminders, push notifications, iOS foreground-check pattern, home dashboard
 
@@ -31,7 +31,7 @@
 4. User can view a list of all their vehicles on the home screen
 5. SQLite WAL mode is active from first launch, and all schema changes are blocked in CI without a corresponding `.sqm` migration file
 
-**Plans:** 9/10 plans executed
+**Plans:** 10/10 plans complete
 Plans:
 **Wave 1**
 
@@ -65,7 +65,7 @@ Plans:
 
 **Wave 8** *(blocked on Wave 7 completion)*
 
-- [ ] 01-10-PLAN.md — confirmed deletion: dialog, single-flight delete, photo-file removal asserted on a real filesystem
+- [x] 01-10-PLAN.md — confirmed deletion: dialog, single-flight delete, photo-file removal asserted on a real filesystem
 
 ### Phase 2: Service Log
 
@@ -105,7 +105,7 @@ Plans:
 
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
-| 1. Foundation & Vehicle Management | 9/10 | In Progress|  |
+| 1. Foundation & Vehicle Management | 10/10 | Complete   | 2026-10-19 |
 | 2. Service Log | 0/? | Not started | — |
 | 3. Reminders & Dashboard | 0/? | Not started | — |
 

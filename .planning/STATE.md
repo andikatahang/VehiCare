@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: Ready to execute
-last_updated: "2026-10-19T07:14:32.066Z"
+status: Phase complete — ready for verification
+last_updated: "2026-10-19T07:48:36.892Z"
 progress:
   total_phases: 3
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 10
-  completed_plans: 9
-  percent: 0
+  completed_plans: 10
+  percent: 33
 ---
 
 # STATE: VehiCare
@@ -27,9 +27,9 @@ Plan: 10 of 10
 | Field | Value |
 |-------|-------|
 | **Active Phase** | Phase 1: Foundation & Vehicle Management |
-| **Active Plan** | 01-10 (01-01–01-09 complete and verified) |
-| **Status** | Wave 7 done — plan 01-09 (the D-18 vehicle Detail screen: `FieldRow` + `ComingSoonSlot`, the streaming `VehicleDetailViewModel`, the 4:3 hero through `PhotoStorage.resolve`, five stable field rows with the em-dash convention and the plate chip, the reserved service-history slot, the Edit entry point, and `BottomTabs` scoped to the two tab roots) executed; next executable plan is 01-10 (wave 8, the confirmed-delete flow on that same screen) |
-| **Progress** | █████████░ 90% |
+| **Active Plan** | 01-10 (01-01–01-10 complete — Phase 1 fully executed) |
+| **Status** | Wave 8 done — plan 01-10 (the confirmed, irreversible delete flow: `ConfirmDeleteDialog` with the locked copy as the only path to `VehicleDetailViewModel.delete`, the single-flight non-optimistic delete that removes the row and the photo file through the `PhotoStorage` seam, the in-flight-disabled destructive action, the failure Snackbar with one-shot retirement, and the shell-hosted `snackbar_vehicle_deleted` success message shown before the pop) executed; all 10 plans of Phase 1 are done — end-of-phase `/gsd-verify-work` remains |
+| **Progress** | ██████████ 100% |
 
 ```
 Phase 1 [In Progress] → Phase 2 [Not Started] → Phase 3 [Not Started]
@@ -54,11 +54,11 @@ Phase 1 [In Progress] → Phase 2 [Not Started] → Phase 3 [Not Started]
 | Metric | Value |
 |--------|-------|
 | Phases completed | 0 / 3 |
-| Plans completed | 9 / 10 |
-| Requirements covered | 8 / 21 |
-| Sessions | 9 |
+| Plans completed | 10 / 10 |
+| Requirements covered | 9 / 21 |
+| Sessions | 10 |
 
-Per-plan: `Phase 1 / 01` — ~28min, 3 tasks, 63 files · `Phase 1 / 02` — 17min, 3 tasks, 15 files · `Phase 1 / 03` — 20min, 3 tasks, 17 files · `Phase 1 / 04` — 24min, 3 tasks, 17 files · `Phase 1 / 05` — 11min, 3 tasks, 3 files · `Phase 1 / 06` — 10min, 3 tasks, 8 files · `Phase 1 / 07` — 21min, 3 tasks, 6 files · `Phase 1 / 08` — 21min, 3 tasks, 6 files · `Phase 1 / 09` — 4min, 3 tasks, 6 files.
+Per-plan: `Phase 1 / 01` — ~28min, 3 tasks, 63 files · `Phase 1 / 02` — 17min, 3 tasks, 15 files · `Phase 1 / 03` — 20min, 3 tasks, 17 files · `Phase 1 / 04` — 24min, 3 tasks, 17 files · `Phase 1 / 05` — 11min, 3 tasks, 3 files · `Phase 1 / 06` — 10min, 3 tasks, 8 files · `Phase 1 / 07` — 21min, 3 tasks, 6 files · `Phase 1 / 08` — 21min, 3 tasks, 6 files · `Phase 1 / 09` — 4min, 3 tasks, 6 files · `Phase 1 / 10` — 12min, 3 tasks, 5 files.
 
 ## Accumulated Context
 
@@ -144,17 +144,18 @@ Unchanged from the contract: Gradle 9.5.1 · SQLDelight 2.4.1 · Koin 4.2.2 · N
 - [x] Wave 5 / plan 01-07 (real Add/Edit form) → verified by 12 rule cases in `VehicleFormValidationTest` on both targets, plus an Android APK build and a Kotlin/Native framework link (see `01-07-SUMMARY.md`)
 - [x] Wave 6 / plan 01-08 (gallery-only vehicle photo) → verified by 7 real-filesystem `PhotoStorageTest` cases on the iOS simulator, plus an Android APK build, a Kotlin/Native framework link and both test tasks green (see `01-08-SUMMARY.md`)
 - [x] Wave 7 / plan 01-09 (D-18 vehicle Detail screen) → verified by an Android APK build, a Kotlin/Native framework link, both test tasks green (21 Android-host + 34 iOS-simulator tests, incl. 7/7 `PhotoStorageTest`), exactly 5 `FieldRow(` call sites, and a zero-match sweep of the whole `ui/vehicles` tree for the banned icon/gesture/DB patterns (see `01-09-SUMMARY.md`)
+- [x] Wave 8 / plan 01-10 (confirmed vehicle deletion) → verified by an Android APK build, a Kotlin/Native framework link, both test tasks green (21 Android-host + 42 iOS-simulator tests, incl. 8/8 `VehicleDeletionTest`), exactly 1 `delete(` call site in the Detail screen, and a zero-match sweep of commonMain for the recovery word, dark-theme identifiers, camera and long-press patterns (see `01-10-SUMMARY.md`)
 
 ### Blockers
 
-None. Plans 01-01–01-09 are complete and verified by executed builds and tests: 01-09 shipped the read side of VEH-03 (the D-18 Detail screen with a 4:3 hero photo through the single `PhotoStorage.resolve` seam, the vehicle name at the app's only `Display`-role size, five always-present field rows rendering the em dash for absent optionals, the plate chip, the inert Phase 2 service-history slot, an Edit text action to the shared form, and a `uiState` that streams from the repository so an edit or a deletion needs no manual refresh), with `:androidApp:assembleDebug`, `:shared:compileKotlinIosSimulatorArm64`, `:shared:testAndroidHostTest` and `:shared:iosSimulatorArm64Test` all green. The destructive button on that screen is deliberately wired to a no-op `delete` stub, with `deleting`/`deleteFailed`/`onDeleteErrorShown` declared as plan 01-10's. The next executable plan is **01-10** (wave 8, the confirmed-delete flow). Runtime launch on a device/emulator remains for `/gsd-verify-work` (`workflow.human_verify_mode` = end-of-phase).
+None. Plans 01-01–01-10 are complete and verified by executed builds and tests: 01-10 closed VEH-04 (the confirmed, irreversible delete: `ConfirmDeleteDialog` with the locked copy as the only path to `VehicleDetailViewModel.delete`, the single-flight non-optimistic delete that removes the row and the photo file through the `PhotoStorage` seam, the in-flight-disabled destructive action, the one-shot failure Snackbar, and the shell-hosted `snackbar_vehicle_deleted` message shown before the pop), proven by 8 real-filesystem `VehicleDeletionTest` cases, with `:androidApp:assembleDebug`, `:shared:compileKotlinIosSimulatorArm64`, `:shared:testAndroidHostTest` and `:shared:iosSimulatorArm64Test` all green. All 10 plans are executed and all nine requirements Phase 1 maps (DAT-01–04, VEH-01–05) are covered; the phase awaits the end-of-phase human check via `/gsd-verify-work` (`workflow.human_verify_mode` = end-of-phase).
 
 ---
 
 ## Session Continuity
 
-**Last session:** 2026-10-19T07:14:32.062Z
-**Next action:** Execute plan **01-10** (wave 8) — the confirmed-delete flow on the Detail screen 01-09 just settled: the M3 `AlertDialog` behind `Res.string.dialog_delete_title` / `dialog_delete_message`, the real `VehicleDetailViewModel.delete` implementation, the `deleting`/`deleteFailed` surfaces that already exist as stubs, the `snackbar_vehicle_deleted` confirmation, and the photo-file assertion that makes row+file deletion safe (D-07, D-18, T-01-56). Depends on 01-09, which left the button rendered and wired to the stub and the `Scaffold` ready for a `snackbarHost`.
+**Last session:** 2026-10-19T07:47:34.976Z
+**Next action:** Phase 1 execution is complete — 10/10 plans, all nine phase requirements (DAT-01–04, VEH-01–05) covered. Next is the end-of-phase verification pass (`/gsd-verify-work`): the human end-to-end check (create a vehicle with a photo, delete it from Detail, confirm — land on the list with the `Vehicle deleted.` message and no card; cancel removes nothing; the photo file is gone from app storage) and the first runtime launch on device/emulator remain outstanding per `workflow.human_verify_mode` = end-of-phase. After verification, Phase 2 (Service Log) can be planned.
 
 ## Decisions
 
@@ -192,3 +193,9 @@ None. Plans 01-01–01-09 are complete and verified by executed builds and tests
 - [Phase 01]: Detail no-photo hero = Mist 4:3 block with a centred 64dp VehicleTypeCircle — Reuses a declared component instead of inventing an unlisted hero-placeholder size, and keeps D-14's type-circle language identical between list and detail
 - [Phase 01]: Detail uiState streams via observeVehicle with WhileSubscribed(5s); a read failure maps to NotFound — An edit made on the form appears on return with no refresh callback, and a vanished row becomes the not-available surface by itself — so no race-prone existence guard lives in the screen (T-01-55); mirrors plan 01-07's no-fourth-state rule
 - [Phase 01]: The destructive button is rendered but wired to a no-op delete stub owned by plan 01-10 — Lays out the Detail screen once instead of rewriting it twice; a half-wired destructive action is worse than an explicit stub, so plan 01-10 is the one place that turns it on with its confirmation and photo-file assertion (T-01-56)
+- [Phase 01]: ConfirmDeleteDialog pins containerColor to Paper and the heading to titleLarge — M3's defaults would inject an off-palette surfaceContainerHigh tint and a Display-sized heading that outranks the vehicle name on the screen behind the dialog (C-8, D-18)
+- [Phase 01]: Confirm is the only danger-tinted control; Cancel takes Ink on the leading side — The safe option must not read as destructive and the destructive one must not read as safe; both buttons are worded and at least 48dp, and every dismiss path is cancellation (T-01-61)
+- [Phase 01]: onDeleted was added to VehicleDetailRoute(vehicleId, onEdit, onBack, onDeleted) — The plan's interfaces block omitted it, but its own key_links require the shell to distinguish a completed deletion from a plain back navigation (Rule 3 deviation, committed in 9d55729)
+- [Phase 01]: The post-delete success Snackbar is shown on the shell's scope before navController.popBackStack() — The Detail screen is popped the instant the delete succeeds, so the message is hosted by App() and launched first — and the Flow-driven list already lacks the deleted card (T-01-62)
+- [Phase 01]: delete() rethrows CancellationException and reports failure without optimism — A torn-down scope is not a failed deletion; a real failure keeps the vehicle visible and stored, and deleteFailed is retired one-shot after showSnackbar returns — no local removal ever needs a rollback (T-01-60)
+- [Phase 01]: VehicleDeletionTest binds VehicleRepositoryImpl(database, photoDeleter = PhotoStorage::delete) — The identical AppModule binding, so the real-filesystem assertion proves the shipped seam (D-07); ordering facts run on Dispatchers.setMain(StandardTestDispatcher) with CompletableDeferred gates, never sleeps

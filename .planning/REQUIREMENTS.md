@@ -10,7 +10,7 @@
 - [x] **VEH-01**: User can add a vehicle with name, make, model, year, license plate, and vehicle type (car, motorcycle, truck, etc.)
 - [x] **VEH-02**: User can attach a photo to a vehicle
 - [x] **VEH-03**: User can edit vehicle details
-- [ ] **VEH-04**: User can delete a vehicle and all its associated records
+- [x] **VEH-04**: User can delete a vehicle and all its associated records
 - [x] **VEH-05**: User can view a list of all their vehicles
 
 ### Service Log
@@ -86,7 +86,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | VEH-01 | Phase 1: Foundation & Vehicle Management | Complete |
 | VEH-02 | Phase 1: Foundation & Vehicle Management | Complete |
 | VEH-03 | Phase 1: Foundation & Vehicle Management | Complete |
-| VEH-04 | Phase 1: Foundation & Vehicle Management | Pending |
+| VEH-04 | Phase 1: Foundation & Vehicle Management | Complete |
 | VEH-05 | Phase 1: Foundation & Vehicle Management | Complete |
 | SVC-01 | Phase 2: Service Log | Pending |
 | SVC-02 | Phase 2: Service Log | Pending |
