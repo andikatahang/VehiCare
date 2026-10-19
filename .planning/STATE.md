@@ -3,12 +3,12 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: Ready to execute
-last_updated: "2026-10-19T06:33:28.959Z"
+last_updated: "2026-10-19T07:04:03.151Z"
 progress:
   total_phases: 3
   completed_phases: 0
   total_plans: 10
-  completed_plans: 7
+  completed_plans: 8
   percent: 0
 ---
 
@@ -22,13 +22,13 @@ progress:
 ## Current Position
 
 Phase: 01 (foundation-vehicle-management) — EXECUTING
-Plan: 8 of 10
+Plan: 9 of 10
 
 | Field | Value |
 |-------|-------|
 | **Active Phase** | Phase 1: Foundation & Vehicle Management |
-| **Active Plan** | 01-08 (01-01–01-07 complete and verified) |
-| **Status** | Wave 5 done — plan 01-07 (real Add/Edit form: pure rules, Loading/Ready/NotFound state machine, type picker, five-field screen) executed; next executable plan is 01-08 (wave 6, the photo block on this same screen) |
+| **Active Plan** | 01-09 (01-01–01-08 complete and verified) |
+| **Status** | Wave 6 done — plan 01-08 (gallery-only vehicle photo: `PhotoStorage` persist/delete seam, ViewModel photo lifecycle, `PhotoField` block, `photoDeleter` bound) executed; next executable plan is 01-09 (wave 7, the Detail screen with its hero photo) |
 | **Progress** | ███████░░░ 70% |
 
 ```
@@ -54,11 +54,11 @@ Phase 1 [In Progress] → Phase 2 [Not Started] → Phase 3 [Not Started]
 | Metric | Value |
 |--------|-------|
 | Phases completed | 0 / 3 |
-| Plans completed | 7 / 10 |
-| Requirements covered | 7 / 21 |
-| Sessions | 7 |
+| Plans completed | 8 / 10 |
+| Requirements covered | 8 / 21 |
+| Sessions | 8 |
 
-Per-plan: `Phase 1 / 01` — ~28min, 3 tasks, 63 files · `Phase 1 / 02` — 17min, 3 tasks, 15 files · `Phase 1 / 03` — 20min, 3 tasks, 17 files · `Phase 1 / 04` — 24min, 3 tasks, 17 files · `Phase 1 / 05` — 11min, 3 tasks, 3 files · `Phase 1 / 06` — 10min, 3 tasks, 8 files · `Phase 1 / 07` — 21min, 3 tasks, 6 files.
+Per-plan: `Phase 1 / 01` — ~28min, 3 tasks, 63 files · `Phase 1 / 02` — 17min, 3 tasks, 15 files · `Phase 1 / 03` — 20min, 3 tasks, 17 files · `Phase 1 / 04` — 24min, 3 tasks, 17 files · `Phase 1 / 05` — 11min, 3 tasks, 3 files · `Phase 1 / 06` — 10min, 3 tasks, 8 files · `Phase 1 / 07` — 21min, 3 tasks, 6 files · `Phase 1 / 08` — 21min, 3 tasks, 6 files.
 
 ## Accumulated Context
 
@@ -142,17 +142,18 @@ Unchanged from the contract: Gradle 9.5.1 · SQLDelight 2.4.1 · Koin 4.2.2 · N
 - [x] Wave 3 / plan 01-05 (CI migration guard + WAL proofs) → verified by the guard-fire probe (diff guard exit 1, verify task vacuous) and `WalModeTest` green on the iOS driver and on an API 28 emulator (see `01-05-SUMMARY.md`)
 - [x] Wave 4 / plan 01-06 (D-14 identity-card vehicle list) → verified by an Android APK build, a Kotlin/Native framework link and meta-line unit tests on both targets (see `01-06-SUMMARY.md`)
 - [x] Wave 5 / plan 01-07 (real Add/Edit form) → verified by 12 rule cases in `VehicleFormValidationTest` on both targets, plus an Android APK build and a Kotlin/Native framework link (see `01-07-SUMMARY.md`)
+- [x] Wave 6 / plan 01-08 (gallery-only vehicle photo) → verified by 7 real-filesystem `PhotoStorageTest` cases on the iOS simulator, plus an Android APK build, a Kotlin/Native framework link and both test tasks green (see `01-08-SUMMARY.md`)
 
 ### Blockers
 
-None. Plans 01-01–01-07 are complete and verified by executed builds and tests: 01-07 shipped the real five-field Add/Edit form (pure `VehicleFormValidation`, the `Loading`/`Ready`/`NotFound` state machine with a double-submit guard and a one-shot save-failure flag, the Car · Motorcycle · Truck picker, and the final form screen) with `:androidApp:assembleDebug`, `:shared:compileKotlinIosSimulatorArm64` and both test tasks green, 12/12 rule cases passing (see `01-07-SUMMARY.md`). The next executable plan is **01-08**. Runtime launch on a device/emulator remains for `/gsd-verify-work` (`workflow.human_verify_mode` = end-of-phase).
+None. Plans 01-01–01-08 are complete and verified by executed builds and tests: 01-08 shipped the gallery-only photo slice (`PhotoStorage.persist`/`delete` on relative paths behind one filesystem seam, the ViewModel photo lifecycle with explicit ownership bookkeeping, the 16:9 `PhotoField` block, and `photoDeleter` bound to `PhotoStorage::delete`) with `:androidApp:assembleDebug`, `:shared:compileKotlinIosSimulatorArm64` and both test tasks green, 7/7 `PhotoStorageTest` cases passing on the real simulator filesystem (see `01-08-SUMMARY.md`). The next executable plan is **01-09**. Runtime launch on a device/emulator remains for `/gsd-verify-work` (`workflow.human_verify_mode` = end-of-phase).
 
 ---
 
 ## Session Continuity
 
-**Last session:** 2026-10-19T06:33:28.956Z
-**Next action:** Execute plan **01-08** (wave 6) — extend the Add/Edit screen with the photo block (pick/capture, preview, replace/remove) wired through `VehicleFormValues.photoPath`, and complete `PhotoStorage`. Depends on 01-07, which is complete and left the form as the single Add/Edit screen it will extend.
+**Last session:** 2026-10-19T07:04:03.148Z
+**Next action:** Execute plan **01-09** (wave 7) — the D-18 vehicle Detail screen: hero photo through `PhotoStorage.resolve`, the name as the largest text in the app, five stable field rows with the em-dash convention, the reserved service-history slot and the Edit entry point. Depends on 01-08, which is complete and left `PhotoStorage` as the read seam the hero needs.
 
 ## Decisions
 
@@ -180,3 +181,8 @@ None. Plans 01-01–01-07 are complete and verified by executed builds and tests
 - [Phase 01]: Ready.saveFailed and VehicleTypePicker(enabled) added beyond the plan's interfaces block — The plan's own acceptance criteria require a save-failure Snackbar and inputs disabled while saving; both are defaulted so no call site breaks.
 - [Phase 01]: VehicleTypePicker re-colours SingleChoiceSegmentedButtonRow from the app palette — M3's default selected container resolves to an out-of-palette lavender secondaryContainer (C-8); selection is also carried by icon and Role.RadioButton semantics, never colour alone.
 - [Phase 01]: App.kt needed no edit for this plan — 01-06 already passes vehicleId and onDone to the edit entry; verified one KoinApplication, one NavHost and four composable<> entries.
+- [Phase 01]: supersededPath holds only database-owned paths; a session-owned copy is deleted the moment it is replaced or removed — A single pending path cannot distinguish a file the saved row still references from a copy only this session had, and the two need opposite treatment on abandonment (T-01-49)
+- [Phase 01]: onCleared() never deletes supersededPath — On an edit that path is the file the saved row still references; deleting it would destroy the user's only copy and leave the row dangling — only a never-saved session copy is removed
+- [Phase 01]: PhotoStorage.persist runs before the supersede bookkeeping — Bookkeeping first would schedule the old file for deletion while a failed import leaves the new copy unwritten and photoPath still naming the old file
+- [Phase 01]: persist compresses via FileKit compressImage (JPEG, 1280px cap, quality 80) with a verbatim-copy fallback — The plan required both compression and byte-equality for a synthetic array; compressImage throws on non-decodable bytes, so a non-image pick is stored rather than silently dropped
+- [Phase 01]: delete is non-suspend via kotlinx-io SystemFileSystem.delete(..., mustExist = false) — FileKit's own delete is suspend and onCleared() has no scope; kotlinx-io is already on the classpath through filekit-core

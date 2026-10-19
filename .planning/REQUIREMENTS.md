@@ -8,7 +8,7 @@
 ### Vehicle Management
 
 - [x] **VEH-01**: User can add a vehicle with name, make, model, year, license plate, and vehicle type (car, motorcycle, truck, etc.)
-- [ ] **VEH-02**: User can attach a photo to a vehicle
+- [x] **VEH-02**: User can attach a photo to a vehicle
 - [x] **VEH-03**: User can edit vehicle details
 - [ ] **VEH-04**: User can delete a vehicle and all its associated records
 - [x] **VEH-05**: User can view a list of all their vehicles
@@ -84,7 +84,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | Requirement | Phase | Status |
 |-------------|-------|--------|
 | VEH-01 | Phase 1: Foundation & Vehicle Management | Complete |
-| VEH-02 | Phase 1: Foundation & Vehicle Management | Pending |
+| VEH-02 | Phase 1: Foundation & Vehicle Management | Complete |
 | VEH-03 | Phase 1: Foundation & Vehicle Management | Complete |
 | VEH-04 | Phase 1: Foundation & Vehicle Management | Pending |
 | VEH-05 | Phase 1: Foundation & Vehicle Management | Complete |
