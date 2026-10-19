@@ -4,12 +4,14 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.vehicare.data.VehicleRepository
 import com.vehicare.domain.Vehicle
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 
 /**
  * The Detail destination's state matrix (UI-SPEC §States & Interaction Contract → Detail rows).
@@ -70,44 +72,65 @@ class VehicleDetailViewModel(
     private val _deleting = MutableStateFlow(false)
 
     /**
-     * True while a deletion is running.
+     * True while a deletion is running; the screen disables the destructive action on it.
      *
-     * **Owned by plan 01-10**, which implements the confirmed-delete flow. It is declared here, as
-     * a constant `false`, so the Detail screen can be laid out once and wired to the full delete
-     * surface when that plan lands — rather than being rewritten twice.
+     * It is also the single-flight guard: [delete] reads the current value and returns early while
+     * another deletion is in progress, so a second confirm can never enqueue a second repository
+     * call (T-01-59).
      */
     val deleting: StateFlow<Boolean> = _deleting
 
     private val _deleteFailed = MutableStateFlow(false)
 
     /**
-     * One-shot flag the screen consumes to show the delete-error copy.
-     *
-     * **Owned by plan 01-10**, alongside the confirmation dialog and the failure path; constant
-     * `false` until then.
+     * Set when a deletion did not happen, cleared by [onDeleteErrorShown]. While it is true the
+     * screen shows the delete-error copy — the vehicle is still stored and still on screen.
      */
     val deleteFailed: StateFlow<Boolean> = _deleteFailed
 
     /**
-     * Deletes this vehicle and its photo file.
+     * Deletes this vehicle **and the photo file the repository holds for it** (`D-07`), then hands
+     * the outcome back to the screen.
      *
-     * **Deliberately a no-op stub in this plan.** Plan 01-10 owns the whole destructive flow — the
-     * confirmation dialog, the failure handling and the photo-file assertion that make deletion
-     * safe — and it is the only place that turns this on. A half-wired destructive action would be
-     * worse than an explicit stub, so this method mutates nothing and calls nothing on [repo].
+     * **Irreversible in Phase 1: there is no undo and no trash.** The confirmation dialog is the
+     * only path that reaches this method, and there is deliberately no recovery surface behind it —
+     * an author looking for a way to bring a deleted vehicle back should know it does not exist
+     * rather than assume one is hiding somewhere.
      *
-     * @param onDeleted invoked after a successful deletion, so the screen can return to the list.
+     * Nothing is removed from the UI here and no optimistic state exists: the repository's flow is
+     * what makes the row disappear once the row really is gone, so a failure needs no rollback —
+     * [deleteFailed] simply reports it and the vehicle stays visible (T-01-60). No vehicle data
+     * (name, plate, photo location) is ever logged (ASVS V7).
+     *
+     * @param onDeleted invoked **only after** `repo.delete` returned without throwing, so the
+     *   screen returns to the list only for a deletion that really happened.
      */
     fun delete(onDeleted: () -> Unit) {
-        // Stub: plan 01-10 implements the deletion. `onDeleted` is intentionally unused here.
+        if (deleting.value) return
+        _deleting.value = true
+        viewModelScope.launch {
+            try {
+                repo.delete(vehicleId)
+                _deleting.value = false
+                onDeleted()
+            } catch (cancellation: CancellationException) {
+                // The scope was torn down; that is not a failed deletion to report.
+                throw cancellation
+            } catch (_: Exception) {
+                _deleting.value = false
+                _deleteFailed.value = true
+            }
+        }
     }
 
     /**
      * Lets the screen retire [deleteFailed] once its message has been shown.
      *
-     * **Owned by plan 01-10**; a no-op until the flag can ever be set.
+     * It retires the message and nothing else: the vehicle is not retried, not cleared and not
+     * navigated away from — retrying is the user's next tap on the destructive action, which runs
+     * through the confirmation dialog again.
      */
     fun onDeleteErrorShown() {
-        // Stub: plan 01-10 implements the deletion. Nothing sets the flag yet.
+        _deleteFailed.value = false
     }
 }
