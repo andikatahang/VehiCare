@@ -6,6 +6,7 @@ import com.vehicare.data.ServiceEntryRepository
 import com.vehicare.domain.HistorySort
 import com.vehicare.domain.ServiceEntry
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -54,16 +55,12 @@ class ServiceHistoryViewModel(
     private val refresh = MutableStateFlow(0)
 
     val uiState: StateFlow<ServiceHistoryUiState> =
-        _sort.flatMapLatest { mode ->
-            refresh.flatMapLatest {
-                repo.observeHistory(vehicleId, mode)
-            }
-        }
-            .map { entries ->
-                if (entries.isEmpty()) ServiceHistoryUiState.Empty
-                else ServiceHistoryUiState.Content(entries)
-            }
-            .catch { emit(ServiceHistoryUiState.Error(message = it.message)) }
+        observeHistoryUiState(
+            repo = repo,
+            vehicleId = vehicleId,
+            sort = _sort,
+            refresh = refresh,
+        )
             .stateIn(
                 scope = viewModelScope,
                 started = SharingStarted.WhileSubscribed(5_000),
@@ -80,3 +77,30 @@ class ServiceHistoryViewModel(
         refresh.value++
     }
 }
+
+/**
+ * Assembles the history state flow.
+ *
+ * The error handler sits **inside** the inner observation, so a failure ends only that read and
+ * leaves the outer ``flatMapLatest`` alive: bumping [refresh] re-runs the query and recovers the
+ * screen (CR-02). Kept top-level and repository-injected so the retry path is testable without a
+ * ViewModel or a main dispatcher.
+ */
+@OptIn(ExperimentalCoroutinesApi::class)
+internal fun observeHistoryUiState(
+    repo: ServiceEntryRepository,
+    vehicleId: Long,
+    sort: Flow<HistorySort>,
+    refresh: Flow<Int>,
+): Flow<ServiceHistoryUiState> =
+    sort.flatMapLatest { mode ->
+        refresh.flatMapLatest {
+            repo.observeHistory(vehicleId, mode)
+                .map { entries ->
+                    if (entries.isEmpty()) ServiceHistoryUiState.Empty
+                    else ServiceHistoryUiState.Content(entries)
+                }
+                // Terminal for this observation only: a `refresh` bump re-arms the query.
+                .catch { emit(ServiceHistoryUiState.Error(message = it.message)) }
+        }
+    }
