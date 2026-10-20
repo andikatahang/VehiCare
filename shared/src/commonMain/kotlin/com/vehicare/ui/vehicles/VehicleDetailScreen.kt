@@ -47,11 +47,11 @@ import com.vehicare.ui.theme.Ink
 import com.vehicare.ui.theme.Mist
 import com.vehicare.ui.theme.Slate
 import com.vehicare.ui.vehicles.components.ComingSoonSlot
-import com.vehicare.ui.vehicles.components.ConfirmDeleteDialog
-import com.vehicare.ui.vehicles.components.FieldRow
 import com.vehicare.ui.vehicles.components.LicensePlateChip
 import com.vehicare.ui.vehicles.components.VehicleTypeCircle
 import com.vehicare.ui.vehicles.components.labelRes
+import com.vehicare.ui.components.ConfirmDeleteDialog
+import com.vehicare.ui.components.FieldRow
 import com.vehicare.util.PhotoStorage
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -63,6 +63,8 @@ import vehicare.shared.generated.resources.action_edit
 import vehicare.shared.generated.resources.cd_back
 import vehicare.shared.generated.resources.cd_vehicle_photo
 import vehicare.shared.generated.resources.detail_not_found
+import vehicare.shared.generated.resources.dialog_delete_message
+import vehicare.shared.generated.resources.dialog_delete_title
 import vehicare.shared.generated.resources.error_delete_vehicle
 import vehicare.shared.generated.resources.field_make
 import vehicare.shared.generated.resources.field_model
@@ -208,9 +210,9 @@ fun VehicleDetailRoute(
 
         if (showDeleteDialog) {
             ConfirmDeleteDialog(
-                // The same name the title bar shows, so a vehicle saved without a name still reads
-                // as a sentence instead of "Delete  and all its records?".
-                vehicleName = title,
+                title = stringResource(Res.string.dialog_delete_title),
+                message = stringResource(Res.string.dialog_delete_message, title),
+                confirmLabel = stringResource(Res.string.action_delete_vehicle),
                 onConfirm = {
                     // Close first, then start the deletion: the dialog is never left on screen
                     // describing an action that has already been decided.

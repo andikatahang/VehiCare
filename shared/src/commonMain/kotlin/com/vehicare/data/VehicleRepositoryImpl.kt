@@ -21,7 +21,8 @@ import kotlinx.coroutines.withContext
  *
  * @param photoDeleter the seam for removing a deleted vehicle's photo file. Plan 01-08 replaces
  *   the no-op default with `PhotoStorage::delete`; a `delete()` that only removes the row would
- *   leave orphaned personal data on disk (D-07).
+ *   leave orphaned personal data on disk (D-07). The D-39 cascade extends this to every service
+ *   entry photo file belonging to the vehicle.
  */
 internal class VehicleRepositoryImpl(
     private val database: VehiCareDatabase,
@@ -73,12 +74,17 @@ internal class VehicleRepositoryImpl(
     }
 
     override suspend fun delete(id: Long): Unit = withContext(ioDispatcher) {
-        val photoPath = database.transactionWithResult {
-            val currentPhotoPath =
-                database.vehicleQueries.selectById(id).executeAsOneOrNull()?.photo_path
+        val photoPaths = database.transactionWithResult {
+            val vehiclePhoto = database.vehicleQueries.selectById(id).executeAsOneOrNull()?.photo_path
+            val servicePhotos = database.serviceEntryQueries
+                .selectPhotoPathsForVehicle(id)
+                .executeAsList()
+            database.serviceEntryQueries.deletePhotosForVehicle(id)   // children first
+            database.serviceEntryQueries.deletePartsForVehicle(id)
+            database.serviceEntryQueries.deleteEntriesForVehicle(id)
             database.vehicleQueries.delete(id)
-            currentPhotoPath
+            listOfNotNull(vehiclePhoto) + servicePhotos
         }
-        photoDeleter(photoPath)
+        photoPaths.forEach { path -> photoDeleter(path) }
     }
 }
