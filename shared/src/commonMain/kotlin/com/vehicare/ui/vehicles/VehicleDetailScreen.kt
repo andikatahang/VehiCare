@@ -42,11 +42,13 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
+import com.vehicare.domain.ServiceSummary
 import com.vehicare.domain.Vehicle
+import com.vehicare.ui.service.ServiceSummaryViewModel
+import com.vehicare.ui.service.components.ServiceSummaryRow
 import com.vehicare.ui.theme.Ink
 import com.vehicare.ui.theme.Mist
 import com.vehicare.ui.theme.Slate
-import com.vehicare.ui.vehicles.components.ComingSoonSlot
 import com.vehicare.ui.vehicles.components.LicensePlateChip
 import com.vehicare.ui.vehicles.components.VehicleTypeCircle
 import com.vehicare.ui.vehicles.components.labelRes
@@ -75,9 +77,8 @@ import vehicare.shared.generated.resources.title_vehicle_fallback
 
 /**
  * One vehicle's Detail screen (D-18): the hero photo or the type-circle placeholder, the name at
- * `Display` size, the five locked field rows, the reserved Phase 2 service-history slot and the
- * recessive destructive action — under a D-20 simple title bar with a back arrow and one Edit
- * action.
+ * `Display` size, the five locked field rows, the Service history summary row and the recessive
+ * destructive action — under a D-20 simple title bar with a back arrow and one Edit action.
  *
  * All three states of [VehicleDetailUiState] render something: a progress indicator while the row
  * is being read, a not-available message with a way back when it is gone, and the content above.
@@ -93,6 +94,8 @@ import vehicare.shared.generated.resources.title_vehicle_fallback
  *
  * @param onDeleted invoked after a deletion really happened, so the shell can report it and return
  *   to the list. A failure never reaches it.
+ * @param onOpenServiceHistory opens this vehicle's full service history — navigation stays injected,
+ *   so this screen never touches a nav controller (D-32).
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -101,10 +104,17 @@ fun VehicleDetailRoute(
     onEdit: () -> Unit,
     onBack: () -> Unit,
     onDeleted: () -> Unit,
+    onOpenServiceHistory: () -> Unit,
 ) {
     val viewModel = koinViewModel<VehicleDetailViewModel>(
         parameters = { parametersOf(vehicleId) },
     )
+    // One aggregate read (count + newest date) drives the summary row; the screen reads no entry
+    // rows of its own, so Detail cost stays constant in history length (T-02-06-01).
+    val summaryViewModel = koinViewModel<ServiceSummaryViewModel>(
+        parameters = { parametersOf(vehicleId) },
+    )
+    val summary = summaryViewModel.summary.collectAsState().value
     val state = viewModel.uiState.collectAsState().value
     val deleting = viewModel.deleting.collectAsState().value
     val deleteFailed = viewModel.deleteFailed.collectAsState().value
@@ -201,6 +211,8 @@ fun VehicleDetailRoute(
             is VehicleDetailUiState.Content -> VehicleDetailContent(
                 vehicle = current.vehicle,
                 contentPadding = innerPadding,
+                summary = summary,
+                onOpenServiceHistory = onOpenServiceHistory,
                 // The visible half of the single-flight guard: a deletion that is already running
                 // cannot be started again from here.
                 deleteEnabled = !deleting,
@@ -226,17 +238,19 @@ fun VehicleDetailRoute(
 }
 
 /**
- * The D-18 body, in the locked order: hero, name, the five field rows, a `2xl` break, the
- * service-history slot, a `2xl` break, then the destructive action last (UI-SPEC §Detail field
+ * The D-18 body, in the locked order: hero, name, the five field rows, a `2xl` break, the Service
+ * history summary row, a `2xl` break, then the destructive action last (UI-SPEC §Detail field
  * rows, §Visual Hierarchy).
  *
- * The scroll container is what makes the field block and the slot reachable on a small screen;
+ * The scroll container is what makes the field block and the row reachable on a small screen;
  * every spacing value in here is one of the seven declared tokens.
  */
 @Composable
 private fun VehicleDetailContent(
     vehicle: Vehicle,
     contentPadding: PaddingValues,
+    summary: ServiceSummary?,
+    onOpenServiceHistory: () -> Unit,
     deleteEnabled: Boolean,
     onDeleteClick: () -> Unit,
 ) {
@@ -302,7 +316,12 @@ private fun VehicleDetailContent(
         )
 
         Spacer(modifier = Modifier.height(48.dp))
-        ComingSoonSlot()
+        // The Phase 1 placeholder's exact band, now occupied by the real summary row (D-32). The
+        // 48px breaks above and below are untouched, so the screen's rhythm does not shift.
+        ServiceSummaryRow(
+            summary = summary,
+            onClick = onOpenServiceHistory,
+        )
         Spacer(modifier = Modifier.height(48.dp))
 
         // The screen's only destructive control, and the lowest-weight element on it: it opens the

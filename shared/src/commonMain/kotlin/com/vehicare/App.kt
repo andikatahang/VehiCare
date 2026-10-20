@@ -124,6 +124,11 @@ fun App(platformModule: Module = noPlatformModule) {
                             // and returns here, where the streaming state already shows the change.
                             onEdit = { navController.navigate(VehicleEditRoute(detailRoute.id)) },
                             onBack = { navController.popBackStack() },
+                            // The summary row opens this vehicle's full history — the destination
+                            // registered by 02-05.
+                            onOpenServiceHistory = {
+                                navController.navigate(ServiceHistoryRoute(detailRoute.id))
+                            },
                             // A deletion that really happened (the ViewModel reports success only
                             // after the repository returned): the message is launched on the
                             // shell's scope first, so the pop to the list cannot take it away,

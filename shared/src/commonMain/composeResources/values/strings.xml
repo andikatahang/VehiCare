@@ -49,7 +49,6 @@
     <string name="type_truck">Truck</string>
 
     <!-- Detail -->
-    <string name="detail_service_history_coming_soon">Service history (coming soon)</string>
     <string name="detail_not_found">This vehicle is no longer available.</string>
     <string name="value_empty">—</string>
 
@@ -75,7 +74,6 @@
     <string name="title_add_service">Add service</string>
     <string name="title_edit_service">Edit service</string>
     <string name="title_service_entry">Service entry</string>
-    <!-- Added now; the existing coming-soon key stays until ComingSoonSlot.kt is deleted (plan 02-05). -->
     <string name="detail_service_history">Service history</string>
 
     <!-- Actions -->
