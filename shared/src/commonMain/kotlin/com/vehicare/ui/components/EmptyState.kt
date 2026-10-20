@@ -1,4 +1,4 @@
-package com.vehicare.ui.vehicles.components
+package com.vehicare.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -14,31 +14,33 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.vehicare.ui.theme.Ink
 import com.vehicare.ui.theme.Mist
 import com.vehicare.ui.theme.Slate
 import org.jetbrains.compose.resources.stringResource
-import org.jetbrains.compose.resources.vectorResource
-import vehicare.shared.generated.resources.Res
-import vehicare.shared.generated.resources.action_add_vehicle
-import vehicare.shared.generated.resources.empty_vehicles_body
-import vehicare.shared.generated.resources.empty_vehicles_heading
-import vehicare.shared.generated.resources.ic_vehicle_car
 
 /**
- * The list's empty state (D-15): the first-run guidance that turns an empty screen into the first
- * add. A 64dp `Mist` circle with the car glyph, `xl` 32px below it the heading in `Ink`, the body
- * copy in `Slate`, then the prominent filled call to action.
+ * The shared empty state: the first-run guidance that turns an empty screen into the first add.
+ * Serves both the vehicle list (D-15) and the service history screen (D-36) — the caller owns
+ * every word and the visual, and the component owns the shape.
  *
- * The button is a reserved accent surface (UI-SPEC Color): it takes the theme's `primary` container
- * as-is, so the later accent swap re-tints it without touching this file. The visual is decorative —
- * the heading carries the meaning — and the screen keeps the FAB visible alongside this CTA (D-19).
+ * A 64dp `Mist` circle (`CircleShape`) holding the icon at `Modifier.size(24.dp)`, `xl` 32px to
+ * the heading (`titleLarge`/`Ink`, centred), `sm` 8px to the body (`bodyLarge`/`Slate`, centred),
+ * `md` 24px to a filled `Button` carrying `actionLabel`; the icon stays decorative
+ * (`contentDescription = null`) and the button keeps the theme's `primary` container as-is so the
+ * later accent swap re-tints it without touching this file. The column keeps `modifier.padding(24.dp)`
+ * and centred horizontal alignment.
  */
 @Composable
 fun EmptyState(
-    onAddVehicle: () -> Unit,
+    icon: ImageVector,
+    heading: String,
+    body: String,
+    actionLabel: String,
+    onAction: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -53,30 +55,30 @@ fun EmptyState(
             contentAlignment = Alignment.Center,
         ) {
             Icon(
-                imageVector = vectorResource(Res.drawable.ic_vehicle_car),
+                imageVector = icon,
                 contentDescription = null,
                 modifier = Modifier.size(24.dp),
             )
         }
         Text(
-            text = stringResource(Res.string.empty_vehicles_heading),
+            text = heading,
             style = MaterialTheme.typography.titleLarge,
             color = Ink,
             textAlign = TextAlign.Center,
             modifier = Modifier.padding(top = 32.dp),
         )
         Text(
-            text = stringResource(Res.string.empty_vehicles_body),
+            text = body,
             style = MaterialTheme.typography.bodyLarge,
             color = Slate,
             textAlign = TextAlign.Center,
             modifier = Modifier.padding(top = 8.dp),
         )
         Button(
-            onClick = onAddVehicle,
+            onClick = onAction,
             modifier = Modifier.padding(top = 24.dp),
         ) {
-            Text(text = stringResource(Res.string.action_add_vehicle))
+            Text(text = actionLabel)
         }
     }
 }

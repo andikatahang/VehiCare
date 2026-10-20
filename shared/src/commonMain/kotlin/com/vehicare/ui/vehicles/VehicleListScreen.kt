@@ -10,6 +10,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
@@ -27,15 +28,20 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.vehicare.ui.components.EmptyState
 import com.vehicare.ui.theme.Slate
-import com.vehicare.ui.vehicles.components.EmptyState
 import com.vehicare.ui.vehicles.components.VehicleCard
 import org.jetbrains.compose.resources.stringResource
+import org.jetbrains.compose.resources.vectorResource
 import org.koin.compose.viewmodel.koinViewModel
 import vehicare.shared.generated.resources.Res
+import vehicare.shared.generated.resources.action_add_vehicle
 import vehicare.shared.generated.resources.action_try_again
 import vehicare.shared.generated.resources.cd_add_vehicle
+import vehicare.shared.generated.resources.empty_vehicles_body
+import vehicare.shared.generated.resources.empty_vehicles_heading
 import vehicare.shared.generated.resources.error_load_vehicles
+import vehicare.shared.generated.resources.ic_vehicle_car
 import vehicare.shared.generated.resources.loading_vehicles
 import vehicare.shared.generated.resources.title_vehicles
 
@@ -83,7 +89,13 @@ fun VehicleListRoute(
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center,
                     ) {
-                        EmptyState(onAddVehicle = onAddVehicle)
+                        EmptyState(
+                            icon = vectorResource(Res.drawable.ic_vehicle_car),
+                            heading = stringResource(Res.string.empty_vehicles_heading),
+                            body = stringResource(Res.string.empty_vehicles_body),
+                            actionLabel = stringResource(Res.string.action_add_vehicle),
+                            onAction = onAddVehicle,
+                        )
                     }
                 }
 
