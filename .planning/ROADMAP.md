@@ -127,7 +127,7 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation & Vehicle Management | 10/10 | Complete    | 2026-10-19 |
-| 2. Service Log | 3/6 | In Progress | — |
+| 2. Service Log | 3/6 | In Progress|  |
 | 3. Reminders & Dashboard | 0/? | Not started | — |
 
 ---
