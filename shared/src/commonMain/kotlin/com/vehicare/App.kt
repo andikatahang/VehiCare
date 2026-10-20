@@ -18,11 +18,13 @@ import coil3.ImageLoader
 import coil3.compose.setSingletonImageLoaderFactory
 import com.vehicare.di.appModule
 import com.vehicare.ui.navigation.BottomTabs
+import com.vehicare.ui.navigation.ServiceEntryDetailRoute
 import com.vehicare.ui.navigation.ServiceEntryEditRoute
 import com.vehicare.ui.navigation.SettingsRoute
 import com.vehicare.ui.navigation.VehicleDetailRoute
 import com.vehicare.ui.navigation.VehicleEditRoute
 import com.vehicare.ui.navigation.VehicleListRoute
+import com.vehicare.ui.service.ServiceEntryDetailRoute as ServiceEntryDetailScreen
 import com.vehicare.ui.service.ServiceEntryEditRoute as ServiceEntryEditScreen
 import com.vehicare.ui.vehicles.VehicleDetailRoute as VehicleDetailScreen
 import com.vehicare.ui.vehicles.VehicleEditRoute as VehicleEditScreen
@@ -36,6 +38,7 @@ import org.koin.compose.KoinApplication
 import org.koin.core.module.Module
 import org.koin.dsl.module
 import vehicare.shared.generated.resources.Res
+import vehicare.shared.generated.resources.snackbar_entry_deleted
 import vehicare.shared.generated.resources.snackbar_vehicle_deleted
 
 /**
@@ -137,6 +140,24 @@ fun App(platformModule: Module = noPlatformModule) {
                             entryId = route.entryId,
                             onBack = { navController.popBackStack() },
                             onSaved = { navController.popBackStack() },
+                        )
+                    }
+                    composable<ServiceEntryDetailRoute> { backStackEntry ->
+                        val detailRoute = backStackEntry.toRoute<ServiceEntryDetailRoute>()
+                        // The delete-success message is resolved here and launched on the shell's scope,
+                        // because this screen is popped the moment the delete succeeds and a snackbar
+                        // hosted on it would vanish with it (Shared Pattern 7).
+                        val entryDeletedMessage = stringResource(Res.string.snackbar_entry_deleted)
+                        ServiceEntryDetailScreen(
+                            entryId = detailRoute.entryId,
+                            onEdit = { vehicleId, entryId ->
+                                navController.navigate(ServiceEntryEditRoute(vehicleId, entryId))
+                            },
+                            onBack = { navController.popBackStack() },
+                            onDeleted = {
+                                scope.launch { snackbarHostState.showSnackbar(entryDeletedMessage) }
+                                navController.popBackStack()
+                            },
                         )
                     }
                 }

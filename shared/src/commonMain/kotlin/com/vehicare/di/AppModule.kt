@@ -8,6 +8,7 @@ import com.vehicare.data.db.DatabaseFactory
 import com.vehicare.data.db.DriverFactory
 import com.vehicare.data.db.createDriverFactory
 import com.vehicare.db.VehiCareDatabase
+import com.vehicare.ui.service.ServiceEntryDetailViewModel
 import com.vehicare.ui.service.ServiceEntryEditViewModel
 import com.vehicare.ui.vehicles.VehicleDetailViewModel
 import com.vehicare.ui.vehicles.VehicleEditViewModel
@@ -53,4 +54,6 @@ val appModule = module {
     viewModel { (vehicleId: Long) -> VehicleDetailViewModel(get(), vehicleId) }
     // Service entry edit form: vehicleId + entryId from the route (entryId = 0L means add).
     viewModel { (vehicleId: Long, entryId: Long) -> ServiceEntryEditViewModel(get(), vehicleId, entryId) }
+    // Read-only entry detail: entryId from the route.
+    viewModel { (entryId: Long) -> ServiceEntryDetailViewModel(get(), entryId) }
 }
