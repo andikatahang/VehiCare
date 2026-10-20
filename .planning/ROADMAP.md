@@ -81,7 +81,7 @@ Plans:
 4. User can view the full service history for a vehicle sorted by date or mileage
 5. User can edit or delete any existing service entry
 
-**Plans:** 5/6 plans executed
+**Plans:** 6/6 plans executed
 Plans:
 **Wave 1**
 
@@ -102,7 +102,7 @@ Plans:
 
 **Wave 5** *(blocked on Wave 4 completion)*
 
-- [ ] 02-06-PLAN.md — the vehicle-Detail Service history summary row replacing the coming-soon placeholder, and the placeholder's retirement
+- [x] 02-06-PLAN.md — the vehicle-Detail Service history summary row replacing the coming-soon placeholder, and the placeholder's retirement
 
 ### Phase 3: Reminders & Dashboard
 
