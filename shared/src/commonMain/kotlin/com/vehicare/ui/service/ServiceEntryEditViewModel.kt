@@ -80,7 +80,11 @@ class ServiceEntryEditViewModel(
     private val _uiState = MutableStateFlow<ServiceEntryEditUiState>(
         if (isAdd) {
             ServiceEntryEditUiState.Ready(
-                values = ServiceEntryFormValues(),
+                // The date is seeded synchronously: it is pure and cheap, and it keeps the submit
+                // gate in agreement with the date the field already displays (WR-03).
+                values = ServiceEntryFormValues(
+                    dateEpochMs = ServiceDates.toStorage(ServiceDates.today()),
+                ),
                 saveFailed = false,
                 saving = false,
                 importing = false,
@@ -127,35 +131,39 @@ class ServiceEntryEditViewModel(
 
     init {
         if (isAdd) {
-            // Add mode: seed today's date, prefill mileage, load learned types
+            // Add mode: the date was seeded synchronously; the repository-backed prefill merges
+            // into whatever the user has typed in the meantime instead of replacing it (WR-03).
             viewModelScope.launch {
-                val dateEpochMs = ServiceDates.toStorage(ServiceDates.today())
-                val latestMileage = repo.observeLatestMileage(vehicleId).first()
-                val learned = repo.observeLearnedTypes().first()
-
-                val baseline = latestMileage
-                _uiState.value = ServiceEntryEditUiState.Ready(
-                    values = ServiceEntryFormValues(
-                        dateEpochMs = dateEpochMs,
-                        mileage = latestMileage?.toString() ?: "",
-                        serviceType = null,
-                        cost = "",
-                        notes = "",
-                        workshop = "",
-                        mechanic = "",
-                        parts = emptyList(),
-                        photoPaths = emptyList(),
-                    ),
-                    mileageBaseline = baseline,
-                    learnedTypes = learned,
-                )
+                try {
+                    val latestMileage = repo.observeLatestMileage(vehicleId).first()
+                    val learned = repo.observeLearnedTypes().first()
+                    val current = _uiState.value as? ServiceEntryEditUiState.Ready ?: return@launch
+                    _uiState.value = current.copy(
+                        values = current.values.copy(
+                            mileage = current.values.mileage.ifBlank {
+                                latestMileage?.toString().orEmpty()
+                            },
+                        ),
+                        mileageBaseline = latestMileage,
+                        learnedTypes = learned,
+                    )
+                } catch (cancelled: CancellationException) {
+                    throw cancelled
+                } catch (_: Exception) {
+                    // A failed prefill must never disable Save: the form stays usable with the
+                    // synchronously seeded date and no baseline.
+                }
             }
         } else {
-            // Edit mode: load entry once, set baseline from previous mileage
+            // Edit mode: load the row once. A failure before the first emission is NotFound; a
+            // late failure leaves the user's filled form untouched (WR-02).
             viewModelScope.launch {
                 repo.observeEntry(entryId)
                     .catch {
-                        _uiState.value = ServiceEntryEditUiState.NotFound
+                        if (!initialLoadApplied) {
+                            initialLoadApplied = true
+                            _uiState.value = ServiceEntryEditUiState.NotFound
+                        }
                     }
                     .collect { entry ->
                         if (initialLoadApplied) return@collect
@@ -163,13 +171,21 @@ class ServiceEntryEditViewModel(
                         _uiState.value = if (entry == null) {
                             ServiceEntryEditUiState.NotFound
                         } else {
-                            val previousMileage = repo.observePreviousMileage(vehicleId, entryId).first()
-                            val learned = repo.observeLearnedTypes().first()
-                            ServiceEntryEditUiState.Ready(
-                                values = entry.toFormValues(),
-                                mileageBaseline = previousMileage,
-                                learnedTypes = learned,
-                            )
+                            try {
+                                ServiceEntryEditUiState.Ready(
+                                    values = entry.toFormValues(),
+                                    mileageBaseline = repo
+                                        .observePreviousMileage(vehicleId, entryId)
+                                        .first(),
+                                    learnedTypes = repo.observeLearnedTypes().first(),
+                                )
+                            } catch (cancelled: CancellationException) {
+                                throw cancelled
+                            } catch (_: Exception) {
+                                // Seeding failed inside the collector: fail closed rather than
+                                // leave the screen on Loading forever.
+                                ServiceEntryEditUiState.NotFound
+                            }
                         }
                     }
             }
@@ -226,6 +242,11 @@ class ServiceEntryEditViewModel(
 
         _uiState.value = current.copy(saving = true, saveFailed = false)
         val submitted = current.values
+        // While the write is in flight these files are no longer abandonable: `onCleared` must not
+        // delete paths the transaction may already have committed (WR-05). They return to the
+        // abandonable set only if the save fails.
+        val submittedPhotos = persistedButUnsavedPaths.toSet()
+        persistedButUnsavedPaths.clear()
         viewModelScope.launch {
             try {
                 val entry = ServiceEntryFormValidation.toServiceEntry(entryId, vehicleId, submitted)
@@ -234,8 +255,11 @@ class ServiceEntryEditViewModel(
                 clearSaving()
                 onSaved()
             } catch (cancelled: CancellationException) {
+                // The write may or may not have committed: keep the files rather than risk
+                // deleting ones the row now references. A rare orphan file is the safer failure.
                 throw cancelled
             } catch (_: Exception) {
+                persistedButUnsavedPaths.addAll(submittedPhotos)
                 markSaveFailed()
             }
         }
@@ -271,18 +295,8 @@ class ServiceEntryEditViewModel(
             }
 
             val latest = _uiState.value as? ServiceEntryEditUiState.Ready ?: return@launch
-            val previousPaths = latest.values.photoPaths
-            // For each removed path (should be at most one in current UX), route it
-            previousPaths.forEach { previous ->
-                if (persistedButUnsavedPaths.contains(previous)) {
-                    // Copied this session and never saved, so no row references it: remove it now.
-                    PhotoStorage.delete(previous)
-                    persistedButUnsavedPaths.remove(previous)
-                } else {
-                    // The saved row still references it, so only a successful save may remove it.
-                    supersededPaths.add(previous)
-                }
-            }
+            // The strip is additive (up to 5 photos): existing paths are not replacements and
+            // must neither be deleted nor queued for deletion when a new photo is added (CR-01).
             persistedButUnsavedPaths.add(relativePath)
             _uiState.value = latest.copy(
                 values = latest.values.copy(photoPaths = latest.values.photoPaths + relativePath),
@@ -319,12 +333,15 @@ class ServiceEntryEditViewModel(
         _uiState.value = current.copy(values = current.values.copy(parts = newParts))
     }
 
-    /** Updates a part row at [index]. */
+    /** Updates a part row at [index]. Quantity stays digits-only (WR-08). */
     fun onPartChange(index: Int, name: String, quantity: String) {
         val current = _uiState.value as? ServiceEntryEditUiState.Ready ?: return
         val parts = current.values.parts.toMutableList()
         if (index in parts.indices) {
-            parts[index] = PartRow(name, quantity)
+            parts[index] = PartRow(
+                name = name,
+                quantity = ServiceEntryFormValidation.sanitizeQuantity(quantity),
+            )
             _uiState.value = current.copy(values = current.values.copy(parts = parts))
         }
     }
