@@ -31,3 +31,7 @@ data class ServiceEntryEditRoute(val vehicleId: Long, val entryId: Long = 0L)
 /** The read-only Service entry detail screen opened from the history row (D-35). */
 @Serializable
 data class ServiceEntryDetailRoute(val entryId: Long)
+
+/** One vehicle's full service history — the sortable list of every entry (D-32). */
+@Serializable
+data class ServiceHistoryRoute(val vehicleId: Long)

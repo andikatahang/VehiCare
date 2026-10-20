@@ -10,6 +10,7 @@ import com.vehicare.data.db.createDriverFactory
 import com.vehicare.db.VehiCareDatabase
 import com.vehicare.ui.service.ServiceEntryDetailViewModel
 import com.vehicare.ui.service.ServiceEntryEditViewModel
+import com.vehicare.ui.service.ServiceHistoryViewModel
 import com.vehicare.ui.vehicles.VehicleDetailViewModel
 import com.vehicare.ui.vehicles.VehicleEditViewModel
 import com.vehicare.ui.vehicles.VehicleListViewModel
@@ -56,4 +57,6 @@ val appModule = module {
     viewModel { (vehicleId: Long, entryId: Long) -> ServiceEntryEditViewModel(get(), vehicleId, entryId) }
     // Read-only entry detail: entryId from the route.
     viewModel { (entryId: Long) -> ServiceEntryDetailViewModel(get(), entryId) }
+    // The history list: one vehicleId from the route.
+    viewModel { (vehicleId: Long) -> ServiceHistoryViewModel(get(), vehicleId) }
 }

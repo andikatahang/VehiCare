@@ -20,12 +20,14 @@ import com.vehicare.di.appModule
 import com.vehicare.ui.navigation.BottomTabs
 import com.vehicare.ui.navigation.ServiceEntryDetailRoute
 import com.vehicare.ui.navigation.ServiceEntryEditRoute
+import com.vehicare.ui.navigation.ServiceHistoryRoute
 import com.vehicare.ui.navigation.SettingsRoute
 import com.vehicare.ui.navigation.VehicleDetailRoute
 import com.vehicare.ui.navigation.VehicleEditRoute
 import com.vehicare.ui.navigation.VehicleListRoute
 import com.vehicare.ui.service.ServiceEntryDetailRoute as ServiceEntryDetailScreen
 import com.vehicare.ui.service.ServiceEntryEditRoute as ServiceEntryEditScreen
+import com.vehicare.ui.service.ServiceHistoryRoute as ServiceHistoryScreen
 import com.vehicare.ui.vehicles.VehicleDetailRoute as VehicleDetailScreen
 import com.vehicare.ui.vehicles.VehicleEditRoute as VehicleEditScreen
 import com.vehicare.ui.vehicles.VehicleListRoute as VehicleListScreen
@@ -158,6 +160,21 @@ fun App(platformModule: Module = noPlatformModule) {
                                 scope.launch { snackbarHostState.showSnackbar(entryDeletedMessage) }
                                 navController.popBackStack()
                             },
+                        )
+                    }
+                    composable<ServiceHistoryRoute> { backStackEntry ->
+                        val historyRoute = backStackEntry.toRoute<ServiceHistoryRoute>()
+                        ServiceHistoryScreen(
+                            vehicleId = historyRoute.vehicleId,
+                            // The FAB and the empty-state CTA both open the add form for this
+                            // vehicle (D-36); entryId = 0L is the add case of the 02-03 form.
+                            onAddService = {
+                                navController.navigate(ServiceEntryEditRoute(historyRoute.vehicleId, 0L))
+                            },
+                            onOpenEntry = { entryId ->
+                                navController.navigate(ServiceEntryDetailRoute(entryId))
+                            },
+                            onBack = { navController.popBackStack() },
                         )
                     }
                 }
