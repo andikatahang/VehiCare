@@ -1,0 +1,114 @@
+package com.vehicare.ui.service
+
+import com.vehicare.domain.ServiceEntry
+import com.vehicare.domain.ServicePart
+import com.vehicare.util.RupiahFormat
+
+/**
+ * The Add/Edit service entry form's field content, exactly as the user typed it.
+ *
+ * Every field is a `String` (not a nullable) because that is what a text field holds;
+ * [ServiceEntryFormValidation.toServiceEntry] is the single place where "empty text" becomes `null`
+ * for the domain model. Numeric fields hold raw digits only — formatting is applied only for display.
+ */
+data class ServiceEntryFormValues(
+    val dateEpochMs: Long? = null,
+    val mileage: String = "",
+    val serviceType: String? = null,
+    val cost: String = "",
+    val notes: String = "",
+    val workshop: String = "",
+    val mechanic: String = "",
+    val parts: List<PartRow> = emptyList(),
+    val photoPaths: List<String> = emptyList(),
+)
+
+/**
+ * One part row as the user types it — the ViewModel owns the list.
+ *
+ * Both fields are text: name free, quantity digits-only (validated in ViewModel).
+ * Quantity defaults to "1" and is clamped to ≥ 1 on save.
+ */
+data class PartRow(
+    val name: String = "",
+    val quantity: String = "1",
+)
+
+/**
+ * The form's error identity — an enum, never copy.
+ *
+ * The user-facing message stays the `error_mileage_required` entry of
+ * `composeResources/values/strings.xml`, resolved in the screen (D-11).
+ */
+enum class ServiceEntryFormError { MILEAGE_REQUIRED }
+
+/**
+ * Every Add/Edit service entry form rule, as pure functions: no Compose, no Compose Resources,
+ * no database.
+ *
+ * Keeping the rules here — away from the ViewModel and the screen — means the submit gate, the
+ * digit sanitizers and the blank-to-null mapping are decided in exactly one place and are
+ * unit-testable on both targets without a UI harness.
+ */
+object ServiceEntryFormValidation {
+
+    /** The submit gate (D-27): date, non-blank mileage, and service type must be present. */
+    fun isSubmittable(values: ServiceEntryFormValues): Boolean =
+        values.dateEpochMs != null && values.mileage.isNotBlank() && values.serviceType != null
+
+    /** The error the form is currently in, or `null` when the required fields are acceptable. */
+    fun errorFor(values: ServiceEntryFormValues): ServiceEntryFormError? =
+        if (isSubmittable(values)) null else ServiceEntryFormError.MILEAGE_REQUIRED
+
+    /**
+     * Keeps only the digit characters of [raw], at most the first nine (mileage ≤ 9 digits).
+     */
+    fun sanitizeMileage(raw: String): String = raw.filter { it.isDigit() }.take(9)
+
+    /**
+     * Keeps only the digit characters of [raw], at most the first twelve (cost ≤ 12 digits).
+     */
+    fun sanitizeCost(raw: String): String = raw.filter { it.isDigit() }.take(12)
+
+    /**
+     * Maps the form's text into the domain model that crosses the repository boundary.
+     *
+     * Each optional field is trimmed and a blank one becomes `null`, never `""` — the Detail screen
+     * renders `—` for null and would render an empty string as a blank line instead. [id] is passed
+     * straight through, so `0L` stays the insert case and an edit keeps its original row id.
+     *
+     * Quantities are clamped to ≥ 1. Parts with a blank name are dropped (SVC-02 rows need a name).
+     */
+    fun toServiceEntry(id: Long, vehicleId: Long, values: ServiceEntryFormValues): ServiceEntry {
+        val date = values.dateEpochMs ?: 0L
+        val mileageKm = values.mileage.trimToNull()?.toLongOrNull() ?: 0L
+        val serviceType = values.serviceType ?: ""
+        val costRupiah = values.cost.trimToNull()?.let { RupiahFormat.parseRupiahDigits(it) }
+        val notes = values.notes.trimToNull()
+        val workshop = values.workshop.trimToNull()
+        val mechanic = values.mechanic.trimToNull()
+
+        val parts = values.parts
+            .mapNotNull { part ->
+                val name = part.name.trim().takeIf { it.isNotEmpty() } ?: return@mapNotNull null
+                val quantity = part.quantity.trimToNull()?.toIntOrNull()?.coerceAtLeast(1) ?: 1
+                ServicePart(name = name, quantity = quantity)
+            }
+
+        return ServiceEntry(
+            id = id,
+            vehicleId = vehicleId,
+            dateEpochMs = date,
+            mileageKm = mileageKm,
+            serviceType = serviceType,
+            costRupiah = costRupiah,
+            notes = notes,
+            workshop = workshop,
+            mechanic = mechanic,
+            parts = parts,
+            photoPaths = values.photoPaths,
+        )
+    }
+
+    private fun String.trimToNull(): String? = trim().takeIf { it.isNotEmpty() }
+}

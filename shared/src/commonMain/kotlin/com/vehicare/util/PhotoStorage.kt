@@ -27,7 +27,10 @@ import kotlinx.io.files.SystemFileSystem
 object PhotoStorage {
 
     /** Name of the app-private directory that holds every persisted vehicle photo. */
-    private const val DIRECTORY = "vehicles"
+    private const val VEHICLES_DIRECTORY = "vehicles"
+
+    /** Name of the app-private directory that holds every persisted service entry photo. */
+    const val SERVICE_ENTRY_DIRECTORY = "service_entries"
 
     /**
      * Longest side a persisted photo keeps, in pixels.
@@ -41,7 +44,7 @@ object PhotoStorage {
     private const val JPEG_QUALITY = 80
 
     /**
-     * Copies [picked] into app-private storage under `DIRECTORY/[fileName]` and returns the
+     * Copies [picked] into app-private storage under `directory/[fileName]` and returns the
      * **relative** location the database stores.
      *
      * The bytes are compressed (JPEG, bounded to [MAX_IMAGE_DIMENSION]) before they are written, so
@@ -51,11 +54,13 @@ object PhotoStorage {
      *
      * A pick whose bytes are not a decodable image is stored verbatim instead of failing — refusing
      * to attach the user's selection would be a worse outcome than skipping the downscale.
+     *
+     * @param directory the app-private subdirectory to store the photo in (default: VEHICLES_DIRECTORY for vehicle photos)
      */
-    suspend fun persist(picked: PlatformFile, fileName: String): String {
-        val relative = "$DIRECTORY/$fileName"
+    suspend fun persist(picked: PlatformFile, fileName: String, directory: String = VEHICLES_DIRECTORY): String {
+        val relative = "$directory/$fileName"
         val source = picked.readBytes()
-        resolve(DIRECTORY).createDirectories()
+        resolve(directory).createDirectories()
         resolve(relative).write(compress(source))
         return relative
     }

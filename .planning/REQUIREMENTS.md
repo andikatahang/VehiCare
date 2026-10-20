@@ -18,7 +18,7 @@
 - [x] **SVC-01**: User can create a service entry with date, mileage, service type, cost, and notes
 - [x] **SVC-02**: User can add parts replaced or repaired to a service entry (part name, quantity)
 - [x] **SVC-03**: User can attach one or more photos (receipts, work done) to a service entry
-- [ ] **SVC-04**: User can record the workshop name and mechanic for a service entry
+- [x] **SVC-04**: User can record the workshop name and mechanic for a service entry
 - [x] **SVC-05**: User can view the full service history for a vehicle, sorted by date or mileage
 - [x] **SVC-06**: User can edit an existing service entry
 - [x] **SVC-07**: User can delete a service entry
@@ -91,7 +91,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SVC-01 | Phase 2: Service Log | Complete |
 | SVC-02 | Phase 2: Service Log | Complete |
 | SVC-03 | Phase 2: Service Log | Complete |
-| SVC-04 | Phase 2: Service Log | Pending |
+| SVC-04 | Phase 2: Service Log | Complete |
 | SVC-05 | Phase 2: Service Log | Complete |
 | SVC-06 | Phase 2: Service Log | Complete |
 | SVC-07 | Phase 2: Service Log | Complete |
@@ -113,4 +113,4 @@ Which phases cover which requirements. Updated during roadmap creation.
 
 ---
 *Requirements defined: 2026-10-18*
-*Last updated: 2026-10-18 after initial definition*
+*Last updated: 2026-10-20 after 02-03 completion*

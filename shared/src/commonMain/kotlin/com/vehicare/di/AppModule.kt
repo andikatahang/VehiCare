@@ -1,11 +1,14 @@
 package com.vehicare.di
 
+import com.vehicare.data.ServiceEntryRepository
+import com.vehicare.data.ServiceEntryRepositoryImpl
 import com.vehicare.data.VehicleRepository
 import com.vehicare.data.VehicleRepositoryImpl
 import com.vehicare.data.db.DatabaseFactory
 import com.vehicare.data.db.DriverFactory
 import com.vehicare.data.db.createDriverFactory
 import com.vehicare.db.VehiCareDatabase
+import com.vehicare.ui.service.ServiceEntryEditViewModel
 import com.vehicare.ui.vehicles.VehicleDetailViewModel
 import com.vehicare.ui.vehicles.VehicleEditViewModel
 import com.vehicare.ui.vehicles.VehicleListViewModel
@@ -35,6 +38,12 @@ val appModule = module {
     single<VehicleRepository> {
         VehicleRepositoryImpl(get(), photoDeleter = PhotoStorage::delete)
     }
+    // The service entry repository with the real photo deleter (02-03) — this is the phase's only
+    // repository binding; 02-01 wires nothing (its impl default deleter stays `{}` for tests only)
+    // and 02-04/05/06 add only their ViewModel factories.
+    single<ServiceEntryRepository> {
+        ServiceEntryRepositoryImpl(get(), photoDeleter = PhotoStorage::delete)
+    }
     viewModel { VehicleListViewModel(get()) }
     // The form's id comes from the route: `parametersOf(vehicleId)` at the call site, destructured
     // here. 0L is the add case; anything else loads that row for edit.
@@ -42,4 +51,6 @@ val appModule = module {
     // The Detail destination's id arrives the same way the form's does, so both route-id
     // ViewModels are built by one mechanism — a typed `Long` from the route, never a string key.
     viewModel { (vehicleId: Long) -> VehicleDetailViewModel(get(), vehicleId) }
+    // Service entry edit form: vehicleId + entryId from the route (entryId = 0L means add).
+    viewModel { (vehicleId: Long, entryId: Long) -> ServiceEntryEditViewModel(get(), vehicleId, entryId) }
 }

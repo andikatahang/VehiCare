@@ -81,7 +81,7 @@ Plans:
 4. User can view the full service history for a vehicle sorted by date or mileage
 5. User can edit or delete any existing service entry
 
-**Plans:** 2/6 plans executed
+**Plans:** 3/6 plans executed
 Plans:
 **Wave 1**
 
@@ -90,7 +90,7 @@ Plans:
 
 **Wave 2** *(blocked on Wave 1 completion)*
 
-- [ ] 02-03-PLAN.md — the Add/Edit form: type picker/dialog, date field, parts editor, photo strip, validation, edit ViewModel with per-path photo bookkeeping
+- [x] 02-03-PLAN.md — the Add/Edit form: type picker/dialog, date field, parts editor, photo strip, validation, edit ViewModel with per-path photo bookkeeping
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
@@ -127,7 +127,7 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation & Vehicle Management | 10/10 | Complete    | 2026-10-19 |
-| 2. Service Log | 2/6 | In Progress | — |
+| 2. Service Log | 3/6 | In Progress | — |
 | 3. Reminders & Dashboard | 0/? | Not started | — |
 
 ---
@@ -158,4 +158,4 @@ Critical decisions captured for execution phases:
 
 ---
 *Roadmap created: 2026-10-18*
-*Last updated: 2026-10-18 after initial roadmap creation*
+*Last updated: 2026-10-20 after 02-03 completion*

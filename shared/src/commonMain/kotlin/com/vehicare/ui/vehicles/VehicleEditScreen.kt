@@ -245,6 +245,7 @@ private fun VehicleEditForm(
                     Text(
                         text = stringResource(Res.string.error_name_required),
                         color = MaterialTheme.colorScheme.error,
+                        style = MaterialTheme.typography.labelLarge,
                     )
                 }
             } else {

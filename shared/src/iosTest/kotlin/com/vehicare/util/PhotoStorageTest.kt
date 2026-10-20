@@ -133,6 +133,35 @@ class PhotoStorageTest {
     }
 
     @Test
+    fun persistWithServiceEntryDirectoryUsesCorrectPath() = runTest {
+        val bytes = syntheticBytes(seed = 99)
+        val source = sourceFile(bytes)
+        val fileName = "service_test_$runId.jpg"
+
+        val returned = PhotoStorage.persist(source, fileName, PhotoStorage.SERVICE_ENTRY_DIRECTORY)
+
+        assertEquals("service_entries/$fileName", returned)
+        assertFalse(returned.startsWith("/"))
+        val stored = PhotoStorage.resolve(returned)
+        storedPaths += returned
+        assertTrue(stored.exists(), "the photo must exist inside app storage under service_entries")
+        assertContentEquals(bytes, stored.readBytes())
+    }
+
+    @Test
+    fun persistCreatesServiceEntryDirectoryWhenAbsent() = runTest {
+        PhotoStorage.resolve(PhotoStorage.SERVICE_ENTRY_DIRECTORY).fileKitDelete(mustExist = false, recursively = true)
+        assertFalse(PhotoStorage.resolve(PhotoStorage.SERVICE_ENTRY_DIRECTORY).exists())
+
+        val bytes = syntheticBytes(seed = 98)
+        val returned = PhotoStorage.persist(sourceFile(bytes), "service_test_$runId.jpg", PhotoStorage.SERVICE_ENTRY_DIRECTORY)
+
+        storedPaths += returned
+        assertTrue(PhotoStorage.resolve(returned).exists())
+        assertContentEquals(bytes, PhotoStorage.resolve(returned).readBytes())
+    }
+
+    @Test
     fun persistCompressesAPickedImageIntoAJpeg() = runTest {
         val returned = PhotoStorage.persist(sourceFile(onePixelPng()), nextFileName())
         storedPaths += returned

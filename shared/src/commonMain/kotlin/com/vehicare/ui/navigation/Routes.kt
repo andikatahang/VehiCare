@@ -23,3 +23,7 @@ data class VehicleEditRoute(val id: Long = 0L)
 /** One vehicle's Detail screen. */
 @Serializable
 data class VehicleDetailRoute(val id: Long)
+
+/** The shared Add/Edit service entry form. `entryId == 0L` means "add"; any `entryId > 0` means "edit [entryId]". */
+@Serializable
+data class ServiceEntryEditRoute(val vehicleId: Long, val entryId: Long = 0L)

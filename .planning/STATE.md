@@ -3,13 +3,13 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: Executing Phase 02
-last_updated: "2026-10-19T14:19:42.331Z"
+last_updated: "2026-10-20T14:30:00.000Z"
 progress:
   total_phases: 3
   completed_phases: 1
   total_plans: 16
-  completed_plans: 12
-  percent: 33
+  completed_plans: 13
+  percent: 37
 ---
 
 # STATE: VehiCare
@@ -27,14 +27,14 @@ Plan: 3 of 6
 | Field | Value |
 |-------|-------|
 | **Active Phase** | Phase 2: Service Log (executing) |
-| **Active Plan** | 02-03 next — 02-02 (shared utilities) complete 2026-10-19 |
-| **Status** | 02-02 complete — kotlinx-datetime 0.8.0 wired, `ServiceDates`/`RupiahFormat` tested on both targets, full Phase 2 string set in place |
-| **Progress** | `[████████░░] 12/16 plans (75%)` |
+| **Active Plan** | 02-03 complete — 02-04 (history screen) next |
+| **Status** | 02-03 complete — Add/Edit service entry form with type chips, custom dialog, date picker, parts editor, photo strip, validation, ViewModel with two-set photo bookkeeping; single destination for add (entryId=0) and edit; ServiceEntryRepository Koin binding; C-27 Label role on vehicle form |
+| **Progress** | `[█████████░] 13/16 plans (81%)` |
 
 ```
-Phase 1 [Complete] → Phase 2 [Executing — 2/6 plans] → Phase 3 [Not Started]
-                      ↑
-                      Current
+Phase 1 [Complete] → Phase 2 [Executing — 3/6 plans] → Phase 3 [Not Started]
+                       ↑
+                       Current
 ```
 
 ---
@@ -44,7 +44,7 @@ Phase 1 [Complete] → Phase 2 [Executing — 2/6 plans] → Phase 3 [Not Starte
 | Phase | Name | Status |
 |-------|------|--------|
 | 1 | Foundation & Vehicle Management | Complete (2026-10-19) |
-| 2 | Service Log | Executing — 2/6 plans (02-01, 02-02 complete) |
+| 2 | Service Log | Executing — 3/6 plans (02-01, 02-02, 02-03 complete) |
 | 3 | Reminders & Dashboard | Not started |
 
 ---
@@ -54,11 +54,13 @@ Phase 1 [Complete] → Phase 2 [Executing — 2/6 plans] → Phase 3 [Not Starte
 | Metric | Value |
 |--------|-------|
 | Phases completed | 1 / 3 |
-| Plans completed | 12 / 16 |
-| Requirements covered | 15 / 21 |
-| Sessions | 12 |
+| Plans completed | 13 / 16 |
+| Requirements covered | 17 / 21 |
+| Sessions | 13 |
 
-Per-plan: `Phase 1 / 01` — ~28min, 3 tasks, 63 files · `Phase 1 / 02` — 17min, 3 tasks, 15 files · `Phase 1 / 03` — 20min, 3 tasks, 17 files · `Phase 1 / 04` — 24min, 3 tasks, 17 files · `Phase 1 / 05` — 11min, 3 tasks, 3 files · `Phase 1 / 06` — 10min, 3 tasks, 8 files · `Phase 1 / 07` — 21min, 3 tasks, 6 files · `Phase 1 / 08` — 21min, 3 tasks, 6 files · `Phase 1 / 09` — 4min, 3 tasks, 6 files · `Phase 1 / 10` — 12min, 3 tasks, 5 files · `Phase 2 / 01` — 11min, 3 tasks, 14 files · `Phase 2 / 02` — 15min, 2 tasks, 7 files.
+Per-plan: `Phase 1 / 01` — ~28min, 3 tasks, 63 files · `Phase 1 / 02` — 17min, 3 tasks, 15 files · `Phase 1 / 03` — 20min, 3 tasks, 17 files · `Phase 1 / 04` — 24min, 3 tasks, 17 files · `Phase 1 / 05` — 11min, 3 tasks, 3 files · `Phase 1 / 06` — 10min, 3 tasks, 8 files · `Phase 1 / 07` — 21min, 3 tasks, 6 files · `Phase 1 / 08` — 21min, 3 tasks, 6 files · `Phase 1 / 09` — 4min, 3 tasks, 6 files · `Phase 1 / 10` — 12min, 3 tasks, 5 files · `Phase 2 / 01` — 11min, 3 tasks, 14 files · `Phase 2 / 02` — 15min, 2 tasks, 7 files · `Phase 2 / 03` — 45min, 3 tasks, 16 files.
+
+---
 
 ## Accumulated Context
 
@@ -159,8 +161,8 @@ No blockers. **Phase 1 closed 2026-10-19** — UAT 6/6 passed (`01-UAT.md`), sec
 
 ## Session Continuity
 
-**Last session:** 2026-10-19T14:19:42.327Z
-**Next action:** 02-02 (shared utilities + Phase 2 strings) complete — kotlinx-datetime 0.8.0, `ServiceDates`, `RupiahFormat` and the full string set are ready. Next: `/gsd-execute-phase 2` continues with 02-03 (Add/Edit form). Debt: `01-VERIFICATION.md` `human_needed` acknowledged (see Blockers).
+**Last session:** 2026-10-20T14:30:00.000Z
+**Next action:** 02-04 (history screen) — 02-03 Add/Edit form complete. Next: `/gsd-execute-phase 2` continues with 02-04 (ServiceHistoryScreen, ServiceHistoryViewModel, ServiceSummaryRow, HistorySortControl). Debt: `01-VERIFICATION.md` `human_needed` acknowledged (see Blockers).
 
 ## Decisions
 
@@ -210,3 +212,9 @@ No blockers. **Phase 1 closed 2026-10-19** — UAT 6/6 passed (`01-UAT.md`), sec
 - [Phase 02]: ServiceDates keeps today() on the system zone while storage/display pin UTC start-of-day — The user's wall-clock date and a zone-independent stored date are different requirements; one seam documents and tests the asymmetry (RESEARCH Pitfall 1), preventing cross-phase off-by-one imports.
 - [Phase 02]: RupiahFormat routes both Rp and km formats through one private groupDigits helper with no locale API — D-29 requires identical dot grouping on Android and iOS; a single pure-Kotlin helper plus the 12-digit parse cap prevents platform drift and Long overflow (T-02-02-03).
 - [Phase 02]: The full Phase 2 string block was appended in one change; detail_service_history_coming_soon retirement waits for plan 02-05 — Every later UI plan compiles against Res.string keys with no string edits; the old key must stay until ComingSoonSlot.kt is deleted in the same commit, or the build breaks for an unexecuted plan.
+- [Phase 02]: PhotoStorage.persist now takes optional `directory` parameter (default: VEHICLES_DIRECTORY); existing vehicle call sites unchanged — plan 02-03
+- [Phase 02]: ServiceEntryFormValidation.isSubmittable gates exactly on date + non-blank mileage + service type (D-27) — plan 02-03
+- [Phase 02]: ServiceEntryEditViewModel implements seven photo rules as two path sets; onCleared only removes session-owned files — plan 02-03
+- [Phase 02]: Custom type confirm collapses case-insensitively onto preset/learned chips; never rewrites stored values (D-40) — plan 02-03
+- [Phase 02]: Vehicle form's name-field error line now uses MaterialTheme.typography.labelLarge (C-27) — plan 02-03
+- [Phase 02]: ServiceEntryEditRoute registered with vehicleId + entryId (0L = add); AppModule binds single<ServiceEntryRepository> with PhotoStorage::delete — plan 02-03
