@@ -52,6 +52,13 @@ enum class ServiceEntryFormError { MILEAGE_REQUIRED }
  */
 object ServiceEntryFormValidation {
 
+    /** UI-SPEC C-17 input caps, enforced at the input boundary (WR-07). */
+    const val MAX_CUSTOM_TYPE = 60
+    const val MAX_NOTES = 500
+    const val MAX_WORKSHOP = 120
+    const val MAX_MECHANIC = 120
+    const val MAX_PART_NAME = 120
+
     /** The submit gate (D-27): date, non-blank mileage, and service type must be present. */
     fun isSubmittable(values: ServiceEntryFormValues): Boolean =
         values.dateEpochMs != null && values.mileage.isNotBlank() && values.serviceType != null
@@ -69,6 +76,12 @@ object ServiceEntryFormValidation {
      * Keeps only the digit characters of [raw], at most the first twelve (cost ≤ 12 digits).
      */
     fun sanitizeCost(raw: String): String = raw.filter { it.isDigit() }.take(12)
+
+    /**
+     * Keeps only the digit characters of [raw], at most four. Blank is allowed so the user can
+     * retype; [toServiceEntry] already falls back to 1 for a blank quantity (WR-08).
+     */
+    fun sanitizeQuantity(raw: String): String = raw.filter { it.isDigit() }.take(4)
 
     /**
      * Maps the form's text into the domain model that crosses the repository boundary.

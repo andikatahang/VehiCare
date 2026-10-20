@@ -153,4 +153,22 @@ class ServiceEntryFormValidationTest {
         assertNull(RupiahFormat.parseRupiahDigits(""))
         assertNull(RupiahFormat.parseRupiahDigits("abc"))
     }
+
+    @Test
+    fun sanitizeQuantityKeepsOnlyDigitsUpToFour() {
+        assertEquals("2", ServiceEntryFormValidation.sanitizeQuantity("2x"))
+        assertEquals("12", ServiceEntryFormValidation.sanitizeQuantity("1 2"))
+        assertEquals("1234", ServiceEntryFormValidation.sanitizeQuantity("12345"))
+        assertEquals("", ServiceEntryFormValidation.sanitizeQuantity("two"))
+    }
+
+    @Test
+    fun inputCapsMatchTheUiSpec() {
+        // UI-SPEC C-17: these are the enforced input boundaries.
+        assertEquals(60, ServiceEntryFormValidation.MAX_CUSTOM_TYPE)
+        assertEquals(500, ServiceEntryFormValidation.MAX_NOTES)
+        assertEquals(120, ServiceEntryFormValidation.MAX_WORKSHOP)
+        assertEquals(120, ServiceEntryFormValidation.MAX_MECHANIC)
+        assertEquals(120, ServiceEntryFormValidation.MAX_PART_NAME)
+    }
 }

@@ -76,7 +76,13 @@ fun PartsEditor(
             ) {
                 OutlinedTextField(
                     value = row.name,
-                    onValueChange = { name -> onPartChange(index, name, row.quantity) },
+                    onValueChange = { name ->
+                        onPartChange(
+                            index,
+                            name.take(ServiceEntryFormValidation.MAX_PART_NAME),
+                            row.quantity,
+                        )
+                    },
                     modifier = Modifier
                         .weight(1f)
                         .defaultMinSize(minHeight = 48.dp),

@@ -20,6 +20,7 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.VisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.vehicare.ui.service.ServiceEntryFormValidation
 import com.vehicare.ui.theme.Ink
 import com.vehicare.ui.theme.Paper
 import org.jetbrains.compose.resources.stringResource
@@ -64,7 +65,9 @@ fun ServiceTypeDialog(
         text = {
             OutlinedTextField(
                 value = text,
-                onValueChange = { text = it },
+                onValueChange = { raw ->
+                    text = raw.take(ServiceEntryFormValidation.MAX_CUSTOM_TYPE)
+                },
                 label = { Text(text = stringResource(Res.string.field_service_type)) },
                 singleLine = true,
                 maxLines = 1,
