@@ -2,13 +2,13 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: Ready to execute
-last_updated: "2026-10-20T05:26:40.931Z"
+status: Executing Phase 02
+last_updated: "2026-10-20T06:00:34.000Z"
 progress:
   total_phases: 3
   completed_phases: 1
   total_plans: 16
-  completed_plans: 14
+  completed_plans: 15
   percent: 33
 ---
 
@@ -22,17 +22,17 @@ progress:
 ## Current Position
 
 Phase: 02 (service-log) — EXECUTING
-Plan: 4 of 6
+Plan: 5 of 6
 
 | Field | Value |
 |-------|-------|
 | **Active Phase** | Phase 2: Service Log (executing) |
-| **Active Plan** | 02-03 complete — 02-04 (history screen) next |
-| **Status** | 02-03 complete — Add/Edit service entry form with type chips, custom dialog, date picker, parts editor, photo strip, validation, ViewModel with two-set photo bookkeeping; single destination for add (entryId=0) and edit; ServiceEntryRepository Koin binding; C-27 Label role on vehicle form |
-| **Progress** | `[█████████░] 13/16 plans (81%)` |
+| **Active Plan** | 02-05 complete — 02-06 (vehicle Detail summary row) next |
+| **Status** | 02-05 complete — Service history destination: sortable keyed list (Date|Mileage, in-memory only), four-state matrix, shared parameterized EmptyState, add FAB in every state, ServiceHistoryRoute wired; 02-06 replaces the vehicle Detail coming-soon placeholder |
+| **Progress** | `[██████████] 15/16 plans (94%)` |
 
 ```
-Phase 1 [Complete] → Phase 2 [Executing — 3/6 plans] → Phase 3 [Not Started]
+Phase 1 [Complete] → Phase 2 [Executing — 5/6 plans] → Phase 3 [Not Started]
                        ↑
                        Current
 ```
@@ -44,7 +44,7 @@ Phase 1 [Complete] → Phase 2 [Executing — 3/6 plans] → Phase 3 [Not Starte
 | Phase | Name | Status |
 |-------|------|--------|
 | 1 | Foundation & Vehicle Management | Complete (2026-10-19) |
-| 2 | Service Log | Executing — 3/6 plans (02-01, 02-02, 02-03 complete) |
+| 2 | Service Log | Executing — 5/6 plans (02-01, 02-02, 02-03, 02-04, 02-05 complete) |
 | 3 | Reminders & Dashboard | Not started |
 
 ---
@@ -54,7 +54,7 @@ Phase 1 [Complete] → Phase 2 [Executing — 3/6 plans] → Phase 3 [Not Starte
 | Metric | Value |
 |--------|-------|
 | Phases completed | 1 / 3 |
-| Plans completed | 13 / 16 |
+| Plans completed | 15 / 16 |
 | Requirements covered | 17 / 21 |
 | Sessions | 13 |
 
@@ -62,6 +62,7 @@ Per-plan: `Phase 1 / 01` — ~28min, 3 tasks, 63 files · `Phase 1 / 02` — 17m
 
 ---
 | Phase 2 P4 | 45min | 3 tasks | 15 files |
+| Phase 2 P5 | 32min | 3 tasks | 10 files |
 
 ## Accumulated Context
 
@@ -162,8 +163,8 @@ No blockers. **Phase 1 closed 2026-10-19** — UAT 6/6 passed (`01-UAT.md`), sec
 
 ## Session Continuity
 
-**Last session:** 2026-10-20T05:26:40.927Z
-**Next action:** 02-04 (history screen) — 02-03 Add/Edit form complete. Next: `/gsd-execute-phase 2` continues with 02-04 (ServiceHistoryScreen, ServiceHistoryViewModel, ServiceSummaryRow, HistorySortControl). Debt: `01-VERIFICATION.md` `human_needed` acknowledged (see Blockers).
+**Last session:** 2026-10-20T06:00:34.000Z
+**Next action:** 02-06 (vehicle Detail summary row) — 02-05 Service history screen complete. Next: `/gsd-execute-phase 2` executes Wave 5 (02-06: replace `ComingSoonSlot` with the summary row that opens `ServiceHistoryRoute`, retire the placeholder). Debt: `01-VERIFICATION.md` `human_needed` acknowledged (see Blockers).
 
 ## Decisions
 

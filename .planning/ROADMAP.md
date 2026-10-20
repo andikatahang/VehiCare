@@ -81,7 +81,7 @@ Plans:
 4. User can view the full service history for a vehicle sorted by date or mileage
 5. User can edit or delete any existing service entry
 
-**Plans:** 4/6 plans executed
+**Plans:** 5/6 plans executed
 Plans:
 **Wave 1**
 
@@ -98,7 +98,7 @@ Plans:
 
 **Wave 4** *(blocked on Wave 3 completion)*
 
-- [ ] 02-05-PLAN.md — the Service history screen: `Date | Mileage` sort control, keyed rows, shared empty state, "Add service" FAB
+- [x] 02-05-PLAN.md — the Service history screen: `Date | Mileage` sort control, keyed rows, shared empty state, "Add service" FAB
 
 **Wave 5** *(blocked on Wave 4 completion)*
 
