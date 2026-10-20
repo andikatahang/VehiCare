@@ -27,6 +27,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -66,6 +69,8 @@ fun ServiceDateField(
 ) {
     var showPicker by remember { mutableStateOf(false) }
     val displayText = ServiceDates.display(epochMs)
+    val fieldLabel = stringResource(Res.string.field_service_date)
+    val setDateLabel = stringResource(Res.string.action_set_date)
 
     Box(
         modifier = modifier
@@ -91,13 +96,19 @@ fun ServiceDateField(
             },
         )
 
-        // Transparent clickable area over the whole field
+        // Transparent clickable area over the whole field. It carries the field's label and the
+        // action for screen readers: without them the only way to set a date is an unlabeled node
+        // (WR-10).
         if (enabled) {
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
                     .defaultMinSize(minHeight = 56.dp)
-                    .clickable { showPicker = true },
+                    .clickable(
+                        role = Role.Button,
+                        onClickLabel = setDateLabel,
+                    ) { showPicker = true }
+                    .semantics { contentDescription = "$fieldLabel: $displayText" },
                 contentAlignment = Alignment.Center,
             ) {}
         }

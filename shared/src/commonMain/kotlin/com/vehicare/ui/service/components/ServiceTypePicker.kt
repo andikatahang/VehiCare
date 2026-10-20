@@ -2,6 +2,8 @@ package com.vehicare.ui.service.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.defaultMinSize
@@ -47,6 +49,7 @@ import vehicare.shared.generated.resources.action_add_type
  * Presentational only: renders the given lists and reports intent via [onSelect] / [onAddCustom].
  * No component calls a repository or ViewModel and none autofocuses (D-31).
  */
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun ServiceTypePicker(
     presets: List<String> = ServiceTypePresets.ALL,
@@ -63,47 +66,15 @@ fun ServiceTypePicker(
     }
 
     Column(modifier = modifier.fillMaxWidth()) {
-        // Use a simple wrapping approach - just put all chips in a row that can wrap
-        // For now, use a Column of Rows with manual wrapping
-        var currentRowItems = mutableListOf<String>()
-        var currentRowWidth = 0f
-        val maxWidth = 360f // Approximate screen width minus padding
-        val gap = 8f // 8.dp value as float
-
-        allOptions.forEach { option ->
-            // Estimate chip width (text + padding + icon if selected)
-            val textWidth = option.length * 8f + 32f // rough estimate
-            val estimatedWidth = textWidth + (if (option == selected) 24f else 0f)
-
-            if (currentRowWidth + estimatedWidth > maxWidth && currentRowItems.isNotEmpty()) {
-                // Render current row
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    currentRowItems.forEach { item ->
-                        renderChip(item, item == selected, enabled, onSelect)
-                    }
-                }
-                currentRowItems.clear()
-                currentRowWidth = 0f
-            }
-
-            currentRowItems.add(option)
-            currentRowWidth += estimatedWidth + gap
-        }
-
-        // Render remaining items
-        if (currentRowItems.isNotEmpty()) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                currentRowItems.forEach { item ->
-                    renderChip(item, item == selected, enabled, onSelect)
-                }
+        // FlowRow measures real chip widths, so wrapping stays correct at any screen width,
+        // font scale and selection state (WR-09 / D-26 / C-15).
+        FlowRow(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalArrangement = Arrangement.spacedBy(8.dp),
+        ) {
+            allOptions.forEach { option ->
+                renderChip(option, option == selected, enabled, onSelect)
             }
         }
 
