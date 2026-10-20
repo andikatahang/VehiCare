@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: Executing Phase 02
-last_updated: "2026-10-20T05:10:26.066Z"
+status: Ready to execute
+last_updated: "2026-10-20T05:26:40.931Z"
 progress:
   total_phases: 3
   completed_phases: 1
   total_plans: 16
-  completed_plans: 13
-  percent: 37
+  completed_plans: 14
+  percent: 33
 ---
 
 # STATE: VehiCare
@@ -22,7 +22,7 @@ progress:
 ## Current Position
 
 Phase: 02 (service-log) — EXECUTING
-Plan: 3 of 6
+Plan: 4 of 6
 
 | Field | Value |
 |-------|-------|
@@ -61,6 +61,7 @@ Phase 1 [Complete] → Phase 2 [Executing — 3/6 plans] → Phase 3 [Not Starte
 Per-plan: `Phase 1 / 01` — ~28min, 3 tasks, 63 files · `Phase 1 / 02` — 17min, 3 tasks, 15 files · `Phase 1 / 03` — 20min, 3 tasks, 17 files · `Phase 1 / 04` — 24min, 3 tasks, 17 files · `Phase 1 / 05` — 11min, 3 tasks, 3 files · `Phase 1 / 06` — 10min, 3 tasks, 8 files · `Phase 1 / 07` — 21min, 3 tasks, 6 files · `Phase 1 / 08` — 21min, 3 tasks, 6 files · `Phase 1 / 09` — 4min, 3 tasks, 6 files · `Phase 1 / 10` — 12min, 3 tasks, 5 files · `Phase 2 / 01` — 11min, 3 tasks, 14 files · `Phase 2 / 02` — 15min, 2 tasks, 7 files · `Phase 2 / 03` — 45min, 3 tasks, 16 files.
 
 ---
+| Phase 2 P4 | 45min | 3 tasks | 15 files |
 
 ## Accumulated Context
 
@@ -161,7 +162,7 @@ No blockers. **Phase 1 closed 2026-10-19** — UAT 6/6 passed (`01-UAT.md`), sec
 
 ## Session Continuity
 
-**Last session:** 2026-10-20T14:30:00.000Z
+**Last session:** 2026-10-20T05:26:40.927Z
 **Next action:** 02-04 (history screen) — 02-03 Add/Edit form complete. Next: `/gsd-execute-phase 2` continues with 02-04 (ServiceHistoryScreen, ServiceHistoryViewModel, ServiceSummaryRow, HistorySortControl). Debt: `01-VERIFICATION.md` `human_needed` acknowledged (see Blockers).
 
 ## Decisions
@@ -218,3 +219,10 @@ No blockers. **Phase 1 closed 2026-10-19** — UAT 6/6 passed (`01-UAT.md`), sec
 - [Phase 02]: Custom type confirm collapses case-insensitively onto preset/learned chips; never rewrites stored values (D-40) — plan 02-03
 - [Phase 02]: Vehicle form's name-field error line now uses MaterialTheme.typography.labelLarge (C-27) — plan 02-03
 - [Phase 02]: ServiceEntryEditRoute registered with vehicleId + entryId (0L = add); AppModule binds single<ServiceEntryRepository> with PhotoStorage::delete — plan 02-03
+- [Phase 2]: ConfirmDeleteDialog parameterized with title/message/confirmLabel (caller-resolved); vehicleName param removed; action_cancel stays internal; KDoc single-path warning now names both entities
+- [Phase 2]: FieldRow moved to ui/components/ unchanged (body + KDoc); VehicleDetailScreen import updated; zero ui.vehicles.components.FieldRow refs remain (C-23)
+- [Phase 2]: VehicleRepositoryImpl.delete cascade: select vehicle photo + service photo paths -> delete photos -> parts -> entries -> vehicle in one transaction -> forEach photoDeleter after; no RETURNING, serialized lane unchanged (D-39)
+- [Phase 2]: ServiceEntryDetailViewModel mirrors VehicleDetailViewModel: observeEntry -> Loading/NotFound/Content, single-flight delete, one-shot deleteFailed, CancellationException rethrown first
+- [Phase 2]: ServiceEntryDetailScreen locked anatomy per UI-SPEC: focal block (Display type + serviceMetaLine), lg break, field run (Cost divider, Parts omitted when empty, Workshop divider, Mechanic divider, stacked Notes no divider), Photos omitted when empty (read-only strip), 2xl break, destructive OutlinedButton
+- [Phase 2]: serviceMetaLine internal helper (dateEpochMs, mileageKm -> '19 Oct 2026 · 123.456 km') - single source for entry detail and future history row (02-05 imports it); unit tested in ServiceMetaLineTest
+- [Phase 2]: ServiceEntryDeletionTest proves: rows+files, isolation, idempotence, ViewModel ordering (success after repo returns), single-flight, failure retention, vehicle cascade D-39 (vehicle+entry photos all gone, survivor untouched)

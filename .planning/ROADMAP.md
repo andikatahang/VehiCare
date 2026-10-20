@@ -81,7 +81,7 @@ Plans:
 4. User can view the full service history for a vehicle sorted by date or mileage
 5. User can edit or delete any existing service entry
 
-**Plans:** 3/6 plans executed
+**Plans:** 4/6 plans executed
 Plans:
 **Wave 1**
 
@@ -94,7 +94,7 @@ Plans:
 
 **Wave 3** *(blocked on Wave 2 completion)*
 
-- [ ] 02-04-PLAN.md — the read-only entry detail + the delete path: shared confirm dialog, vehicle→entries cascade, deletion proven against a real filesystem
+- [x] 02-04-PLAN.md — the read-only entry detail + the delete path: shared confirm dialog, vehicle→entries cascade, deletion proven against a real filesystem
 
 **Wave 4** *(blocked on Wave 3 completion)*
 
@@ -127,7 +127,7 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation & Vehicle Management | 10/10 | Complete    | 2026-10-19 |
-| 2. Service Log | 3/6 | In Progress|  |
+| 2. Service Log | 4/6 | In Progress|  |
 | 3. Reminders & Dashboard | 0/? | Not started | — |
 
 ---
