@@ -26,6 +26,7 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.SnackbarResult
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
@@ -45,13 +46,14 @@ import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
-import com.vehicare.ui.theme.Slate
 import com.vehicare.ui.service.ServiceEntryFormValidation
 import com.vehicare.ui.service.components.PartsEditor
 import com.vehicare.ui.service.components.ServiceDateField
 import com.vehicare.ui.service.components.ServicePhotoStrip
 import com.vehicare.ui.service.components.ServiceTypeDialog
 import com.vehicare.ui.service.components.ServiceTypePicker
+import com.vehicare.ui.theme.Slate
+import com.vehicare.util.RupiahFormat
 import io.github.vinceglb.filekit.PlatformFile
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -59,12 +61,13 @@ import org.koin.core.parameter.parametersOf
 import vehicare.shared.generated.resources.Res
 import vehicare.shared.generated.resources.action_add_service
 import vehicare.shared.generated.resources.action_back_to_vehicles
+import vehicare.shared.generated.resources.action_try_again
 import vehicare.shared.generated.resources.action_update_service
 import vehicare.shared.generated.resources.cd_back
 import vehicare.shared.generated.resources.detail_not_found
 import vehicare.shared.generated.resources.error_add_photo
 import vehicare.shared.generated.resources.error_mileage_required
-import vehicare.shared.generated.resources.error_save_vehicle
+import vehicare.shared.generated.resources.error_save_entry
 import vehicare.shared.generated.resources.field_cost
 import vehicare.shared.generated.resources.field_mechanic
 import vehicare.shared.generated.resources.field_mileage
@@ -103,18 +106,25 @@ fun ServiceEntryEditRoute(
     val isAdd = entryId == 0L
 
     val snackbarHostState = remember { SnackbarHostState() }
-    val saveErrorText = stringResource(Res.string.error_save_vehicle)
+    val saveErrorText = stringResource(Res.string.error_save_entry)
+    val retryLabel = stringResource(Res.string.action_try_again)
     val saveFailed = (state as? ServiceEntryEditUiState.Ready)?.saveFailed == true
     val photoErrorText = stringResource(Res.string.error_add_photo)
     val photoFailed = (state as? ServiceEntryEditUiState.Ready)?.photoError == true
 
-    // UI-SPEC Add/Edit "Save failed": the form is retained and the failure is reported. The flag is
-    // one-shot — the ViewModel clears it once the Snackbar has been shown, so a recomposition can
-    // never replay it, and `onSaveErrorShown` never touches the field values.
+    // UI-SPEC Add/Edit "Save failed": the form is retained, the failure is reported with the
+    // in-context recovery action the contract promises, and choosing it re-invokes submit.
+    // The flag is one-shot — the ViewModel clears it once the Snackbar has been shown.
     LaunchedEffect(saveFailed) {
         if (saveFailed) {
-            snackbarHostState.showSnackbar(saveErrorText)
+            val result = snackbarHostState.showSnackbar(
+                message = saveErrorText,
+                actionLabel = retryLabel,
+            )
             viewModel.onSaveErrorShown()
+            if (result == SnackbarResult.ActionPerformed) {
+                viewModel.save(onSaved = onSaved)
+            }
         }
     }
 
@@ -236,6 +246,10 @@ private fun ServiceEntryEditForm(
     val mileageBaseline = state.mileageBaseline
     val learnedTypes = state.learnedTypes
 
+    // WR-01: the "required" error appears only after the user clears a previously non-empty value,
+    // matching UI-SPEC's Invalid state (an untouched blank form carries no error line).
+    var mileageCleared by remember { mutableStateOf(false) }
+
     Column(
         modifier = Modifier
             .padding(contentPadding)
@@ -254,15 +268,20 @@ private fun ServiceEntryEditForm(
             enabled = !saving && !importing,
         )
 
-        // 2. Mileage (required *) with supporting line for warning/error
+        // 2. Mileage (required *) with supporting line: cleared-error → lower-warning → preview.
         val mileageValue = values.mileage
-        val mileageWarning = mileageBaseline != null && mileageValue.isNotBlank() && mileageValue.toLongOrNull() != null && mileageValue.toLong() < mileageBaseline
-        val mileageError = state.mileageBaseline != null && values.mileage.isBlank() && values.mileage != (state as? ServiceEntryEditUiState.Ready)?.values?.mileage
+        val mileageLong = mileageValue.toLongOrNull()
+        val mileageWarning = mileageBaseline != null && mileageLong != null && mileageLong < mileageBaseline
+        val mileageError = mileageCleared && mileageValue.isBlank()
+        val mileagePreview = mileageLong?.let(RupiahFormat::formatMileage)
 
         OutlinedTextField(
             value = mileageValue,
             onValueChange = { raw ->
-                onFieldChange { it.copy(mileage = ServiceEntryFormValidation.sanitizeMileage(raw)) }
+                val sanitized = ServiceEntryFormValidation.sanitizeMileage(raw)
+                // Flip only when a previously non-empty value is cleared.
+                mileageCleared = sanitized.isBlank() && values.mileage.isNotBlank()
+                onFieldChange { it.copy(mileage = sanitized) }
             },
             modifier = Modifier.fillMaxWidth(),
             label = {
@@ -279,22 +298,38 @@ private fun ServiceEntryEditForm(
             enabled = !saving && !importing,
             keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
             isError = mileageError,
-            supportingText = if (mileageError) {
-                {
-                    Text(
-                        text = stringResource(Res.string.error_mileage_required),
-                        color = MaterialTheme.colorScheme.error,
-                    )
+            supportingText = when {
+                mileageError -> {
+                    {
+                        Text(
+                            text = stringResource(Res.string.error_mileage_required),
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.error,
+                        )
+                    }
                 }
-            } else if (mileageWarning) {
-                {
-                    Text(
-                        text = stringResource(Res.string.warn_mileage_lower),
-                        color = MaterialTheme.colorScheme.error,
-                    )
+
+                mileageWarning -> {
+                    {
+                        Text(
+                            text = stringResource(Res.string.warn_mileage_lower),
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.error,
+                        )
+                    }
                 }
-            } else {
-                null
+
+                mileagePreview != null -> {
+                    {
+                        Text(
+                            text = mileagePreview,
+                            style = MaterialTheme.typography.labelLarge,
+                            color = Slate,
+                        )
+                    }
+                }
+
+                else -> null
             },
         )
 
@@ -350,7 +385,9 @@ private fun ServiceEntryEditForm(
         // 5. Notes (optional) multi-line
         OutlinedTextField(
             value = values.notes,
-            onValueChange = { notes -> onFieldChange { it.copy(notes = notes) } },
+            onValueChange = { notes ->
+                onFieldChange { it.copy(notes = notes.take(ServiceEntryFormValidation.MAX_NOTES)) }
+            },
             modifier = Modifier.fillMaxWidth(),
             label = { Text(text = stringResource(Res.string.field_notes)) },
             singleLine = false,
@@ -378,7 +415,11 @@ private fun ServiceEntryEditForm(
         // 7. Workshop (optional)
         OutlinedTextField(
             value = values.workshop,
-            onValueChange = { workshop -> onFieldChange { it.copy(workshop = workshop) } },
+            onValueChange = { workshop ->
+                onFieldChange {
+                    it.copy(workshop = workshop.take(ServiceEntryFormValidation.MAX_WORKSHOP))
+                }
+            },
             modifier = Modifier.fillMaxWidth(),
             label = { Text(text = stringResource(Res.string.field_workshop)) },
             singleLine = true,
@@ -388,7 +429,11 @@ private fun ServiceEntryEditForm(
         // 8. Mechanic (optional)
         OutlinedTextField(
             value = values.mechanic,
-            onValueChange = { mechanic -> onFieldChange { it.copy(mechanic = mechanic) } },
+            onValueChange = { mechanic ->
+                onFieldChange {
+                    it.copy(mechanic = mechanic.take(ServiceEntryFormValidation.MAX_MECHANIC))
+                }
+            },
             modifier = Modifier.fillMaxWidth(),
             label = { Text(text = stringResource(Res.string.field_mechanic)) },
             singleLine = true,
