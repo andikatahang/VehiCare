@@ -11,6 +11,7 @@ import com.vehicare.db.VehiCareDatabase
 import com.vehicare.ui.service.ServiceEntryDetailViewModel
 import com.vehicare.ui.service.ServiceEntryEditViewModel
 import com.vehicare.ui.service.ServiceHistoryViewModel
+import com.vehicare.ui.service.ServiceSummaryViewModel
 import com.vehicare.ui.vehicles.VehicleDetailViewModel
 import com.vehicare.ui.vehicles.VehicleEditViewModel
 import com.vehicare.ui.vehicles.VehicleListViewModel
@@ -59,4 +60,6 @@ val appModule = module {
     viewModel { (entryId: Long) -> ServiceEntryDetailViewModel(get(), entryId) }
     // The history list: one vehicleId from the route.
     viewModel { (vehicleId: Long) -> ServiceHistoryViewModel(get(), vehicleId) }
+    // The Detail's summary row: the same route id, one aggregate read.
+    viewModel { (vehicleId: Long) -> ServiceSummaryViewModel(get(), vehicleId) }
 }
