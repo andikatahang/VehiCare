@@ -63,14 +63,42 @@ blocked: 0
   severity: major
   test: 1
   artifacts:
-    - shared/src/commonMain/kotlin/com/vehicare/ui/service/ServiceEntryEditViewModel.kt
-    - shared/src/commonMain/kotlin/com/vehicare/ui/service/components/ServiceTypePicker.kt
-  missing: []
-  root_cause: "onCustomTypeConfirmed sets values.serviceType for a new label but never adds it to learnedTypes; ServiceTypePicker renders only presets + learned, so the selection has no chip and is invisible."
+    - path: "shared/src/commonMain/kotlin/com/vehicare/ui/service/ServiceEntryEditViewModel.kt"
+      lines: "210-230"
+      note: "onCustomTypeConfirmed sets values.serviceType for a new label but leaves learnedTypes unchanged."
+    - path: "shared/src/commonMain/kotlin/com/vehicare/ui/service/ServiceEntryEditScreen.kt"
+      lines: "348-356"
+      note: "ServiceTypePicker receives learned = state.learnedTypes, so the new label is not in the rendered options."
+    - path: "shared/src/commonMain/kotlin/com/vehicare/ui/service/components/ServiceTypePicker.kt"
+      lines: "62-79"
+      note: "allOptions = presets + learned; a selected value outside that list has no chip to render."
+  missing:
+    - "Add the confirmed new label to the Ready state's learnedTypes (case-insensitive dedupe) before/while selecting it."
+    - "Cover the behavior with a ViewModel state test."
+  root_cause: "The new custom label is stored only in values.serviceType; the picker renders presets + learnedTypes, so the selection has no chip and is invisible. Confirmed by code trace at HEAD a16c46c."
 
-## Requested Changes
-
-- test: 1
-  request: "Allow selecting more than one service type per entry."
-  scope_note: "Not part of SVC-01/D-27: the domain model stores a single `serviceType: String`, and the schema, form, detail and summary all assume one value. Needs a product decision before planning."
-  status: needs_decision
+- truth: "A service entry can carry more than one service type, and the form lets the user toggle several presets/custom types"
+  status: failed
+  reason: "User requested: 'Saya juga mau input type bisa dipilih beberapa.'"
+  severity: major
+  test: 1
+  artifacts:
+    - path: "shared/src/commonMain/kotlin/com/vehicare/domain/ServiceEntry.kt"
+      lines: "18-30"
+      note: "serviceType is a single non-null String."
+    - path: "shared/src/commonMain/sqldelight/com/vehicare/db/ServiceEntry.sq"
+      note: "service_entry.service_type is a single TEXT NOT NULL column."
+    - path: "shared/src/commonMain/kotlin/com/vehicare/ui/service/ServiceEntryFormValidation.kt"
+      lines: "58-65"
+      note: "isSubmittable/toServiceEntry assume one serviceType value."
+    - path: "shared/src/commonMain/kotlin/com/vehicare/ui/service/components/ServiceTypePicker.kt"
+      note: "Single selected value; chips are one-of."
+    - path: "shared/src/commonMain/kotlin/com/vehicare/ui/service/ServiceEntryDetailScreen.kt"
+      note: "Renders one type line."
+  missing:
+    - "Schema v3 with a normalized service_entry_type table (entry_id, position, label) plus migration 2.sqm that backfills existing service_type values."
+    - "Domain model and repository/mapper changes for a list of types (learned types sourced from the new table)."
+    - "Multi-select affordance in the picker (toggle chips) and form validation requiring at least one type."
+    - "Detail, history row, and vehicle summary rendering for multiple types."
+    - "Tests: migration backfill, mapper round-trip, learned-type dedupe, multi-select validation."
+  root_cause: "Out of the current phase's scope: the data model, schema, and UI were designed around a single serviceType (SVC-01/D-27). Implementing it is a product-scope expansion requiring a schema migration and cross-screen changes."

@@ -81,7 +81,7 @@ Plans:
 4. User can view the full service history for a vehicle sorted by date or mileage
 5. User can edit or delete any existing service entry
 
-**Plans:** 6/6 plans executed
+**Plans:** 6/8 plans executed
 Plans:
 **Wave 1**
 
@@ -103,6 +103,11 @@ Plans:
 **Wave 5** *(blocked on Wave 4 completion)*
 
 - [x] 02-06-PLAN.md — the vehicle-Detail Service history summary row replacing the coming-soon placeholder, and the placeholder's retirement
+
+**Wave 6** *(gap closure from 02-UAT.md)*
+
+- [ ] 02-07-PLAN.md — schema v3: `service_entry_type` child table + `2.sqm` backfill + `3.db`, ordered `serviceTypes` through domain/mapper/repository/cascade, migration and multi-type tests
+- [ ] 02-08-PLAN.md — multi-select chip group, the GAP 1 custom-type selection fix, the joined type line on detail/history, and the UI-SPEC multi-select corrections
 
 ### Phase 3: Reminders & Dashboard
 
