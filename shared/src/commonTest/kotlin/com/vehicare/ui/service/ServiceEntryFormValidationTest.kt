@@ -22,7 +22,7 @@ class ServiceEntryFormValidationTest {
         val valid = ServiceEntryFormValues(
             dateEpochMs = 1_000_000_000_000L,
             mileage = "12345",
-            serviceType = "Oil change",
+            serviceTypes = listOf("Oil change"),
         )
         assertTrue(ServiceEntryFormValidation.isSubmittable(valid))
 
@@ -36,7 +36,7 @@ class ServiceEntryFormValidationTest {
         assertFalse(ServiceEntryFormValidation.isSubmittable(valid.copy(mileage = "   ")))
 
         // Missing service type
-        assertFalse(ServiceEntryFormValidation.isSubmittable(valid.copy(serviceType = null)))
+        assertFalse(ServiceEntryFormValidation.isSubmittable(valid.copy(serviceTypes = emptyList())))
 
         // Cost, notes, workshop, mechanic, parts, photos are optional — their presence doesn't affect the gate
         assertTrue(ServiceEntryFormValidation.isSubmittable(valid.copy(cost = "50000")))
@@ -52,7 +52,7 @@ class ServiceEntryFormValidationTest {
         val valid = ServiceEntryFormValues(
             dateEpochMs = 1_000_000_000_000L,
             mileage = "12345",
-            serviceType = "Oil change",
+            serviceTypes = listOf("Oil change"),
         )
 
         assertNull(ServiceEntryFormValidation.errorFor(valid))
@@ -82,7 +82,7 @@ class ServiceEntryFormValidationTest {
         val values = ServiceEntryFormValues(
             dateEpochMs = 1_000_000_000_000L,
             mileage = "12345",
-            serviceType = "Oil change",
+            serviceTypes = listOf("Oil change"),
             cost = "500000",
             notes = "  ",
             workshop = "Main Shop",
@@ -115,11 +115,26 @@ class ServiceEntryFormValidationTest {
     }
 
     @Test
+    fun toServiceEntryKeepsSelectionOrderAndCollapsesCaseDuplicates() {
+        // T-02-08-02: the mapping is the last boundary before storage, so it dedupes too. The first
+        // occurrence wins, which is what keeps the user's tap order intact.
+        val values = ServiceEntryFormValues(
+            dateEpochMs = 1_000_000_000_000L,
+            mileage = "12345",
+            serviceTypes = listOf("Battery", "battery", "Oil change"),
+        )
+
+        val entry = ServiceEntryFormValidation.toServiceEntry(1L, 1L, values)
+
+        assertEquals(listOf("Battery", "Oil change"), entry.serviceTypes)
+    }
+
+    @Test
     fun toServiceEntryHandlesMissingOptionalCost() {
         val values = ServiceEntryFormValues(
             dateEpochMs = 1_000_000_000_000L,
             mileage = "12345",
-            serviceType = "Oil change",
+            serviceTypes = listOf("Oil change"),
             cost = "",
         )
 
@@ -132,7 +147,7 @@ class ServiceEntryFormValidationTest {
         val values = ServiceEntryFormValues(
             dateEpochMs = 1_000_000_000_000L,
             mileage = "12345",
-            serviceType = "Oil change",
+            serviceTypes = listOf("Oil change"),
             parts = listOf(
                 PartRow("Valid", "1"),
                 PartRow("", "2"),

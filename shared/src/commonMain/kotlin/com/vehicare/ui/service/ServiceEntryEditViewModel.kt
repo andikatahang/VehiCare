@@ -4,7 +4,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.vehicare.data.ServiceEntryRepository
 import com.vehicare.domain.ServiceEntry
-import com.vehicare.domain.ServiceTypePresets
 import com.vehicare.ui.service.ServiceEntryFormValidation
 import com.vehicare.util.PhotoStorage
 import com.vehicare.util.ServiceDates
@@ -37,7 +36,10 @@ sealed interface ServiceEntryEditUiState {
      *                        the submit button stay disabled while that runs
      * @param photoError      one-shot failure flag the screen consumes to show the photo-import message
      * @param mileageBaseline the baseline mileage for the warning (null if no baseline available)
-     * @param learnedTypes    the learned custom types from the repository
+     * @param learnedTypes    the repository's learned labels **plus** any custom label confirmed in this
+     *                        session, newest first; the picker renders `presets + learned`, which is why a
+     *                        confirmed label must land here as well as in [values] — see
+     *                        [withConfirmedCustomType]
      */
     data class Ready(
         val values: ServiceEntryFormValues,
@@ -193,8 +195,12 @@ class ServiceEntryEditViewModel(
     }
 
     /**
-     * The single mutator for every field. [update] receives the current values and returns the next
-     * ones, so no field can be written through a path that skips re-validation.
+     * The single mutator for every free-text field. [update] receives the current values and returns
+     * the next ones, so no field can be written through a path that skips re-validation.
+     *
+     * The two chip transitions ([onCustomTypeConfirmed], [onTypeToggled]) are deliberately not routed
+     * through here: a list requires the case-insensitive collapse in [ServiceTypeSelection], and one
+     * pure transition returning both lists is what keeps the selection and the rendered chips in sync.
      */
     fun onFieldChange(update: (ServiceEntryFormValues) -> ServiceEntryFormValues) {
         val current = _uiState.value as? ServiceEntryEditUiState.Ready ?: return
@@ -204,29 +210,28 @@ class ServiceEntryEditViewModel(
 
     /**
      * Called when the user confirms a custom type from the dialog.
-     * Performs case-insensitive collapse against presets and learned types — a match selects the
-     * existing chip and never rewrites stored values (D-40).
+     *
+     * Delegates to the single pure [withConfirmedCustomType] transition, which returns the next
+     * selection **and** the next learned-chip list in one `copy`. Writing both is what closes UAT
+     * gap 1: the picker renders `presets + learned`, so a new label that only entered the selection
+     * had no chip and the confirmation looked like it did nothing.
+     *
+     * A case-insensitive match against a preset or an already-learned label selects that existing
+     * chip and never rewrites the stored value (D-40).
      */
     fun onCustomTypeConfirmed(trimmedLabel: String) {
         val current = _uiState.value as? ServiceEntryEditUiState.Ready ?: return
-        val lower = trimmedLabel.lowercase()
+        _uiState.value = current.withConfirmedCustomType(trimmedLabel)
+    }
 
-        // Check presets first
-        val presetMatch = ServiceTypePresets.ALL.firstOrNull { it.lowercase() == lower }
-        if (presetMatch != null) {
-            _uiState.value = current.copy(values = current.values.copy(serviceType = presetMatch))
-            return
-        }
-
-        // Check learned types
-        val learnedMatch = current.learnedTypes.firstOrNull { it.lowercase() == lower }
-        if (learnedMatch != null) {
-            _uiState.value = current.copy(values = current.values.copy(serviceType = learnedMatch))
-            return
-        }
-
-        // New custom label becomes the selection
-        _uiState.value = current.copy(values = current.values.copy(serviceType = trimmedLabel))
+    /**
+     * Toggles a chip: a selected label is removed, any other is appended in tap order (D-26 as
+     * superseded 2026-10-21 — any number of types may be selected). The learned chip list is not
+     * touched; only the selection changes.
+     */
+    fun onTypeToggled(label: String) {
+        val current = _uiState.value as? ServiceEntryEditUiState.Ready ?: return
+        _uiState.value = current.withToggledType(label)
     }
 
     /**
@@ -409,7 +414,7 @@ class ServiceEntryEditViewModel(
 private fun ServiceEntry.toFormValues(): ServiceEntryFormValues = ServiceEntryFormValues(
     dateEpochMs = dateEpochMs,
     mileage = mileageKm.toString(),
-    serviceType = serviceTypes.firstOrNull(),
+    serviceTypes = serviceTypes,
     cost = costRupiah?.toString() ?: "",
     notes = notes.orEmpty(),
     workshop = workshop.orEmpty(),

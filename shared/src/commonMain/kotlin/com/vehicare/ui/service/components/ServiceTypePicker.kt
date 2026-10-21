@@ -35,18 +35,29 @@ import vehicare.shared.generated.resources.Res
 import vehicare.shared.generated.resources.action_add_type
 
 /**
- * The service-type chip group (D-26): presets → learned → "Add custom…" in a wrapping layout.
+ * The service-type chip group (D-26, superseded 2026-10-21): presets → learned → "Add custom…" in a
+ * wrapping layout.
+ *
+ * **Multi-select** is the approved contract (user decision 2026-10-21, UAT gap 2): tapping a chip
+ * toggles it, any number of types may be selected, and any selected chip may be deselected. That
+ * overrides D-26's original one-of rule; its order, geometry, palette and glyph rules stay in force.
+ * M3 gives each chip `Role.Checkbox`, so every chip announces its own state and selection is never
+ * carried by colour alone.
  *
  * The six presets are code constants from [ServiceTypePresets.ALL] (locked order: Oil change,
  * Tire rotation, Brake service, Inspection, Battery, Filters). Learned labels come from the
  * repository already filtered for case-insensitive preset matches (D-40), newest-used first.
  *
- * Every chip is at least 48dp tall (UI-SPEC Accessibility). The selected chip shows a leading
+ * [allOptions] is `presets + learned + any selected label not already present`. That union is a
+ * **defensive** guard, not the primary fix for UAT gap 1: a selected value must always have a chip to
+ * render, even if the learned list is momentarily stale (for example right after a custom confirm).
+ *
+ * Every chip is at least 48dp tall (UI-SPEC Accessibility). Every selected chip shows a leading
  * 16dp `Check` glyph and takes `Ink` border/label on `Paper`; unselected chips are `Mist`/`Slate`/`Hairline`.
  * "Add custom…" is an `AssistChip` with a leading `Add` glyph and `Mist`/`Hairline`/`Ink` treatment.
- * Nothing is preselected on add — the form's submit gate requires an explicit choice (D-27/D-31).
+ * Nothing is preselected on add — the form's submit gate requires at least one type (D-27/D-31).
  *
- * Presentational only: renders the given lists and reports intent via [onSelect] / [onAddCustom].
+ * Presentational only: renders the given lists and reports intent via [onToggle] / [onAddCustom].
  * No component calls a repository or ViewModel and none autofocuses (D-31).
  */
 @OptIn(ExperimentalLayoutApi::class)
@@ -54,8 +65,8 @@ import vehicare.shared.generated.resources.action_add_type
 fun ServiceTypePicker(
     presets: List<String> = ServiceTypePresets.ALL,
     learned: List<String> = emptyList(),
-    selected: String?,
-    onSelect: (String) -> Unit,
+    selected: List<String> = emptyList(),
+    onToggle: (String) -> Unit,
     onAddCustom: () -> Unit,
     enabled: Boolean = true,
     modifier: Modifier = Modifier,
@@ -63,6 +74,10 @@ fun ServiceTypePicker(
     val allOptions = buildList {
         addAll(presets)
         addAll(learned)
+        // Defensive union: a selected label that appears in neither list still gets a chip.
+        selected.forEach { label ->
+            if (none { it.equals(label, ignoreCase = true) }) add(label)
+        }
     }
 
     Column(modifier = modifier.fillMaxWidth()) {
@@ -74,7 +89,12 @@ fun ServiceTypePicker(
             verticalArrangement = Arrangement.spacedBy(8.dp),
         ) {
             allOptions.forEach { option ->
-                renderChip(option, option == selected, enabled, onSelect)
+                renderChip(
+                    option = option,
+                    isSelected = selected.any { it.equals(option, ignoreCase = true) },
+                    enabled = enabled,
+                    onToggle = onToggle,
+                )
             }
         }
 
@@ -116,11 +136,11 @@ private fun renderChip(
     option: String,
     isSelected: Boolean,
     enabled: Boolean,
-    onSelect: (String) -> Unit,
+    onToggle: (String) -> Unit,
 ) {
     FilterChip(
         selected = isSelected,
-        onClick = { if (enabled) onSelect(option) },
+        onClick = { if (enabled) onToggle(option) },
         modifier = Modifier
             .defaultMinSize(minHeight = 48.dp)
             .width(IntrinsicSize.Min),

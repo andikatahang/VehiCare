@@ -197,6 +197,7 @@ fun ServiceEntryEditRoute(
                 isAdd = isAdd,
                 contentPadding = innerPadding,
                 onFieldChange = viewModel::onFieldChange,
+                onTypeToggled = viewModel::onTypeToggled,
                 onCustomTypeConfirm = { showTypeDialog = true },
                 onPhotoPicked = viewModel::onPhotoPicked,
                 onPhotoRemoved = viewModel::onPhotoRemoved,
@@ -231,6 +232,7 @@ private fun ServiceEntryEditForm(
     isAdd: Boolean,
     contentPadding: PaddingValues,
     onFieldChange: ((ServiceEntryFormValues) -> ServiceEntryFormValues) -> Unit,
+    onTypeToggled: (String) -> Unit,
     onCustomTypeConfirm: () -> Unit,
     onPhotoPicked: (PlatformFile) -> Unit,
     onPhotoRemoved: (Int) -> Unit,
@@ -348,10 +350,8 @@ private fun ServiceEntryEditForm(
             ServiceTypePicker(
                 presets = com.vehicare.domain.ServiceTypePresets.ALL,
                 learned = learnedTypes,
-                selected = values.serviceType,
-                onSelect = { type ->
-                    onFieldChange { it.copy(serviceType = type) }
-                },
+                selected = values.serviceTypes,
+                onToggle = onTypeToggled,
                 onAddCustom = onCustomTypeConfirm,
                 enabled = !saving && !importing,
             )

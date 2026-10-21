@@ -7,14 +7,18 @@ import com.vehicare.util.RupiahFormat
 /**
  * The Add/Edit service entry form's field content, exactly as the user typed it.
  *
- * Every field is a `String` (not a nullable) because that is what a text field holds;
+ * Every text field is a `String` (not a nullable) because that is what a text field holds;
  * [ServiceEntryFormValidation.toServiceEntry] is the single place where "empty text" becomes `null`
  * for the domain model. Numeric fields hold raw digits only — formatting is applied only for display.
+ *
+ * [serviceTypes] is the multi-select chip group's selection, **in tap order** — that order is the
+ * stored display order. It may be empty while the user is editing; the submit gate is what requires
+ * at least one type.
  */
 data class ServiceEntryFormValues(
     val dateEpochMs: Long? = null,
     val mileage: String = "",
-    val serviceType: String? = null,
+    val serviceTypes: List<String> = emptyList(),
     val cost: String = "",
     val notes: String = "",
     val workshop: String = "",
@@ -59,9 +63,9 @@ object ServiceEntryFormValidation {
     const val MAX_MECHANIC = 120
     const val MAX_PART_NAME = 120
 
-    /** The submit gate (D-27): date, non-blank mileage, and service type must be present. */
+    /** The submit gate (D-27): date, non-blank mileage, and at least one service type. */
     fun isSubmittable(values: ServiceEntryFormValues): Boolean =
-        values.dateEpochMs != null && values.mileage.isNotBlank() && values.serviceType != null
+        values.dateEpochMs != null && values.mileage.isNotBlank() && values.serviceTypes.isNotEmpty()
 
     /** The error the form is currently in, or `null` when the required fields are acceptable. */
     fun errorFor(values: ServiceEntryFormValues): ServiceEntryFormError? =
@@ -95,7 +99,6 @@ object ServiceEntryFormValidation {
     fun toServiceEntry(id: Long, vehicleId: Long, values: ServiceEntryFormValues): ServiceEntry {
         val date = values.dateEpochMs ?: 0L
         val mileageKm = values.mileage.trimToNull()?.toLongOrNull() ?: 0L
-        val serviceType = values.serviceType ?: ""
         val costRupiah = values.cost.trimToNull()?.let { RupiahFormat.parseRupiahDigits(it) }
         val notes = values.notes.trimToNull()
         val workshop = values.workshop.trimToNull()
@@ -113,9 +116,9 @@ object ServiceEntryFormValidation {
             vehicleId = vehicleId,
             dateEpochMs = date,
             mileageKm = mileageKm,
-            // Interim bridge: the form is still single-select in this plan; 02-08 replaces this
-            // with the real list built from the multi-select chip group.
-            serviceTypes = listOf(serviceType),
+            // Boundary guard (T-02-08-02): the chip transitions already collapse case-insensitive
+            // duplicates, but the mapping is the last place before storage, so it dedupes too.
+            serviceTypes = values.serviceTypes.distinctBy { it.lowercase() },
             costRupiah = costRupiah,
             notes = notes,
             workshop = workshop,
