@@ -41,6 +41,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.vehicare.domain.ServiceEntry
@@ -233,13 +234,15 @@ private fun ServiceEntryDetailContent(
             .padding(horizontal = 16.dp)
             .padding(top = 16.dp, bottom = 48.dp),
     ) {
-        // Focal block (UI-SPEC §Service entry detail line 238-241): the service type at `Display`
-        // 24sp/500 `Ink`, then the meta `19 Oct 2026 · 123.456 km` (`Body`/`Slate`, `sm` 8px below).
-        // temporary compile bridge — 02-08 replaces this with serviceTypeLine(...)
+        // Focal block (UI-SPEC §Service entry detail): the service type(s) at `Display` 24sp/500
+        // `Ink` — one type verbatim, several joined by the locked ` · ` separator — capped at two
+        // lines, then the meta `19 Oct 2026 · 123.456 km` (`Body`/`Slate`, `sm` 8px below).
         Text(
-            text = entry.serviceTypes.firstOrNull().orEmpty(),
+            text = serviceTypeLine(entry.serviceTypes),
             style = MaterialTheme.typography.headlineSmall,
             color = Ink,
+            maxLines = 2,
+            overflow = TextOverflow.Ellipsis,
         )
         Text(
             text = serviceMetaLine(entry.dateEpochMs, entry.mileageKm),
@@ -392,3 +395,13 @@ private fun PhotosBlock(photoPaths: List<String>) {
  */
 internal fun serviceMetaLine(dateEpochMs: Long, mileageKm: Long): String =
     "${ServiceDates.display(dateEpochMs)} · ${RupiahFormat.formatMileage(mileageKm)}"
+
+/**
+ * The single source of the service-type line for the detail focal block and the history row
+ * (`ServiceHistoryRow` imports it from here — it must never re-implement it).
+ *
+ * One type renders verbatim, so a single-type entry is byte-identical to what shipped before
+ * multi-select. Two or more are joined by the middle dot (U+00B7) with single spaces — the same
+ * separator convention as [serviceMetaLine]. The stored list order is the display order.
+ */
+internal fun serviceTypeLine(types: List<String>): String = types.joinToString(" · ")

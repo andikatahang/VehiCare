@@ -188,14 +188,16 @@ One `NavHost` in `App.kt` (unchanged); the bottom tab shell renders only on the 
 | 3 | `ServiceEntryDetailRoute(entryId: Long)` | `Scaffold` + `TopAppBar("Service entry", back arrow, "Edit" text action)` | focal block, `FieldRow` × 3 (Cost, Workshop, Mechanic), stacked Notes row, `PartsBlock`, `ServicePhotoStrip` (read-only), destructive `OutlinedButton`, `ConfirmDeleteDialog`, `Snackbar` host |
 | 4 | `VehicleDetailRoute(id)` — **modified** | unchanged shell | `ComingSoonSlot` **is replaced by** `ServiceSummaryRow` at the same position; the screen gains an `onOpenServiceHistory: () -> Unit` parameter wired in `App.kt`; nothing else on this screen changes |
 
-### Service-type chip group (D-26) — `ServiceTypePicker`
+### Service-type chip group (D-26, multi-select 2026-10-21) — `ServiceTypePicker`
+
+**Multi-select is the approved contract** (user decision 2026-10-21, UAT gap 2). It supersedes D-26's one-of rule: any number of types may be selected and every selected chip may be deselected again. The rest of D-26 — the order below, the `FilterChip` role, the 48dp minimum, the palette and the check glyph — is unchanged, and the supersede note lives on D-26 in `02-CONTEXT.md`.
 
 - `FlowRow` (verified present in foundation-layout 1.12.x), full width, `sm` 8px gaps on both axes. Order is locked: **the six presets → learned custom labels (newest-used first) → the "Add custom…" chip**.
-- Each type option is a `FilterChip` with `Modifier.defaultMinSize(minHeight = 48.dp)`; the selected chip additionally shows a leading 16dp `Check` glyph (`contentDescription = null`) and takes the palette colours declared in §Color item 10. Unselected chips: `Mist` container, `Slate` label, `Hairline` border. M3 applies `Role.Checkbox` to chips (verified in the pinned `Chip.kt`), so selection is announced and never carried by colour alone.
+- Each type option is a `FilterChip` with `Modifier.defaultMinSize(minHeight = 48.dp)`; **every selected chip** — not just the last one tapped — additionally shows a leading 16dp `Check` glyph (`contentDescription = null`) and takes the palette colours declared in §Color item 10. Unselected chips: `Mist` container, `Slate` label, `Hairline` border. Chips **toggle** rather than replace one another — tapping a chip toggles it and leaves every other selection untouched; M3 applies `Role.Checkbox` to chips (verified in the pinned `Chip.kt`), so each chip announces its own selected/not-selected state and selection is never carried by colour alone.
 - "Add custom…" is an `AssistChip` (leading `Add` glyph, `Mist`/`Hairline`/`Ink`) — visually an action, not a selection.
 - The six presets are **constants in code** (`ServiceTypePresets.ALL`, D-23 order: Oil change · Tire rotation · Brake service · Inspection · Battery · Filters), **not** six string resources: the stored value and the displayed label are the same token (D-40), and duplicating them into `strings.xml` would create a second source of truth.
 - Learned labels are user text (a resource cannot own them) and are filtered case-insensitively against the presets before rendering (D-24/D-25).
-- The one-field prompt is a `Paper` `AlertDialog`: title "Add service type" (`Heading`), one `OutlinedTextField` (`singleLine`, label "Service type", max 60 chars, trimmed, no case transform), confirm `TextButton` "Add type" (disabled while the trimmed value is blank), cancel "Cancel". On confirm, the trimmed label is matched case-insensitively against presets and existing learned labels: a match **selects the existing chip** (no duplicate chip, and **no stored value is ever rewritten** — D-40); otherwise the new label becomes the selected chip and a candidate learned label.
+- The one-field prompt is a `Paper` `AlertDialog`: title "Add service type" (`Heading`), one `OutlinedTextField` (`singleLine`, label "Service type", max 60 chars, trimmed, no case transform), confirm `TextButton` "Add type" (disabled while the trimmed value is blank), cancel "Cancel". On confirm, the trimmed label is matched case-insensitively against presets and existing learned labels: a match **selects/keeps the existing chip** (no duplicate chip, and **no stored value is ever rewritten** — D-40); otherwise the trimmed label is added to the **selected set** *and* to the **chip list** as a learned candidate (deduped case-insensitively, newest-first) so the new label renders as a selected chip immediately.
 
 ### Add/Edit service entry — single scrolling form (D-08/D-30)
 
@@ -216,14 +218,14 @@ Locked field order:
 | 9 | Photos | `Title` section label "Photos" + strip or empty block + "Add photo" + count line (max 5) | — |
 | 10 | Submit | full-width filled `Button` at the bottom of the same column — "Add service" / "Update service" | — |
 
-Submission gate: the submit button is enabled **iff** a date is set, the mileage digits are non-blank, a service type is selected, and no save/import is in flight. Nothing else gates it (D-27/D-28).
+Submission gate: the submit button is enabled **iff** a date is set, the mileage digits are non-blank, **at least one service type** is selected, and no save/import is in flight. Nothing else gates it (D-27/D-28).
 
 ### Service history — row anatomy and sorting (D-33/D-34)
 
 - Sort control: `SingleChoiceSegmentedButtonRow`, **full content width**, two segments `Date` | `Mileage`, both **fixed descending** (newest date / highest mileage) — no direction arrow is rendered because the direction is not a user choice. Default is `Date` on every visit (ViewModel state, **never persisted**). Colours exactly as `VehicleTypePicker` (see §Color). `Modifier.defaultMinSize(minHeight = 48.dp)`.
 - Control placement: `md` 16px horizontal padding, `sm` 8px above the first row; it renders **only in the Content state** (an enabled sort control over zero rows would be a dead control).
 - Row (`ServiceHistoryRow`, a `Mist` M3 `Card`, 12dp radius, `md` 16px inner padding, merged semantics, tap → entry detail, **no long-press ever**):
-  - title = the stored service type, `Title`/`Ink`, `maxLines = 1` with ellipsis;
+  - title = the stored service type(s) — one renders verbatim, two or more are joined by ` · ` (U+00B7, single spaces) — `Title`/`Ink`, `maxLines = 1` with ellipsis;
   - meta = `19 Oct 2026 · 123.456 km` (`Body`/`Slate`, `sm` 8px below the title) — the middle dot `·` (U+00B7) with single spaces either side is the locked separator, same as the vehicle meta line;
   - trailing = cost `Rp 450.000` (`Title`/`Ink`), or the em dash `—` in `Slate` when the entry has no cost; vertically centred against the two-line column.
 - List: one `LazyColumn`, `items(entries, key = { it.id })` — **keys are mandatory** (sorting reorders rows; PITFALLS CMP 1); content padding `md` 16px horizontal, `md` 16px vertical gaps, `3xl` 64px bottom (clears the FAB).
@@ -237,7 +239,7 @@ Submission gate: the submit button is enabled **iff** a date is set, the mileage
 
 ### Service entry detail — read-only anatomy (D-35, order locked)
 
-1. **Focal block** (top of content, `md` 16px top padding): the service type at `Display` 24sp/500 `Ink`, then the meta `19 Oct 2026 · 123.456 km` (`Body`/`Slate`, `sm` 8px below).
+1. **Focal block** (top of content, `md` 16px top padding): the service type(s) at `Display` 24sp/500 `Ink` — one renders verbatim, two or more are joined by the same ` · ` separator — capped at `maxLines = 2` with ellipsis, then the meta `19 Oct 2026 · 123.456 km` (`Body`/`Slate`, `sm` 8px below).
 2. `lg` 24px break, then the field run in D-35's order:
    - **Cost** — `FieldRow` ("Cost" label, `Rp 450.000` value or `—`), divider below;
    - **Parts** — a `Title` section label "Parts" + one `Body`/`Ink` line per part, `name × qty` (e.g. `Oil filter × 2`), `sm` 8px between lines; **the whole block is omitted when the entry has no parts**;
@@ -259,7 +261,7 @@ Every screen implements these states explicitly. **No state may render a blank w
 | Service history | Empty | `EmptyState`: 64dp `Mist` circle with a centred 24dp `Build` (wrench) glyph tinted `Ink` (`xl` 32px below), Heading "No service entries yet", body copy in `Slate`, then a **filled** "Add service" CTA. The FAB remains visible (D-36). The sort control is **not** rendered |
 | Service history | Content | sort control + `LazyColumn` (keys mandatory), rows newest-first by the selected order, `md` 16px gaps, `3xl` 64px bottom padding |
 | Service history | Error | Centred `Body` copy (load error) + an outlined "Try again" button. FAB stays visible; the empty state is **not** shown on error |
-| Add/Edit entry | Idle | Normal form; submit enabled only when date + mileage + type are present |
+| Add/Edit entry | Idle | Normal form; submit enabled only when date + mileage + at least one type are present |
 | Add/Edit entry | Invalid | Inline error text appears **only** after the user has cleared a previously non-empty required text value (Mileage → "Enter the mileage." under the field, `Danger`); the service type has **no** error line — its `*` marker and the disabled submit button carry the requirement |
 | Add/Edit entry | Mileage warning | When the entered mileage is lower than the baseline (the prefill on add; the immediately previous entry in Date order on edit), the field's supporting line is replaced by "Lower than the last recorded mileage — check this" in `Danger`. **Save is never blocked** (D-28) |
 | Add/Edit entry | Uploading/importing a photo | All photo controls and pickers are disabled while an import or a save is in flight; every other field stays readable but disabled (Phase 1 `Saving` precedent) |
@@ -281,7 +283,7 @@ Every screen implements these states explicitly. **No state may render a blank w
 | Tap the "Add service" FAB / empty-state CTA | Navigate to `ServiceEntryEditRoute(vehicleId, entryId = 0L)`. FAB `contentDescription` = "Add service" |
 | Tap the summary row on the vehicle Detail | Navigate to `ServiceHistoryRoute(vehicleId)`. **Nothing else** — it never opens the form and never duplicates the list |
 | Tap the Service date field | Opens `ServiceDatePickerDialog` seeded with the current value. **The keyboard must never open for this control.** Confirm = "Set date" (disabled while no date is selected), dismiss = "Cancel"; every dismiss path keeps the previous value. No date-range restriction (any past or future date may be saved) |
-| Tap a service-type chip | Selects it (one tap, D-26). Selecting a different chip replaces the selection — exactly one type is selected, and **no type is preselected** on add |
+| Tap a service-type chip | **Toggles** it (one tap, D-26 as superseded 2026-10-21): a selected chip becomes deselected, any other becomes selected. Any number of types may be selected; deselecting the last one is allowed and simply leaves Save disabled, and **no type is preselected** on add |
 | Tap "Add custom…" | Opens the one-field dialog described above; dismissing it changes nothing |
 | Tap "Add part" | Appends an empty part row at the end of the block (`sm` 8px below the last row). No autofocus (the keyboard stays closed until the user taps a field) |
 | Tap a part row's remove control | Removes that row immediately, no confirmation (an unsaved form edit) |

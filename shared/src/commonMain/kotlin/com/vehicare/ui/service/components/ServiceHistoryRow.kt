@@ -24,6 +24,7 @@ import com.vehicare.ui.theme.Slate
 import com.vehicare.util.RupiahFormat
 import org.jetbrains.compose.resources.stringResource
 import com.vehicare.ui.service.serviceMetaLine
+import com.vehicare.ui.service.serviceTypeLine
 import vehicare.shared.generated.resources.Res
 import vehicare.shared.generated.resources.value_empty
 
@@ -51,9 +52,8 @@ fun ServiceHistoryRow(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                // temporary compile bridge — 02-08 replaces this with serviceTypeLine(...)
                 Text(
-                    text = entry.serviceTypes.firstOrNull().orEmpty(),
+                    text = serviceTypeLine(entry.serviceTypes),
                     style = MaterialTheme.typography.titleMedium,
                     color = Ink,
                     maxLines = 1,
