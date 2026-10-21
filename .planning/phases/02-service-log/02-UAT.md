@@ -1,22 +1,34 @@
 ---
-status: complete
+status: testing
 phase: 02-service-log
 source: [02-VERIFICATION.md]
 started: 2026-10-20T07:05:00Z
-updated: 2026-10-21T04:11:30Z
+updated: 2026-10-21T10:58:00Z
 ---
 
 ## Current Test
 
-[testing complete]
+number: 1
+name: 30-second create path — gap re-test (custom chip + multi-select)
+expected: |
+  Open a vehicle's history → Add service → "Add custom…", type a label, confirm: the label appears
+  immediately as a selected chip carrying the Check glyph, and can be deselected and re-selected
+  without disappearing. Tap several preset chips in a chosen order, deselect the middle one,
+  re-select it, save. The saved entry's detail shows the labels joined by " · " in tap order on at
+  most two lines; the history row shows the same line on one line with ellipsis.
+awaiting: user response
 
 ## Tests
 
 ### 1. 30-second create path
 expected: Open a vehicle's history, tap Add service, accept today's date, type a mileage, tap a preset type chip, optionally add cost/notes, tap Save. Repeat once using "Add custom…" for the type. The entry is saved and the history shows it immediately; the whole interaction stays under 30 seconds on a normal device; a custom type is stored verbatim and appears as a learned chip on the next add.
-result: issue
-reported: "+ Add Type" tidak berfungsi semestinya, saya menambahkan tapi tidak tertampil. Saya juga mau input type bisa dipilih beberapa
-severity: major
+result: pending
+retest: true
+fixed_by: [02-07-PLAN.md, 02-08-PLAN.md]
+previous_result: issue
+previous_reported: "+ Add Type" tidak berfungsi semestinya, saya menambahkan tapi tidak tertampil. Saya juga mau input type bisa dipilih beberapa
+previous_severity: major
+note: Fixed in 02-07 (schema v3, ordered serviceTypes) and 02-08 (pure custom-confirm transition, multi-select chips, joined type line). Re-run required — the ViewModel/state chain is proven by executable tests, but the Compose recomposition → rendered pixel has no screen-level test.
 
 ### 2. Parts + workshop/mechanic round-trip
 expected: Add two parts (name + quantity), a workshop and a mechanic to an entry, save, then open its detail; edit the entry and confirm the values are prefilled. Parts render as "name × qty" in the locked detail order between Cost and Workshop; Workshop and Mechanic render as label/value rows; quantities are digit-only and default to 1; values survive edit round-trip.
@@ -50,15 +62,17 @@ result: pass
 
 total: 8
 passed: 7
-issues: 1
-pending: 0
+issues: 0
+pending: 1
 skipped: 0
 blocked: 0
 
 ## Gaps
 
 - truth: "A custom service type confirmed in the Add custom… dialog appears as the selected chip immediately"
-  status: failed
+  status: resolved
+  resolved_by: 02-08-PLAN.md
+  retest: pending
   reason: "User reported: '+ Add Type' tidak berfungsi semestinya, saya menambahkan tapi tidak tertampil."
   severity: major
   test: 1
@@ -78,7 +92,9 @@ blocked: 0
   root_cause: "The new custom label is stored only in values.serviceType; the picker renders presets + learnedTypes, so the selection has no chip and is invisible. Confirmed by code trace at HEAD a16c46c."
 
 - truth: "A service entry can carry more than one service type, and the form lets the user toggle several presets/custom types"
-  status: failed
+  status: resolved
+  resolved_by: [02-07-PLAN.md, 02-08-PLAN.md]
+  retest: pending
   reason: "User requested: 'Saya juga mau input type bisa dipilih beberapa.'"
   severity: major
   test: 1
