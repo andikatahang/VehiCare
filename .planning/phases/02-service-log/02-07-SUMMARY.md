@@ -89,7 +89,7 @@ Each task was committed atomically:
 2. **Task 2: Move domain, mapper, repository, cascade and read surfaces to ordered serviceTypes** - `f4c8626` (feat)
 3. **Task 3: Prove the v2→v3 backfill and multi-type data behavior on a real driver** - `9d66c49` (test)
 
-**Plan metadata:** `_pending_` (docs: complete plan)
+**Plan metadata:** `4b5e53f` (docs: complete plan)
 
 ## Files Created/Modified
 
