@@ -29,7 +29,7 @@ Plan: Not started
 |-------|-------|
 | **Active Phase** | Phase 3: Reminders & Dashboard (ready to plan) |
 | **Active Plan** | Not started |
-| **Status** | **Phase 2 complete 2026-10-21.** UAT 8/8 passed, including the gap-closure re-test (custom chip renders immediately, multi-select toggles). Security audit threat-secure: 50/50 threats closed (`02-SECURITY.md`, `threats_open: 0`). Verification `status: passed` (52/52 must-haves, 7/7 requirements). Phase 3 has no CONTEXT.md yet. |
+| **Status** | **Phase 2 complete 2026-10-21.** UAT 8/8 passed, including the gap-closure re-test (custom chip renders immediately, multi-select toggles). Security audit threat-secure: 50/50 threats closed (`02-SECURITY.md`, `threats_open: 0`). Verification `status: passed` (52/52 must-haves, 7/7 requirements). **Phase 3 context gathered 2026-10-21** (`03-CONTEXT.md`, D-41…D-65 across four discussed areas) — ready to plan. |
 | **Progress** | `[███████░░░] 2/3 phases (67%)` |
 
 ```
@@ -170,7 +170,7 @@ No blockers. **Phase 2 closed 2026-10-21** — UAT 8/8 passed (`02-UAT.md`), sec
 **Last session:** 2026-10-21T16:38:22.993Z
 **Stopped at:** Phase 3 context gathered
 **Resume file:** .planning/phases/03-reminders-dashboard/03-CONTEXT.md
-**Next action:** Plan Phase 3 (Reminders & Dashboard). It has no CONTEXT.md, so run `/gsd-discuss-phase 3` first. Stale `.planning/phases/02-service-log/.continue-here.md` still exists on disk and was intentionally not deleted without owner approval. Debt: `01-VERIFICATION.md` remains `human_needed` (acknowledged; `/gsd-audit-uat` or re-verify to clear); `01-REVIEW.md` CR-01/WR-01…03/IN-01…06 open; `02-REVIEW.md` WR-01…WR-04 open; `App.kt` KDoc typo uncommitted.
+**Next action:** Plan Phase 3 (Reminders & Dashboard) — context is captured, so run `/gsd-plan-phase 3` (optionally `/gsd-ui-phase 3` first: ROADMAP has `UI hint: yes`). Phase 3 artifacts (`b9a9e8d`, `712d428`, `9272983`) are committed locally and **not pushed**. Stale `.planning/phases/02-service-log/.continue-here.md` still exists on disk and was intentionally not deleted without owner approval. Debt: `01-VERIFICATION.md` remains `human_needed` (acknowledged; `/gsd-audit-uat` or re-verify to clear); `01-REVIEW.md` CR-01/WR-01…03/IN-01…06 open; `02-REVIEW.md` WR-01…WR-04 open.
 
 ## Decisions
 
