@@ -2,13 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: Phase 02 complete — verification pending
-last_updated: "2026-10-20T06:20:00.000Z"
+status: Executing Phase 02
+stopped_at: Completed 02-07 (schema v3 service_entry_type + backfill + ordered serviceTypes); 02-08 wave 2 next
+last_updated: "2026-10-21T09:46:32.507Z"
 progress:
   total_phases: 3
   completed_phases: 1
-  total_plans: 16
-  completed_plans: 16
+  total_plans: 18
+  completed_plans: 17
   percent: 33
 ---
 
@@ -22,17 +23,17 @@ progress:
 ## Current Position
 
 Phase: 02 (service-log) — EXECUTING
-Plan: 6 of 6
+Plan: 8 of 8
 
 | Field | Value |
 |-------|-------|
-| **Active Phase** | Phase 2: Service Log (plans complete — verification pending) |
-| **Active Plan** | 02-06 complete — phase verification next |
-| **Status** | All 6 plans executed. 02-06 replaced the vehicle Detail's coming-soon placeholder with the aggregate summary row (`N entries · Last service <date>` / `No entries yet`) wired to `ServiceHistoryRoute`; `ComingSoonSlot` and its string are retired. Next: post-wave gates, code review, security audit, verifier, UAT |
-| **Progress** | `[██████████] 16/16 plans (100%)` |
+| **Active Phase** | Phase 2: Service Log (gap closure — wave 1 done) |
+| **Active Plan** | 02-07 complete — 02-08 (multi-select UI) next |
+| **Status** | Schema v3 shipped: `service_entry_type` child table + `2.sqm` backfill + regenerated `3.db`; `ServiceEntry.serviceTypes` is ordered and hydrated in batches, writes replace type rows transactionally, both delete paths cascade. Form/picker stay single-select until 02-08, which also replaces the two documented `firstOrNull()` display bridges. UAT test 1 re-run still owed after 02-08. |
+| **Progress** | `[█████████░] 17/18 plans (94%)` |
 
 ```
-Phase 1 [Complete] → Phase 2 [Executing — 6/6 plans] → Phase 3 [Not Started]
+Phase 1 [Complete] → Phase 2 [Executing — 7/8 plans] → Phase 3 [Not Started]
                        ↑
                        Current
 ```
@@ -44,7 +45,7 @@ Phase 1 [Complete] → Phase 2 [Executing — 6/6 plans] → Phase 3 [Not Starte
 | Phase | Name | Status |
 |-------|------|--------|
 | 1 | Foundation & Vehicle Management | Complete (2026-10-19) |
-| 2 | Service Log | Executing — 6/6 plans (verification pending) |
+| 2 | Service Log | Executing — 7/8 plans (02-08 next) |
 | 3 | Reminders & Dashboard | Not started |
 
 ---
@@ -54,7 +55,7 @@ Phase 1 [Complete] → Phase 2 [Executing — 6/6 plans] → Phase 3 [Not Starte
 | Metric | Value |
 |--------|-------|
 | Phases completed | 1 / 3 |
-| Plans completed | 16 / 16 |
+| Plans completed | 17 / 18 |
 | Requirements covered | 17 / 21 |
 | Sessions | 13 |
 
@@ -64,6 +65,7 @@ Per-plan: `Phase 1 / 01` — ~28min, 3 tasks, 63 files · `Phase 1 / 02` — 17m
 | Phase 2 P4 | 45min | 3 tasks | 15 files |
 | Phase 2 P5 | 32min | 3 tasks | 10 files |
 | Phase 2 P6 | 15min | 2 tasks | 7 files |
+| Phase 2 P7 | 10min | 3 tasks | 18 files |
 
 ## Accumulated Context
 
@@ -164,10 +166,10 @@ No blockers. **Phase 1 closed 2026-10-19** — UAT 6/6 passed (`01-UAT.md`), sec
 
 ## Session Continuity
 
-**Last session:** 2026-10-21T09:27:53Z
-**Stopped at:** Phase 2 gap closure — plan-checker returned `VERIFICATION PASSED` for 02-07/02-08 (`bebe5fe`); execution not started.
+**Last session:** 2026-10-21T09:46:32.502Z
+**Stopped at:** Completed 02-07 (schema v3 service_entry_type + backfill + ordered serviceTypes); 02-08 wave 2 next
 **Resume file:** `.planning/phases/02-service-log/.continue-here.md`
-**Next action:** `/gsd-execute-phase 2 --gaps-only` (02-07 wave 1 → 02-08 wave 2); after fixes re-run UAT test 1 and the five Gradle gates before completing Phase 2. Debt: `01-VERIFICATION.md` `human_needed` acknowledged (see Blockers).
+**Next action:** Execute 02-08 (wave 2): multi-select chip group, GAP 1 custom-type selection fix, `serviceTypeLine` on detail/history, UI-SPEC multi-select corrections. Then re-run UAT test 1 and the five Gradle gates before completing Phase 2. Debt: `01-VERIFICATION.md` `human_needed` acknowledged (see Blockers).
 
 ## Decisions
 
@@ -230,3 +232,7 @@ No blockers. **Phase 1 closed 2026-10-19** — UAT 6/6 passed (`01-UAT.md`), sec
 - [Phase 2]: ServiceEntryDetailScreen locked anatomy per UI-SPEC: focal block (Display type + serviceMetaLine), lg break, field run (Cost divider, Parts omitted when empty, Workshop divider, Mechanic divider, stacked Notes no divider), Photos omitted when empty (read-only strip), 2xl break, destructive OutlinedButton
 - [Phase 2]: serviceMetaLine internal helper (dateEpochMs, mileageKm -> '19 Oct 2026 · 123.456 km') - single source for entry detail and future history row (02-05 imports it); unit tested in ServiceMetaLineTest
 - [Phase 2]: ServiceEntryDeletionTest proves: rows+files, isolation, idempotence, ViewModel ordering (success after repo returns), single-flight, failure retention, vehicle cascade D-39 (vehicle+entry photos all gone, survivor untouched)
+- [Phase 02]: service_entry.service_type survives in schema v3 as a position-0 mirror of service_entry_type — minSdk 26 ships SQLite 3.18 without DROP COLUMN, and rebuilding the table via RENAME rewrites sqlite_master (quoted name) which fails the byte-identical baseline guard; the child table is the source of truth and toBindParameters writes the mirror from serviceTypes.first() only
+- [Phase 02]: observeHistory hydrates service types with one vehicle-scoped selectTypesForVehicle query — A history page must cost a constant number of queries, not one per entry (T-02-07-07); entry rows and type rows are combined and grouped by entry_id, which preserves the query's (entry_id, position) order
+- [Phase 02]: selectLearnedTypes reads the child table with GROUP BY lower(label) and a single MAX(entry_id) aggregate — One row per case-insensitive label with bare-column semantics well defined and no window functions; the old WHERE id IN (SELECT MAX(id)) shape would emit a label twice once one entry carries several
+- [Phase 02]: 02-07 keeps the form and both display surfaces single-select; 02-08 owns the multi-select UI and serviceTypeLine — The plan ships the storage/repository half only, with two documented firstOrNull() compile bridges in detail and history, so no second display rule exists to delete later

@@ -81,7 +81,7 @@ Plans:
 4. User can view the full service history for a vehicle sorted by date or mileage
 5. User can edit or delete any existing service entry
 
-**Plans:** 6/8 plans executed
+**Plans:** 7/8 plans executed
 Plans:
 **Wave 1**
 
@@ -106,7 +106,7 @@ Plans:
 
 **Wave 6** *(gap closure from 02-UAT.md)*
 
-- [ ] 02-07-PLAN.md — schema v3: `service_entry_type` child table + `2.sqm` backfill + `3.db`, ordered `serviceTypes` through domain/mapper/repository/cascade, migration and multi-type tests
+- [x] 02-07-PLAN.md — schema v3: `service_entry_type` child table + `2.sqm` backfill + `3.db`, ordered `serviceTypes` through domain/mapper/repository/cascade, migration and multi-type tests
 - [ ] 02-08-PLAN.md — multi-select chip group, the GAP 1 custom-type selection fix, the joined type line on detail/history, and the UI-SPEC multi-select corrections
 
 ### Phase 3: Reminders & Dashboard
@@ -132,7 +132,7 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation & Vehicle Management | 10/10 | Complete    | 2026-10-19 |
-| 2. Service Log | 4/6 | In Progress|  |
+| 2. Service Log | 7/8 | In Progress|  |
 | 3. Reminders & Dashboard | 0/? | Not started | — |
 
 ---
