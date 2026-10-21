@@ -428,6 +428,14 @@ class ServiceEntryDeletionTest {
             database.serviceEntryQueries.selectPhotos(entry2Id).executeAsList().isEmpty(),
             "photo rows for entry 2 gone",
         )
+        assertTrue(
+            database.serviceEntryQueries.selectTypes(entry1Id).executeAsList().isEmpty(),
+            "type rows for entry 1 gone",
+        )
+        assertTrue(
+            database.serviceEntryQueries.selectTypes(entry2Id).executeAsList().isEmpty(),
+            "type rows for entry 2 gone",
+        )
 
         // All files gone
         assertFalse(PhotoStorage.resolve(vehiclePhoto).exists(), "vehicle photo file gone")
@@ -436,6 +444,11 @@ class ServiceEntryDeletionTest {
 
         // Survivor untouched
         assertNotNull(repository.observeEntry(survivorEntryId).first(), "survivor entry remains")
+        assertEquals(
+            listOf("Brake service"),
+            database.serviceEntryQueries.selectTypes(survivorEntryId).executeAsList(),
+            "the survivor's type rows are the only ones left",
+        )
         assertTrue(PhotoStorage.resolve(survivorPhoto).exists(), "survivor photo file remains")
     }
 

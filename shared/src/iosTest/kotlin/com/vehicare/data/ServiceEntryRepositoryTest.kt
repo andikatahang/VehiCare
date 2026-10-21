@@ -181,8 +181,76 @@ class ServiceEntryRepositoryTest {
     }
 
     @Test
-    fun deleteRemovesEntryAndChildrenAndHandsEveryPhotoPathToTheDeleter() = runTest {
+    fun saveWritesOneOrderedTypeRowPerLabelAndMirrorsPositionZero() = runTest {
         val vehicleId = vehicleRepository.save(Vehicle(name = "A"))
+        val types = listOf("Oil change", "Tire rotation", "Wheel alignment")
+
+        val id = repository.save(entry(vehicleId, serviceTypes = types))
+
+        val stored = database.serviceEntryQueries.selectTypes(id).executeAsList()
+        assertEquals(types, stored, "one child row per label, in selection order")
+        assertEquals(3, stored.size)
+        assertEquals("Oil change", database.serviceEntryQueries.selectById(id).executeAsOne().service_type)
+    }
+
+    @Test
+    fun editingAnEntryReplacesItsTypeRows() = runTest {
+        val vehicleId = vehicleRepository.save(Vehicle(name = "A"))
+        val id = repository.save(
+            entry(vehicleId, serviceTypes = listOf("Oil change", "Tire rotation", "Wheel alignment")),
+        )
+
+        repository.save(entry(vehicleId, serviceTypes = listOf("Battery")).copy(id = id))
+
+        assertEquals(listOf("Battery"), database.serviceEntryQueries.selectTypes(id).executeAsList())
+        assertEquals("Battery", database.serviceEntryQueries.selectById(id).executeAsOne().service_type)
+    }
+
+    @Test
+    fun observeEntryAndHistoryHydrateEveryEntriesOrderedTypes() = runTest {
+        val vehicleId = vehicleRepository.save(Vehicle(name = "A"))
+        val first = repository.save(
+            entry(vehicleId, dateEpochMs = 1_000L, serviceTypes = listOf("Brake service", "Inspection")),
+        )
+        val second = repository.save(
+            entry(vehicleId, dateEpochMs = 2_000L, serviceTypes = listOf("Battery")),
+        )
+
+        assertEquals(listOf("Brake service", "Inspection"), repository.observeEntry(first).first()?.serviceTypes)
+        assertEquals(listOf("Battery"), repository.observeEntry(second).first()?.serviceTypes)
+
+        val history = repository.observeHistory(vehicleId, HistorySort.DATE).first().associateBy { it.id }
+        assertEquals(listOf("Brake service", "Inspection"), history.getValue(first).serviceTypes)
+        assertEquals(listOf("Battery"), history.getValue(second).serviceTypes, "each entry keeps its own list")
+    }
+
+    @Test
+    fun learnedTypesReadTheChildTableNewestFirstAndCollapseCaseVariants() = runTest {
+        val vehicleId = vehicleRepository.save(Vehicle(name = "A"))
+        repository.save(entry(vehicleId, serviceTypes = listOf("Wheel alignment", "Battery")))
+        repository.save(entry(vehicleId, serviceTypes = listOf("wheel alignment")))
+        repository.save(entry(vehicleId, serviceTypes = listOf("Detailing")))
+
+        // Newest entry first; the case variant collapses onto one chip carrying the stored casing
+        // of the newest row; the preset "Battery" is filtered out; no stored label is rewritten.
+        assertEquals(listOf("Detailing", "wheel alignment"), repository.observeLearnedTypes().first())
+    }
+
+    @Test
+    fun deletingAnEntryRemovesItsTypeRows() = runTest {
+        val vehicleId = vehicleRepository.save(Vehicle(name = "A"))
+        val id = repository.save(entry(vehicleId, serviceTypes = listOf("Oil change", "Tire rotation")))
+
+        repository.delete(id)
+
+        assertTrue(
+            database.serviceEntryQueries.selectTypes(id).executeAsList().isEmpty(),
+            "type rows must not survive the entry",
+        )
+    }
+
+    @Test
+    fun deleteRemovesEntryAndChildrenAndHandsEveryPhotoPathToTheDeleter() = runTest {        val vehicleId = vehicleRepository.save(Vehicle(name = "A"))
         val deletedPaths = mutableListOf<String?>()
         val deletingRepository = ServiceEntryRepositoryImpl(
             database = database,

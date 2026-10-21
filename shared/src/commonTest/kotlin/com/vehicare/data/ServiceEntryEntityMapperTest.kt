@@ -129,6 +129,24 @@ class ServiceEntryEntityMapperTest {
     }
 
     @Test
+    fun bareRowFallbackKeepsTheTypeNonEmpty() {
+        // This is the path used before hydration — and by any read that has no child rows.
+        val entity = ServiceEntryEntity(
+            id = 4L,
+            vehicle_id = 1L,
+            service_date_epoch_ms = 0L,
+            mileage_km = 0L,
+            service_type = "Custom type",
+            cost_rupiah = null,
+            notes = null,
+            workshop = null,
+            mechanic = null,
+        )
+
+        assertEquals(listOf("Custom type"), entity.toDomain().serviceTypes)
+    }
+
+    @Test
     fun mapsLearnedTypeRowsToTheirStoredLabel() {
         val row = SelectLearnedTypes(label = "oil change", last_used_id = 42L)
 
