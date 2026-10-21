@@ -111,7 +111,7 @@ Plans:
 
 ### Phase 3: Reminders & Dashboard
 
-**Goal:** Users receive proactive mileage- and time-based reminders when service is due, and see an at-a-glance summary of all vehicles on the home screen.
+**Goal:** As a vehicle owner, I want to see which service is due and be reminded when it is, so that I never miss maintenance.
 **Mode:** mvp
 **Depends on:** Phase 2
 **Requirements:** REM-01, REM-02, REM-03, REM-04, DSH-01
