@@ -22,7 +22,9 @@ internal fun ServiceEntryEntity.toDomain(): ServiceEntry = ServiceEntry(
     vehicleId = vehicle_id,
     dateEpochMs = service_date_epoch_ms,
     mileageKm = mileage_km,
-    serviceType = service_type,
+    // Pre-hydration fallback only: the repository replaces this with the ordered rows of
+    // `service_entry_type`, and it keeps the list non-empty for any caller that maps a bare row.
+    serviceTypes = listOf(service_type),
     costRupiah = cost_rupiah,
     notes = notes,
     workshop = workshop,
@@ -48,14 +50,19 @@ internal fun SelectSummary.toDomain(): ServiceSummary = ServiceSummary(
 )
 
 /** `selectLearnedTypes` returns the stored label as-is — it is never rewritten (D-40). */
-internal fun SelectLearnedTypes.toServiceType(): String = service_type
+internal fun SelectLearnedTypes.toServiceType(): String = label
 
-/** The eight non-id bind values of a `service_entry` row, in `ServiceEntry.sq` query order. */
+/**
+ * The eight non-id bind values of a `service_entry` row, in `ServiceEntry.sq` query order.
+ *
+ * [serviceTypeMirror] is the position-0 label, written only to the legacy
+ * `service_entry.service_type` column; the `service_entry_type` rows are the source of truth.
+ */
 internal class ServiceEntryBindParameters(
     val vehicleId: Long,
     val dateEpochMs: Long,
     val mileageKm: Long,
-    val serviceType: String,
+    val serviceTypeMirror: String,
     val costRupiah: Long?,
     val notes: String?,
     val workshop: String?,
@@ -66,7 +73,9 @@ internal fun ServiceEntry.toBindParameters(): ServiceEntryBindParameters = Servi
     vehicleId = vehicleId,
     dateEpochMs = dateEpochMs,
     mileageKm = mileageKm,
-    serviceType = serviceType,
+    // Non-empty by contract; a violation fails the save transaction rather than writing an
+    // empty mirror.
+    serviceTypeMirror = serviceTypes.first(),
     costRupiah = costRupiah,
     notes = notes,
     workshop = workshop,

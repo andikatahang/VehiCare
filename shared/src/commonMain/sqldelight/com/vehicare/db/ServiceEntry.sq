@@ -89,11 +89,15 @@ selectSummary:
 SELECT COUNT(*) AS entry_count, MAX(service_date_epoch_ms) AS last_service_epoch_ms
 FROM service_entry WHERE vehicle_id = ?;
 
+-- One row per case-insensitive label, newest-used first. The bare `label` is well defined because
+-- with exactly one MAX() aggregate SQLite takes bare columns from the row that supplied the
+-- maximum; the old `WHERE entry_id IN (SELECT MAX(id) …)` shape would emit the same label twice
+-- once a single entry carries several labels, and this SQLite version has no window functions.
 selectLearnedTypes:
-SELECT service_type, id AS last_used_id
-FROM service_entry
-WHERE id IN (SELECT MAX(id) FROM service_entry GROUP BY lower(service_type))
-ORDER BY id DESC;
+SELECT label, MAX(entry_id) AS last_used_id
+FROM service_entry_type
+GROUP BY lower(label)
+ORDER BY last_used_id DESC;
 
 insertEntry:
 INSERT INTO service_entry(vehicle_id, service_date_epoch_ms, mileage_km, service_type, cost_rupiah, notes, workshop, mechanic)

@@ -235,8 +235,9 @@ private fun ServiceEntryDetailContent(
     ) {
         // Focal block (UI-SPEC §Service entry detail line 238-241): the service type at `Display`
         // 24sp/500 `Ink`, then the meta `19 Oct 2026 · 123.456 km` (`Body`/`Slate`, `sm` 8px below).
+        // temporary compile bridge — 02-08 replaces this with serviceTypeLine(...)
         Text(
-            text = entry.serviceType,
+            text = entry.serviceTypes.firstOrNull().orEmpty(),
             style = MaterialTheme.typography.headlineSmall,
             color = Ink,
         )

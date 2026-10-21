@@ -113,7 +113,9 @@ object ServiceEntryFormValidation {
             vehicleId = vehicleId,
             dateEpochMs = date,
             mileageKm = mileageKm,
-            serviceType = serviceType,
+            // Interim bridge: the form is still single-select in this plan; 02-08 replaces this
+            // with the real list built from the multi-select chip group.
+            serviceTypes = listOf(serviceType),
             costRupiah = costRupiah,
             notes = notes,
             workshop = workshop,

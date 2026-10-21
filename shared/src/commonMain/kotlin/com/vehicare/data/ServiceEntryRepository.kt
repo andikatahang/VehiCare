@@ -52,7 +52,8 @@ interface ServiceEntryRepository {
 
     /**
      * Persists [entry]: an insert when its id is `0L`, an in-place update otherwise. On edit the
-     * part and photo rows are fully replaced, so no orphan children survive (PITFALLS SQL 4).
+     * part, photo and service-type rows are fully replaced, so no orphan children survive
+     * (PITFALLS SQL 4).
      *
      * @return the persisted id — the freshly generated one for inserts.
      */

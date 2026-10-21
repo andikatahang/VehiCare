@@ -110,7 +110,7 @@ class ServiceEntryDeletionTest {
             vehicleId = vehicleId,
             dateEpochMs = 1_700_000_000_000,
             mileageKm = 10_000,
-            serviceType = "Oil change",
+            serviceTypes = listOf("Oil change"),
             parts = listOf(ServicePart(name = "Oil filter", quantity = 1)),
             photoPaths = listOf(photoPath1, photoPath2),
         )
@@ -154,14 +154,14 @@ class ServiceEntryDeletionTest {
             vehicleId = vehicleId,
             dateEpochMs = 1_700_000_000_000,
             mileageKm = 10_000,
-            serviceType = "Oil change",
+            serviceTypes = listOf("Oil change"),
             photoPaths = listOf(survivorPhoto),
         )
         val doomed = ServiceEntry(
             vehicleId = vehicleId,
             dateEpochMs = 1_710_000_000_000,
             mileageKm = 20_000,
-            serviceType = "Tire rotation",
+            serviceTypes = listOf("Tire rotation"),
             photoPaths = listOf(doomedPhoto),
         )
         val survivorId = repository.save(survivor)
@@ -184,7 +184,7 @@ class ServiceEntryDeletionTest {
             vehicleId = vehicleId,
             dateEpochMs = 1_700_000_000_000,
             mileageKm = 10_000,
-            serviceType = "Oil change",
+            serviceTypes = listOf("Oil change"),
         )
         val id = repository.save(entry)
 
@@ -206,7 +206,7 @@ class ServiceEntryDeletionTest {
             vehicleId = vehicleId,
             dateEpochMs = 1_700_000_000_000,
             mileageKm = 10_000,
-            serviceType = "Oil change",
+            serviceTypes = listOf("Oil change"),
             photoPaths = listOf(photoPath),
         )
         val entryId = repository.save(entry)
@@ -251,7 +251,7 @@ class ServiceEntryDeletionTest {
             vehicleId = vehicleId,
             dateEpochMs = 1_700_000_000_000,
             mileageKm = 10_000,
-            serviceType = "Oil change",
+            serviceTypes = listOf("Oil change"),
         )
         val entryId = repository.save(entry)
         val gate = CompletableDeferred<Unit>()
@@ -299,7 +299,7 @@ class ServiceEntryDeletionTest {
             vehicleId = vehicleId,
             dateEpochMs = 1_700_000_000_000,
             mileageKm = 10_000,
-            serviceType = "Oil change",
+            serviceTypes = listOf("Oil change"),
         )
         val entryId = repository.save(entry)
         val failing = RecordingServiceEntryRepository(repository, failure = IllegalStateException("boom"))
@@ -325,7 +325,7 @@ class ServiceEntryDeletionTest {
             vehicleId = vehicleId,
             dateEpochMs = 1_700_000_000_000,
             mileageKm = 10_000,
-            serviceType = "Oil change",
+            serviceTypes = listOf("Oil change"),
         )
         val entryId = repository.save(entry)
         val failing = RecordingServiceEntryRepository(repository, failure = IllegalStateException("boom"))
@@ -369,14 +369,14 @@ class ServiceEntryDeletionTest {
             vehicleId = doomedVehicle,
             dateEpochMs = 1_700_000_000_000,
             mileageKm = 10_000,
-            serviceType = "Oil change",
+            serviceTypes = listOf("Oil change"),
             photoPaths = listOf(entry1Photo),
         )
         val entry2 = ServiceEntry(
             vehicleId = doomedVehicle,
             dateEpochMs = 1_710_000_000_000,
             mileageKm = 20_000,
-            serviceType = "Tire rotation",
+            serviceTypes = listOf("Tire rotation"),
             photoPaths = listOf(entry2Photo),
         )
         val entry1Id = repository.save(entry1)
@@ -389,7 +389,7 @@ class ServiceEntryDeletionTest {
             vehicleId = survivorVehicle,
             dateEpochMs = 1_720_000_000_000,
             mileageKm = 30_000,
-            serviceType = "Brake service",
+            serviceTypes = listOf("Brake service"),
             photoPaths = listOf(survivorPhoto),
         )
         val survivorEntryId = repository.save(survivorEntry)

@@ -34,7 +34,7 @@ class ServiceEntryEntityMapperTest {
                 vehicleId = 3L,
                 dateEpochMs = 1_768_867_200_000L,
                 mileageKm = 123_456L,
-                serviceType = "Oil change",
+                serviceTypes = listOf("Oil change"),
                 costRupiah = 450_000L,
                 notes = "Synthetic 5W-30",
                 workshop = "AutoPro",
@@ -100,7 +100,7 @@ class ServiceEntryEntityMapperTest {
             vehicleId = 3L,
             dateEpochMs = 1_768_867_200_000L,
             mileageKm = 123_456L,
-            serviceType = "Brake service",
+            serviceTypes = listOf("Brake service"),
             costRupiah = 200_000L,
             notes = null,
             workshop = "AutoPro",
@@ -112,7 +112,7 @@ class ServiceEntryEntityMapperTest {
         assertEquals(3L, params.vehicleId)
         assertEquals(1_768_867_200_000L, params.dateEpochMs)
         assertEquals(123_456L, params.mileageKm)
-        assertEquals("Brake service", params.serviceType)
+        assertEquals("Brake service", params.serviceTypeMirror)
         assertEquals(200_000L, params.costRupiah)
         assertNull(params.notes)
         assertEquals("AutoPro", params.workshop)
@@ -130,7 +130,7 @@ class ServiceEntryEntityMapperTest {
 
     @Test
     fun mapsLearnedTypeRowsToTheirStoredLabel() {
-        val row = SelectLearnedTypes(service_type = "oil change", last_used_id = 42L)
+        val row = SelectLearnedTypes(label = "oil change", last_used_id = 42L)
 
         assertEquals("oil change", row.toServiceType())
     }

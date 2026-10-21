@@ -177,7 +177,7 @@ class ServiceEntryRepositoryTest {
         // "Wheel alignment" was learned on another vehicle (D-25); both preset-case variants are
         // filtered out of the chips and the stored strings are never rewritten (D-40).
         assertEquals(listOf("Wheel alignment"), repository.observeLearnedTypes().first())
-        assertEquals("oil change", repository.observeEntry(presetVariant).first()?.serviceType)
+        assertEquals(listOf("oil change"), repository.observeEntry(presetVariant).first()?.serviceTypes)
     }
 
     @Test
@@ -209,6 +209,7 @@ class ServiceEntryRepositoryTest {
         dateEpochMs: Long = 1_768_867_200_000L,
         mileageKm: Long = 123_456L,
         serviceType: String = "Oil change",
+        serviceTypes: List<String> = listOf(serviceType),
         costRupiah: Long? = null,
         notes: String? = null,
         workshop: String? = null,
@@ -219,7 +220,7 @@ class ServiceEntryRepositoryTest {
         vehicleId = vehicleId,
         dateEpochMs = dateEpochMs,
         mileageKm = mileageKm,
-        serviceType = serviceType,
+        serviceTypes = serviceTypes,
         costRupiah = costRupiah,
         notes = notes,
         workshop = workshop,

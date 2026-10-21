@@ -25,6 +25,11 @@ import kotlinx.coroutines.withContext
  * injected rather than referenced inline so it stays single and testable. Reads ride the lane too,
  * not just writes.
  *
+ * Service types live in the `service_entry_type` child table, ordered by `position`. Saves replace
+ * an entry's type rows just like its part and photo rows, deletes remove them before the parent
+ * (SQLite foreign keys are never enabled here), and both reads hydrate them in batches so a history
+ * page never costs one query per entry.
+ *
  * @param photoDeleter the seam for removing a deleted entry's photo files. Plan 02-03's DI change
  *   wires the real `PhotoStorage::delete`; a `delete()` that only removed rows would leave orphaned
  *   personal data on disk (D-07).
@@ -40,9 +45,18 @@ internal class ServiceEntryRepositoryImpl(
             HistorySort.DATE -> database.serviceEntryQueries.selectForVehicleByDate(vehicleId)
             HistorySort.MILEAGE -> database.serviceEntryQueries.selectForVehicleByMileage(vehicleId)
         }
-        return query.asFlow()
+        val entries = query.asFlow().mapToList(ioDispatcher)
+        // One vehicle-scoped query hydrates every entry's types — never one query per row.
+        val types = database.serviceEntryQueries.selectTypesForVehicle(vehicleId)
+            .asFlow()
             .mapToList(ioDispatcher)
-            .map { rows -> rows.map { it.toDomain() } }
+        return combine(entries, types) { rows, typeRows ->
+            // The query already orders by `entry_id, position`, and groupBy preserves that order.
+            val byEntry = typeRows.groupBy({ it.entry_id }, { it.label })
+            rows.map { row ->
+                row.toDomain().copy(serviceTypes = byEntry[row.id] ?: listOf(row.service_type))
+            }
+        }
     }
 
     override fun observeEntry(id: Long): Flow<ServiceEntry?> {
@@ -55,11 +69,19 @@ internal class ServiceEntryRepositoryImpl(
         val photos = database.serviceEntryQueries.selectPhotos(id)
             .asFlow()
             .mapToList(ioDispatcher)
-        return combine(entry, parts, photos) { row, partRows, photoRows ->
-            row?.toDomain()?.copy(
-                parts = partRows.map { it.toDomain() },
-                photoPaths = photoRows.map { it.toDomain() },
-            )
+        val types = database.serviceEntryQueries.selectTypes(id)
+            .asFlow()
+            .mapToList(ioDispatcher)
+        return combine(entry, parts, photos, types) { row, partRows, photoRows, typeLabels ->
+            if (row == null) {
+                null
+            } else {
+                row.toDomain().copy(
+                    parts = partRows.map { it.toDomain() },
+                    photoPaths = photoRows.map { it.toDomain() },
+                    serviceTypes = typeLabels.ifEmpty { listOf(row.service_type) },
+                )
+            }
         }
     }
 
@@ -107,7 +129,7 @@ internal class ServiceEntryRepositoryImpl(
                     vehicle_id = params.vehicleId,
                     service_date_epoch_ms = params.dateEpochMs,
                     mileage_km = params.mileageKm,
-                    service_type = params.serviceType,
+                    service_type = params.serviceTypeMirror,
                     cost_rupiah = params.costRupiah,
                     notes = params.notes,
                     workshop = params.workshop,
@@ -120,7 +142,7 @@ internal class ServiceEntryRepositoryImpl(
                 database.serviceEntryQueries.updateEntry(
                     service_date_epoch_ms = params.dateEpochMs,
                     mileage_km = params.mileageKm,
-                    service_type = params.serviceType,
+                    service_type = params.serviceTypeMirror,
                     cost_rupiah = params.costRupiah,
                     notes = params.notes,
                     workshop = params.workshop,
@@ -130,7 +152,15 @@ internal class ServiceEntryRepositoryImpl(
                 // Full replace keeps positions simple and leaves no orphan children.
                 database.serviceEntryQueries.deletePartsForEntry(entry.id)
                 database.serviceEntryQueries.deletePhotosForEntry(entry.id)
+                database.serviceEntryQueries.deleteTypesForEntry(entry.id)
                 entry.id
+            }
+            entry.serviceTypes.forEachIndexed { index, label ->
+                database.serviceEntryQueries.insertEntryType(
+                    entry_id = id,
+                    position = index.toLong(),
+                    label = label,
+                )
             }
             entry.parts.forEachIndexed { index, part ->
                 database.serviceEntryQueries.insertPart(
@@ -158,6 +188,7 @@ internal class ServiceEntryRepositoryImpl(
                 .map { it.photo_path }
             database.serviceEntryQueries.deletePartsForEntry(id)
             database.serviceEntryQueries.deletePhotosForEntry(id)
+            database.serviceEntryQueries.deleteTypesForEntry(id)
             database.serviceEntryQueries.deleteEntry(id)
             paths
         }

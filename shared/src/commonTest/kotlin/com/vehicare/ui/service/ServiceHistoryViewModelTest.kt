@@ -116,7 +116,7 @@ class ServiceHistoryViewModelTest {
             vehicleId = 7L,
             dateEpochMs = 1_700_000_000_000L,
             mileageKm = 42_000L,
-            serviceType = "Oil change",
+            serviceTypes = listOf("Oil change"),
         )
     }
 }

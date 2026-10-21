@@ -409,7 +409,7 @@ class ServiceEntryEditViewModel(
 private fun ServiceEntry.toFormValues(): ServiceEntryFormValues = ServiceEntryFormValues(
     dateEpochMs = dateEpochMs,
     mileage = mileageKm.toString(),
-    serviceType = serviceType,
+    serviceType = serviceTypes.firstOrNull(),
     cost = costRupiah?.toString() ?: "",
     notes = notes.orEmpty(),
     workshop = workshop.orEmpty(),

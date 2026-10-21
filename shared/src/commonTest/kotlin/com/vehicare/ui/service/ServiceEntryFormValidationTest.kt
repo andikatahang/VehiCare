@@ -102,7 +102,7 @@ class ServiceEntryFormValidationTest {
         assertEquals(100L, entry.vehicleId)
         assertEquals(1_000_000_000_000L, entry.dateEpochMs)
         assertEquals(12345L, entry.mileageKm)
-        assertEquals("Oil change", entry.serviceType)
+        assertEquals(listOf("Oil change"), entry.serviceTypes)
         assertEquals(500000L, entry.costRupiah)
         assertNull(entry.notes) // blank → null
         assertEquals("Main Shop", entry.workshop)

@@ -51,8 +51,9 @@ fun ServiceHistoryRow(
                 modifier = Modifier.weight(1f),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
+                // temporary compile bridge — 02-08 replaces this with serviceTypeLine(...)
                 Text(
-                    text = entry.serviceType,
+                    text = entry.serviceTypes.firstOrNull().orEmpty(),
                     style = MaterialTheme.typography.titleMedium,
                     color = Ink,
                     maxLines = 1,

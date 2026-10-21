@@ -81,6 +81,7 @@ internal class VehicleRepositoryImpl(
                 .executeAsList()
             database.serviceEntryQueries.deletePhotosForVehicle(id)   // children first
             database.serviceEntryQueries.deletePartsForVehicle(id)
+            database.serviceEntryQueries.deleteTypesForVehicle(id)
             database.serviceEntryQueries.deleteEntriesForVehicle(id)
             database.vehicleQueries.delete(id)
             listOfNotNull(vehiclePhoto) + servicePhotos
