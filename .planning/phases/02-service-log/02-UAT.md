@@ -1,29 +1,21 @@
 ---
-status: testing
+status: complete
 phase: 02-service-log
 source: [02-VERIFICATION.md]
 started: 2026-10-20T07:05:00Z
-updated: 2026-10-21T10:58:00Z
+updated: 2026-10-21T14:16:46Z
 ---
 
 ## Current Test
 
-number: 1
-name: 30-second create path — gap re-test (custom chip + multi-select)
-expected: |
-  Open a vehicle's history → Add service → "Add custom…", type a label, confirm: the label appears
-  immediately as a selected chip carrying the Check glyph, and can be deselected and re-selected
-  without disappearing. Tap several preset chips in a chosen order, deselect the middle one,
-  re-select it, save. The saved entry's detail shows the labels joined by " · " in tap order on at
-  most two lines; the history row shows the same line on one line with ellipsis.
-awaiting: user response
+[testing complete]
 
 ## Tests
 
 ### 1. 30-second create path
 expected: Open a vehicle's history, tap Add service, accept today's date, type a mileage, tap a preset type chip, optionally add cost/notes, tap Save. Repeat once using "Add custom…" for the type. The entry is saved and the history shows it immediately; the whole interaction stays under 30 seconds on a normal device; a custom type is stored verbatim and appears as a learned chip on the next add.
-result: pending
-retest: true
+result: pass
+retest: pass
 fixed_by: [02-07-PLAN.md, 02-08-PLAN.md]
 previous_result: issue
 previous_reported: "+ Add Type" tidak berfungsi semestinya, saya menambahkan tapi tidak tertampil. Saya juga mau input type bisa dipilih beberapa
@@ -61,18 +53,18 @@ result: pass
 ## Summary
 
 total: 8
-passed: 7
+passed: 8
 issues: 0
-pending: 1
+pending: 0
 skipped: 0
 blocked: 0
 
 ## Gaps
 
 - truth: "A custom service type confirmed in the Add custom… dialog appears as the selected chip immediately"
-  status: resolved
+  status: verified
   resolved_by: 02-08-PLAN.md
-  retest: pending
+  retest: pass
   reason: "User reported: '+ Add Type' tidak berfungsi semestinya, saya menambahkan tapi tidak tertampil."
   severity: major
   test: 1
@@ -92,9 +84,9 @@ blocked: 0
   root_cause: "The new custom label is stored only in values.serviceType; the picker renders presets + learnedTypes, so the selection has no chip and is invisible. Confirmed by code trace at HEAD a16c46c."
 
 - truth: "A service entry can carry more than one service type, and the form lets the user toggle several presets/custom types"
-  status: resolved
+  status: verified
   resolved_by: [02-07-PLAN.md, 02-08-PLAN.md]
-  retest: pending
+  retest: pass
   reason: "User requested: 'Saya juga mau input type bisa dipilih beberapa.'"
   severity: major
   test: 1
