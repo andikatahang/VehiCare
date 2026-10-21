@@ -204,3 +204,11 @@ None — no external service configuration, no new dependency, no permission cha
 ---
 *Phase: 02-service-log*
 *Completed: 2026-10-21*
+
+## Self-Check: PASSED
+
+- Files: all 5 source/test files created by this plan exist (`FOUND` for each).
+- Commits: `df5b28d`, `5220019` and `eeb226f` are all present in `git log --oneline --all`.
+- Gates: the seven Gradle gates and every grep gate in both tasks exited 0; the JUnit XML reports 131 iOS-simulator and 80 Android-host tests with 0 failures.
+- Not verified by execution: that the new iosTest fails against the pre-02-08 three-branch `onCustomTypeConfirmed`. It asserts `learnedTypes` contains the confirmed label, which the old implementation never wrote, so the failure is structural rather than observed in this run.
+- Working tree: only the unrelated `App.kt` comment change remains (not authored here, not committed — see `deferred-items.md`).
