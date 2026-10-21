@@ -10,7 +10,7 @@
 ## Phases
 
 - [x] **Phase 1: Foundation & Vehicle Management** — KMP project scaffold, SQLDelight schema with WAL + migration CI, full vehicle CRUD (completed 2026-10-19)
-- [ ] **Phase 2: Service Log** — Complete service entry logging, history view, parts, photos, edit/delete — all 8 plans complete (2026-10-21); **UAT test 1 re-run for the custom chip + multi-select is still owed before this phase can be marked complete**
+- [x] **Phase 2: Service Log** — Complete service entry logging, history view, parts, photos, edit/delete — all 8 plans complete; UAT 8/8 passed; threat-secure 50/50 (completed 2026-10-21)
 - [ ] **Phase 3: Reminders & Dashboard** — Mileage and time-based reminders, push notifications, iOS foreground-check pattern, home dashboard
 
 ---
@@ -132,7 +132,7 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation & Vehicle Management | 10/10 | Complete    | 2026-10-19 |
-| 2. Service Log | 8/8 | Complete   | 2026-10-21 |
+| 2. Service Log | 8/8 | Complete    | 2026-10-21 |
 | 3. Reminders & Dashboard | 0/? | Not started | — |
 
 ---

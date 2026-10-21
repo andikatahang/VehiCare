@@ -1,7 +1,7 @@
 ---
 phase: 02-service-log
 verified: 2026-10-21T10:57:46Z
-status: human_needed
+status: passed
 score: 52/52 must-haves verified
 overrides_applied: 0
 requirements_verified: 7/7
@@ -25,6 +25,9 @@ human_verification:
   - test: "On a device/simulator, re-run UAT test 1's two paths: (a) open a vehicle's history → Add service → tap Add custom…, type e.g. Battery replacement, confirm; (b) tap three preset chips in a chosen order, deselect the middle one, re-select it, save, then open the entry's detail and the history row."
     expected: "The custom label appears immediately as a selected chip carrying the Check glyph and can be deselected/re-selected without disappearing; the selection permits several types; the saved entry's detail shows the labels joined by ' · ' in tap order on at most two lines and the history row shows the same line on one line with ellipsis."
     why_human: "The ViewModel → state transition for both gaps is proven by executable tests, but the final Compose recomposition → rendered pixel (chip visible, selected styling, joined title/ellipsis) is inspection-only. UAT test 1 was answered before plans 02-07/02-08 existed, so its pass/fail record does not cover the fixes."
+    result: pass
+    verified_at: "2026-10-21T14:16:46Z"
+    evidence: "UAT test 1 re-run via /gsd-verify-work 2 passed (02-UAT.md — result: pass, retest: pass; gaps 1 and 2 status: verified)."
 ---
 
 # Phase 2: Service Log Verification Report
@@ -32,7 +35,7 @@ human_verification:
 **Phase Goal:** Users can log, view, and manage the complete history of service events for any vehicle.
 **Mode:** mvp (ROADMAP) — the user story used below is the one carried verbatim in the 02-02 and 02-06 plans: *"As a vehicle owner, I want to log every service event — date, mileage, type, cost, notes, parts, workshop, and photos — and browse, edit, or delete any vehicle's full history, so that I have a trustworthy record of all maintenance performed."*
 **Verified:** 2026-10-21T10:57:46Z — **re-verification** after the gap-closure cycle (plans 02-07 + 02-08)
-**Status:** human_needed
+**Status:** passed — the sole human item (UAT test 1 re-test) passed on 2026-10-21
 **Score:** 52/52 must-haves verified
 
 > **Method note (re-verification).** The previous report (39 truths: 5 ROADMAP SCs + plans 02-01…02-06) is superseded. This report re-checks the 39 previously verified truths against HEAD `97f4fab` and adds the 13 truths from plans 02-07 (7) and 02-08 (6) — 52 total. SUMMARY claims were not used as evidence: every row cites the file and symbol checked in the working tree. The claim-bearing test results were regenerated in this session with `--rerun` (both targets were UP-TO-DATE first): iOS **131 tests / 0 failures / 0 errors**, Android host **80 / 0 / 0**, migration guard **BUILD SUCCESSFUL exit 0**. The working tree contains exactly one uncommitted change, the comment-only `App.kt` typo logged in `deferred-items.md`; no Phase 2 source file was modified by this verification.
@@ -44,7 +47,7 @@ human_verification:
 | # | User-story step | Expected | Evidence in codebase | Status |
 |---|-----------------|----------|----------------------|--------|
 | 1 | Open a vehicle and reach its service history | Summary row opens the history; empty state at zero entries, otherwise newest-date-first list | `VehicleDetailScreen.kt:321-323` (`ServiceSummaryRow` → `onOpenServiceHistory`); `App.kt:130` → `ServiceHistoryRoute`; four-state `when` in `ServiceHistoryScreen.kt`; shared `EmptyState` | Code-complete — previously UAT-confirmed (test 5) |
-| 2 | Log a service event in the 30-second path | Today pre-set, mileage pre-filled, one-tap type chips (multi-select), cost/notes optional, Save last | `ServiceEntryEditViewModel.kt:134-158`; `ServiceEntryEditScreen.kt:263-470`; `ServiceEntryFormValidation.kt:67-68` | Code-complete — **re-check owed (human item)**; UAT test 1 predates the fixes |
+| 2 | Log a service event in the 30-second path | Today pre-set, mileage pre-filled, one-tap type chips (multi-select), cost/notes optional, Save last | `ServiceEntryEditViewModel.kt:134-158`; `ServiceEntryEditScreen.kt:263-470`; `ServiceEntryFormValidation.kt:67-68` | Code-complete — UAT test 1 re-run passed 2026-10-21 (custom chip + multi-select) |
 | 3 | Add parts and workshop/mechanic | Inline parts rows (name + quantity, default 1); workshop/mechanic fields; detail renders the locked order | `PartsEditor.kt`; `ServiceEntryEditScreen.kt` workshop/mechanic fields; `ServiceEntryRepositoryImpl.kt:165-179`; `ServiceEntryDetailScreen.kt:253-300` | Code-complete — UAT test 2 passed |
 | 4 | Attach one or more receipt photos | Additive gallery picks up to 5; previews; app-owned copies; two-set file rule | `ServicePhotoStrip.kt:110-190`; `ServiceEntryEditViewModel.kt:283-332,379,396`; `PhotoStorage.kt:33,60`; `ServiceEntryDeletionTest` 8/8 | Code-complete — UAT test 3 passed |
 | 5 | Edit any existing entry | Same form prefilled once; save updates the row and fully replaces children (parts, photos, types) | `ServiceEntryEditViewModel.kt:159-195,241-275`; `ServiceEntryRepositoryImpl.kt:142-181`; `App.kt:143-151` | Code-complete — UAT test 4 passed |
@@ -119,10 +122,10 @@ human_verification:
 | GAP 1 — AssistChip tap → `onAddCustom` → dialog shown | `ServiceTypePicker.kt:109-110`; `ServiceEntryEditScreen.kt:205,213` — inspection | Code path present, not executable-tested |
 | GAP 1 — dialog confirm → `viewModel.onCustomTypeConfirmed` | `ServiceEntryEditScreen.kt:216` — inspection | Code path present |
 | GAP 1 — ViewModel → selection **and** learned chip list in one `copy` | **Executable**: `ServiceEntryEditViewModelCustomTypeTest.customTypeConfirmationSelectsItAndMakesItARenderableChip` (iosTest, 5/5), `ServiceEntryEditViewModelStateTest.confirmedCustomLabelEntersBothTheSelectionAndTheRenderedChipList` (iosTest + androidHost, 5/5 each), `ServiceTypeSelectionTest` (10/10 both targets) | ✓ PROVEN |
-| GAP 1 — state → picker options → selected `FilterChip` → visible `Check` glyph | `ServiceTypePicker.kt:74-81,94,141-166` — inspection only (screen-level Compose test does not exist) | ⚠️ inspection — **human item** |
+| GAP 1 — state → picker options → selected `FilterChip` → visible `Check` glyph | `ServiceTypePicker.kt:74-81,94,141-166` — inspection only (screen-level Compose test does not exist) | ✅ UAT test 1 re-run passed 2026-10-21 |
 | GAP 2 — chip toggles multiple values | **Executable**: `toggleServiceType` tests (`ServiceTypeSelectionTest` 10/10; `ServiceEntryEditViewModelCustomTypeTest` 5/5) | ✓ PROVEN |
 | GAP 2 — multi-type write/read/replace/delete/cascade | **Executable**: `ServiceEntryRepositoryTest` 13/13 (incl. `saveWritesOneOrderedTypeRowPerLabelAndMirrorsPositionZero`), `ServiceEntryDeletionTest` 8/8, `ServiceEntryMigrationTest` 2/2 | ✓ PROVEN |
-| GAP 2 — joined title → detail 2 lines / history 1 line + ellipsis | **Executable**: `ServiceTypeLineTest` 6/6 for the string; `maxLines`/`TextOverflow` rendering is inspection (`ServiceEntryDetailScreen.kt:241-246`, `ServiceHistoryRow.kt:56-61`) | ⚠️ string proven, pixels human |
+| GAP 2 — joined title → detail 2 lines / history 1 line + ellipsis | **Executable**: `ServiceTypeLineTest` 6/6 for the string; `maxLines`/`TextOverflow` rendering is inspection (`ServiceEntryDetailScreen.kt:241-246`, `ServiceHistoryRow.kt:56-61`) | ✅ string proven; pixels confirmed by UAT test 1 re-run 2026-10-21 |
 | GAP 2 — v2 database upgrade keeps every type | **Executable**: `ServiceEntryMigrationTest.migratingFromTwoBackfillsTheMirrorLabelAtPositionZero` (real driver, `Schema.migrate(driver, 2, 3)`) | ✓ PROVEN |
 
 ### Required Artifacts
@@ -270,6 +273,8 @@ No `TBD`/`FIXME`/`XXX`/`TODO`/`HACK` markers exist in any Phase 2 source file. N
 
 ### Human Verification Required
 
+**Result: PASS** — re-run on 2026-10-21 via `/gsd-verify-work 2` (02-UAT.md test 1: `result: pass`, `retest: pass`).
+
 #### 1. Re-run UAT test 1 against the gap-closure build (GAP 1 + GAP 2)
 
 **Test:** On a device/simulator, open a vehicle's history → **Add service**. Tap **Add custom…**, enter `Battery replacement`, confirm. Then tap three preset chips in a chosen order, deselect the middle one, and re-select it. Save. Open the entry's detail, go back to the history, and re-open the add form once to observe the learned chip.
@@ -280,7 +285,7 @@ No `TBD`/`FIXME`/`XXX`/`TODO`/`HACK` markers exist in any Phase 2 source file. N
 
 ### Gaps Summary
 
-No must-have is missing, stubbed, or unwired. Both UAT gaps now have code fixes with executable proofs up to the ViewModel/state and data layers, plus a migration proof for the schema change. The 39 truths verified in the previous report remain green against HEAD `97f4fab` — no regressions. Four warning-level review findings (WR-01…WR-04) are recorded above; none falsifies a must-have, and all are narrow edge cases outside the ROADMAP contract. The only outstanding item is the runtime re-confirmation of the two fixes on a device, which is inherently human: **status `human_needed`, score 52/52**.
+No must-have is missing, stubbed, or unwired. Both UAT gaps now have code fixes with executable proofs up to the ViewModel/state and data layers, plus a migration proof for the schema change. The 39 truths verified in the previous report remain green against HEAD `97f4fab` — no regressions. Four warning-level review findings (WR-01…WR-04) are recorded above; none falsifies a must-have, and all are narrow edge cases outside the ROADMAP contract. The runtime re-confirmation of the two fixes on a device was re-run on 2026-10-21 and passed: **status `passed`, score 52/52**.
 
 ---
 
