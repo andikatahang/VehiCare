@@ -2,14 +2,14 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: Executing Phase 02
-stopped_at: Completed 02-07 (schema v3 service_entry_type + backfill + ordered serviceTypes); 02-08 wave 2 next
-last_updated: "2026-10-21T09:46:32.507Z"
+status: Gap closure complete — UAT test 1 re-run owed
+stopped_at: Completed 02-08 (multi-select chips, pure confirm transition closing GAP 1, joined serviceTypeLine); both gap plans done, UAT re-test next
+last_updated: "2026-10-21T10:19:01.173Z"
 progress:
   total_phases: 3
   completed_phases: 1
   total_plans: 18
-  completed_plans: 17
+  completed_plans: 18
   percent: 33
 ---
 
@@ -22,18 +22,18 @@ progress:
 
 ## Current Position
 
-Phase: 02 (service-log) — EXECUTING
+Phase: 02 (service-log) — EXECUTING (gap closure: both plans done, UAT re-test owed)
 Plan: 8 of 8
 
 | Field | Value |
 |-------|-------|
-| **Active Phase** | Phase 2: Service Log (gap closure — wave 1 done) |
-| **Active Plan** | 02-07 complete — 02-08 (multi-select UI) next |
-| **Status** | Schema v3 shipped: `service_entry_type` child table + `2.sqm` backfill + regenerated `3.db`; `ServiceEntry.serviceTypes` is ordered and hydrated in batches, writes replace type rows transactionally, both delete paths cascade. Form/picker stay single-select until 02-08, which also replaces the two documented `firstOrNull()` display bridges. UAT test 1 re-run still owed after 02-08. |
-| **Progress** | `[█████████░] 17/18 plans (94%)` |
+| **Active Phase** | Phase 2: Service Log (gap closure — waves 1 and 2 done) |
+| **Active Plan** | 02-08 complete — phase awaits the UAT test 1 re-run |
+| **Status** | Both UAT gaps are implemented and proven: the chip group is multi-select (tap toggles, any number, no preselection, at-least-one gate) and a confirmed custom label now lands in both `values.serviceTypes` and `learnedTypes` through one pure transition, so its chip renders immediately. `serviceTypeLine` is the single type-line helper on detail and history. The UI-SPEC and D-26 record describe the approved multi-select override. **Phase 2 is not closed**: UAT test 1 must be re-run for the custom chip and multi-select before it is marked complete. |
+| **Progress** | `[██████████] 18/18 plans (100%)` |
 
 ```
-Phase 1 [Complete] → Phase 2 [Executing — 7/8 plans] → Phase 3 [Not Started]
+Phase 1 [Complete] → Phase 2 [Executing — 8/8 plans, UAT re-test owed] → Phase 3 [Not Started]
                        ↑
                        Current
 ```
@@ -45,7 +45,7 @@ Phase 1 [Complete] → Phase 2 [Executing — 7/8 plans] → Phase 3 [Not Starte
 | Phase | Name | Status |
 |-------|------|--------|
 | 1 | Foundation & Vehicle Management | Complete (2026-10-19) |
-| 2 | Service Log | Executing — 7/8 plans (02-08 next) |
+| 2 | Service Log | Executing — 8/8 plans, UAT test 1 re-run owed |
 | 3 | Reminders & Dashboard | Not started |
 
 ---
@@ -55,9 +55,9 @@ Phase 1 [Complete] → Phase 2 [Executing — 7/8 plans] → Phase 3 [Not Starte
 | Metric | Value |
 |--------|-------|
 | Phases completed | 1 / 3 |
-| Plans completed | 17 / 18 |
+| Plans completed | 18 / 18 |
 | Requirements covered | 17 / 21 |
-| Sessions | 13 |
+| Sessions | 14 |
 
 Per-plan: `Phase 1 / 01` — ~28min, 3 tasks, 63 files · `Phase 1 / 02` — 17min, 3 tasks, 15 files · `Phase 1 / 03` — 20min, 3 tasks, 17 files · `Phase 1 / 04` — 24min, 3 tasks, 17 files · `Phase 1 / 05` — 11min, 3 tasks, 3 files · `Phase 1 / 06` — 10min, 3 tasks, 8 files · `Phase 1 / 07` — 21min, 3 tasks, 6 files · `Phase 1 / 08` — 21min, 3 tasks, 6 files · `Phase 1 / 09` — 4min, 3 tasks, 6 files · `Phase 1 / 10` — 12min, 3 tasks, 5 files · `Phase 2 / 01` — 11min, 3 tasks, 14 files · `Phase 2 / 02` — 15min, 2 tasks, 7 files · `Phase 2 / 03` — 45min, 3 tasks, 16 files.
 
@@ -66,6 +66,7 @@ Per-plan: `Phase 1 / 01` — ~28min, 3 tasks, 63 files · `Phase 1 / 02` — 17m
 | Phase 2 P5 | 32min | 3 tasks | 10 files |
 | Phase 2 P6 | 15min | 2 tasks | 7 files |
 | Phase 2 P7 | 10min | 3 tasks | 18 files |
+| Phase 02 P08 | 30min | 2 tasks | 13 files |
 
 ## Accumulated Context
 
@@ -166,10 +167,10 @@ No blockers. **Phase 1 closed 2026-10-19** — UAT 6/6 passed (`01-UAT.md`), sec
 
 ## Session Continuity
 
-**Last session:** 2026-10-21T09:46:32.502Z
-**Stopped at:** Completed 02-07 (schema v3 service_entry_type + backfill + ordered serviceTypes); 02-08 wave 2 next
+**Last session:** 2026-10-21T10:19:01.169Z
+**Stopped at:** Completed 02-08 (multi-select chips, pure confirm transition closing GAP 1, joined `serviceTypeLine`, UI-SPEC/D-26 corrections); both gap plans done
 **Resume file:** `.planning/phases/02-service-log/.continue-here.md`
-**Next action:** Execute 02-08 (wave 2): multi-select chip group, GAP 1 custom-type selection fix, `serviceTypeLine` on detail/history, UI-SPEC multi-select corrections. Then re-run UAT test 1 and the five Gradle gates before completing Phase 2. Debt: `01-VERIFICATION.md` `human_needed` acknowledged (see Blockers).
+**Next action:** Re-run UAT test 1 on a device — three preset chips stay checked, a custom type appears selected immediately, deselect-all leaves Save disabled, and the detail title / history row show the joined line at 2 and 1 lines. Update `02-UAT.md` only after that run, then complete the Phase 2 transition (STATE/ROADMAP/verification status). Debt: `01-VERIFICATION.md` `human_needed` acknowledged (see Blockers); no `02-SECURITY.md` yet (`/gsd-secure-phase 2` optional).
 
 ## Decisions
 
@@ -236,3 +237,5 @@ No blockers. **Phase 1 closed 2026-10-19** — UAT 6/6 passed (`01-UAT.md`), sec
 - [Phase 02]: observeHistory hydrates service types with one vehicle-scoped selectTypesForVehicle query — A history page must cost a constant number of queries, not one per entry (T-02-07-07); entry rows and type rows are combined and grouped by entry_id, which preserves the query's (entry_id, position) order
 - [Phase 02]: selectLearnedTypes reads the child table with GROUP BY lower(label) and a single MAX(entry_id) aggregate — One row per case-insensitive label with bare-column semantics well defined and no window functions; the old WHERE id IN (SELECT MAX(id)) shape would emit a label twice once one entry carries several
 - [Phase 02]: 02-07 keeps the form and both display surfaces single-select; 02-08 owns the multi-select UI and serviceTypeLine — The plan ships the storage/repository half only, with two documented firstOrNull() compile bridges in detail and history, so no second display rule exists to delete later
+- [Phase 02]: GAP 1 is fixed by one pure transition, not a call-site patch: confirmCustomServiceType returns both the next selection and the next learned chip list, and withConfirmedCustomType writes both in one copy — the picker's selected-label union is defensive only — The UAT bug survived 39/39 static must-haves because a selection outside presets+learned had no chip to render; one transition makes the two lists unable to drift, and the iosTest asserts both
+- [Phase 02]: The form and both display surfaces are multi-select with serviceTypeLine as the single join: one type renders verbatim, several join with the locked middle dot, detail caps at 2 lines and the history row at 1 — D-26's one-of rule was superseded by the user's 2026-10-21 decision; keeping one helper and one separator literal prevents two display rules from diverging as more surfaces list types

@@ -10,7 +10,7 @@
 ## Phases
 
 - [x] **Phase 1: Foundation & Vehicle Management** — KMP project scaffold, SQLDelight schema with WAL + migration CI, full vehicle CRUD (completed 2026-10-19)
-- [ ] **Phase 2: Service Log** — Complete service entry logging, history view, parts, photos, edit/delete
+- [ ] **Phase 2: Service Log** — Complete service entry logging, history view, parts, photos, edit/delete — all 8 plans complete (2026-10-21); **UAT test 1 re-run for the custom chip + multi-select is still owed before this phase can be marked complete**
 - [ ] **Phase 3: Reminders & Dashboard** — Mileage and time-based reminders, push notifications, iOS foreground-check pattern, home dashboard
 
 ---
@@ -81,7 +81,7 @@ Plans:
 4. User can view the full service history for a vehicle sorted by date or mileage
 5. User can edit or delete any existing service entry
 
-**Plans:** 7/8 plans executed
+**Plans:** 8/8 plans complete
 Plans:
 **Wave 1**
 
@@ -107,7 +107,7 @@ Plans:
 **Wave 6** *(gap closure from 02-UAT.md)*
 
 - [x] 02-07-PLAN.md — schema v3: `service_entry_type` child table + `2.sqm` backfill + `3.db`, ordered `serviceTypes` through domain/mapper/repository/cascade, migration and multi-type tests
-- [ ] 02-08-PLAN.md — multi-select chip group, the GAP 1 custom-type selection fix, the joined type line on detail/history, and the UI-SPEC multi-select corrections
+- [x] 02-08-PLAN.md — multi-select chip group, the GAP 1 custom-type selection fix, the joined type line on detail/history, and the UI-SPEC multi-select corrections
 
 ### Phase 3: Reminders & Dashboard
 
@@ -132,7 +132,7 @@ Plans:
 | Phase | Plans Complete | Status | Completed |
 |-------|----------------|--------|-----------|
 | 1. Foundation & Vehicle Management | 10/10 | Complete    | 2026-10-19 |
-| 2. Service Log | 7/8 | In Progress|  |
+| 2. Service Log | 8/8 | Complete   | 2026-10-21 |
 | 3. Reminders & Dashboard | 0/? | Not started | — |
 
 ---
