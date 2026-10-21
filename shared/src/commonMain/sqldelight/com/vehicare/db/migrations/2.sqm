@@ -1,0 +1,18 @@
+-- Migrates v2 (single service_type column) → v3 (normalized service types). File name = the
+-- version being upgraded FROM.
+-- The DDL below must stay structurally identical to the CREATE TABLE statement for
+-- service_entry_type in ServiceEntry.sq — verifyCommonMainVehiCareDatabaseMigration compares
+-- the two, and a drifted column order or constraint fails the build.
+-- The backfill gives every pre-v3 entry exactly one type at position 0: its stored service_type
+-- verbatim, never normalized and never rewritten (D-40). From v3 on, service_entry.service_type
+-- is only a mirror of position 0.
+
+CREATE TABLE service_entry_type (
+    entry_id INTEGER NOT NULL REFERENCES service_entry(id) ON DELETE CASCADE,
+    position INTEGER NOT NULL,
+    label    TEXT    NOT NULL,
+    PRIMARY KEY (entry_id, position)
+);
+
+INSERT INTO service_entry_type(entry_id, position, label)
+SELECT id, 0, service_type FROM service_entry;

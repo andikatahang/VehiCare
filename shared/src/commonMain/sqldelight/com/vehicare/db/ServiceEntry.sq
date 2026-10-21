@@ -8,7 +8,7 @@ CREATE TABLE service_entry (
     vehicle_id            INTEGER NOT NULL REFERENCES vehicle(id),
     service_date_epoch_ms INTEGER NOT NULL,   -- UTC start-of-day millis of the civil date
     mileage_km            INTEGER NOT NULL,   -- unit in the name (PITFALLS SQL 2)
-    service_type          TEXT    NOT NULL,   -- stable plain string (D-10/D-40)
+    service_type          TEXT    NOT NULL,   -- stable plain string (D-10/D-40); position-0 mirror of service_entry_type.label
     cost_rupiah           INTEGER,            -- whole rupiah, never floating point (D-29)
     notes                 TEXT,
     workshop              TEXT,
@@ -28,6 +28,22 @@ CREATE TABLE service_photo (
     entry_id   INTEGER NOT NULL REFERENCES service_entry(id),
     photo_path TEXT    NOT NULL,   -- relative path only (D-05/D-37)
     position   INTEGER NOT NULL
+);
+
+-- The child table is the source of truth for an entry's service types, ordered by `position`.
+-- `service_entry.service_type` stays as a NOT NULL mirror of position 0: Android API 26 ships
+-- SQLite 3.18, where `ALTER TABLE … DROP COLUMN` (3.35+) does not exist, and rebuilding the table
+-- through `ALTER TABLE … RENAME` rewrites its `sqlite_master` SQL (the name gets quoted) and fails
+-- the byte-identical migration verify — so writers keep the mirror in sync instead of dropping it.
+-- `ON DELETE CASCADE` documents intent only: foreign keys are never enabled (no
+-- `PRAGMA foreign_keys=ON` anywhere), so the explicit delete queries below are what remove rows.
+-- The composite primary key is the only index this table needs — `WHERE entry_id = ?` is a prefix
+-- lookup and the autoindex orders `(entry_id, position)`, so no extra CREATE INDEX is added.
+CREATE TABLE service_entry_type (
+    entry_id INTEGER NOT NULL REFERENCES service_entry(id) ON DELETE CASCADE,
+    position INTEGER NOT NULL,
+    label    TEXT    NOT NULL,
+    PRIMARY KEY (entry_id, position)
 );
 
 CREATE INDEX service_entry_vehicle_date    ON service_entry(vehicle_id, service_date_epoch_ms DESC, id DESC);
@@ -51,6 +67,14 @@ SELECT * FROM service_part WHERE entry_id = ? ORDER BY position;
 
 selectPhotos:
 SELECT * FROM service_photo WHERE entry_id = ? ORDER BY position;
+
+selectTypes:
+SELECT label FROM service_entry_type WHERE entry_id = ? ORDER BY position;
+
+selectTypesForVehicle:
+SELECT entry_id, label FROM service_entry_type
+WHERE entry_id IN (SELECT id FROM service_entry WHERE vehicle_id = ?)
+ORDER BY entry_id, position;
 
 selectLatestMileage:
 SELECT mileage_km FROM service_entry WHERE vehicle_id = ?
@@ -85,11 +109,17 @@ INSERT INTO service_part(entry_id, name, quantity, position) VALUES (?, ?, ?, ?)
 insertPhoto:
 INSERT INTO service_photo(entry_id, photo_path, position) VALUES (?, ?, ?);
 
+insertEntryType:
+INSERT INTO service_entry_type(entry_id, position, label) VALUES (?, ?, ?);
+
 deletePartsForEntry:
 DELETE FROM service_part WHERE entry_id = ?;
 
 deletePhotosForEntry:
 DELETE FROM service_photo WHERE entry_id = ?;
+
+deleteTypesForEntry:
+DELETE FROM service_entry_type WHERE entry_id = ?;
 
 deleteEntry:
 DELETE FROM service_entry WHERE id = ?;
@@ -104,6 +134,9 @@ DELETE FROM service_photo WHERE entry_id IN (SELECT id FROM service_entry WHERE 
 
 deletePartsForVehicle:
 DELETE FROM service_part WHERE entry_id IN (SELECT id FROM service_entry WHERE vehicle_id = ?);
+
+deleteTypesForVehicle:
+DELETE FROM service_entry_type WHERE entry_id IN (SELECT id FROM service_entry WHERE vehicle_id = ?);
 
 deleteEntriesForVehicle:
 DELETE FROM service_entry WHERE vehicle_id = ?;
