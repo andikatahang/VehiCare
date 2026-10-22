@@ -1,0 +1,132 @@
+{
+  "version": "1.0",
+  "timestamp": "2026-10-22T04:58:35.250Z",
+  "phase": "03",
+  "phase_name": "Reminders & Dashboard",
+  "phase_dir": ".planning/phases/03-reminders-dashboard",
+  "stage": "planning",
+  "plan": 0,
+  "task": 0,
+  "total_tasks": 0,
+  "plans_written": 3,
+  "plans_total_known": false,
+  "status": "paused",
+  "completed_tasks": [
+    {
+      "id": 1,
+      "name": "Validate Phase 3 and load 03-CONTEXT.md + 03-UI-SPEC.md",
+      "status": "done",
+      "commit": "1a08561"
+    },
+    {
+      "id": 2,
+      "name": "Research: 03-RESEARCH.md (1,113 lines, all nine open questions answered)",
+      "status": "done",
+      "commit": "3b5049b"
+    },
+    {
+      "id": 3,
+      "name": "Pattern map: 03-PATTERNS.md (56 files, 52 analogs)",
+      "status": "done",
+      "commit": "WIP"
+    },
+    {
+      "id": 4,
+      "name": "Plan 03-01: schema v4 + one-database-per-process holder (wave 1)",
+      "status": "done",
+      "commit": "WIP"
+    },
+    {
+      "id": 5,
+      "name": "Plan 03-02: pure due-state + ordering engine (wave 2)",
+      "status": "done",
+      "commit": "WIP"
+    },
+    {
+      "id": 6,
+      "name": "Plan 03-03: reminder repository + copy resolver + notification identity (wave 2)",
+      "status": "done",
+      "commit": "WIP"
+    }
+  ],
+  "remaining_tasks": [
+    {
+      "id": 7,
+      "name": "Finish planner run — the UI slices (Reminders list, reminder editor, Detail summary row, dashboard status line, permission banner) and the platform-delivery slice (Android WorkManager + channel + POST_NOTIFICATIONS, iOS UNUserNotificationCenter + delegate + foreground check) have no PLAN.md yet as of this handoff",
+      "status": "not_started"
+    },
+    {
+      "id": 8,
+      "name": "Spawn gsd-plan-checker and run the revision loop (max 3) — NOT YET RUN",
+      "status": "not_started"
+    },
+    {
+      "id": 9,
+      "name": "Requirements coverage gate (§13) + decision coverage gate (§13a) for REM-01..04 / DSH-01 and D-41..D-65",
+      "status": "not_started"
+    },
+    {
+      "id": 10,
+      "name": "Record planning completion: state.planned-phase, roadmap.annotate-dependencies, commit plans + STATE.md + ROADMAP.md (§13b/13c/13d)",
+      "status": "not_started"
+    },
+    {
+      "id": 11,
+      "name": "Post-planning gap analysis (§13e) and Present Final Status / Next Up routing (§14)",
+      "status": "not_started"
+    }
+  ],
+  "blockers": [
+    {
+      "description": "The gsd-planner background run was paused before returning a completion marker. Plans 03-01, 03-02 and 03-03 exist on disk (written 2026-10-22 11:56-11:57 local) but the total plan count is unknown and no PLANNING COMPLETE marker was received.",
+      "type": "technical",
+      "workaround": "Re-run /gsd-plan-phase 3. Step 6 detects the three existing plans and offers Add more plans / View existing / Replan from scratch — choose Add more plans so the UI and platform-delivery slices are appended without rewriting wave 1-2."
+    },
+    {
+      "description": "Plan verification never ran. No 03-*-PLAN.md has been reviewed by gsd-plan-checker, and ROADMAP.md still reads 'Plans: TBD' while STATE.md still reads 'Ready to plan'.",
+      "type": "technical",
+      "workaround": "Do not execute any plan until the checker passes. Resume with /gsd-plan-phase 3, let the checker run, then /gsd-execute-phase 3."
+    }
+  ],
+  "human_actions_pending": [],
+  "decisions": [
+    {
+      "decision": "Research before planning Phase 3 (user chose 'Research first' at the research gate)",
+      "rationale": "The phase introduces four net-new integration surfaces — Android WorkManager, iOS UNUserNotificationCenter, a fourth expect/actual pair, and schema v4 — where an unverified API assumption would surface only at execution time.",
+      "phase": "03"
+    },
+    {
+      "decision": "One database instance per process via a commonMain DatabaseProvider object, initialised from an Android Application and from MainViewController on iOS",
+      "rationale": "SQLDelight's listener registry lives on the driver instance. A CoroutineWorker that built its own VehiCareDatabase would write successfully but never wake the UI's Flows, which would present as randomly stale reminders. The research also found startKoin is called nowhere, so Koin cannot serve the worker.",
+      "phase": "03"
+    },
+    {
+      "decision": "Delete the getOrNull<DriverFactory>() fallback in di/AppModule.kt as part of plan 03-01",
+      "rationale": "Pattern mapping found that fallback throws on Android today, so it is dead-but-dangerous code once DatabaseProvider exists. Leaving it would offer a second, broken path to a driver.",
+      "phase": "03"
+    },
+    {
+      "decision": "Add exactly one dependency: androidx.work:work-runtime:2.12.0 (never the -ktx artifact)",
+      "rationale": "The -ktx artifact has been empty since 2.9.0 and would add a misleading coordinate. Every other library is already pinned in gradle/libs.versions.toml, which is the authoritative source.",
+      "phase": "03"
+    },
+    {
+      "decision": "03-UI-SPEC.md remains the design source of truth; research reports blockers instead of redesigning",
+      "rationale": "The UI contract is approved (6/6 dimensions, no open findings) and fixes every rendered element, string, spacing value and colour consumer. Research confirmed no contract is blocked, including the palette-locked Switch and the single-select chip semantics limitation.",
+      "phase": "03"
+    },
+    {
+      "decision": "No VALIDATION.md for this phase",
+      "rationale": "workflow.nyquist_validation is false in .planning/config.json, so the Nyquist validation-strategy gate is skipped by the workflow rather than failed.",
+      "phase": "03"
+    }
+  ],
+  "uncommitted_files": [
+    ".planning/phases/03-reminders-dashboard/03-PATTERNS.md",
+    ".planning/phases/03-reminders-dashboard/03-01-PLAN.md",
+    ".planning/phases/03-reminders-dashboard/03-02-PLAN.md",
+    ".planning/phases/03-reminders-dashboard/03-03-PLAN.md"
+  ],
+  "next_action": "Run /gsd-plan-phase 3 and choose 'Add more plans'. The remaining slices are the Reminders screens + dashboard status line + permission banner, and the two-platform notification delivery. Then let gsd-plan-checker verify everything before any execution.",
+  "context_notes": "Planning was paused mid-pipeline. Research (03-RESEARCH.md) and pattern mapping (03-PATTERNS.md) are complete and confident; the planner had produced the first three plans covering the data foundation (03-01, wave 1), the pure calculation core (03-02, wave 2) and the persistence + copy + notification-identity layer (03-03, wave 2) when the session stopped. The three plans are coherent as a set but cover roughly the data and logic half of the phase: REM-01 and REM-02 are claimed, while REM-03, REM-04 and DSH-01 are not yet claimed by any plan. Nothing has been executed, so no code, schema, manifest, or Gradle file has changed — the working tree contains only planning documents. The single biggest execution risk carried forward is the duplicate-database failure mode described in the blockers and in 03-01's objective; the second is that iOS notification work cannot be verified in CI and must be an autonomous:false manual step."
+}
