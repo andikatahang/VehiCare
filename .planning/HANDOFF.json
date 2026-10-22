@@ -8,7 +8,7 @@
   "plan": 0,
   "task": 0,
   "total_tasks": 0,
-  "plans_written": 3,
+  "plans_written": 4,
   "plans_total_known": false,
   "status": "paused",
   "completed_tasks": [
@@ -46,41 +46,47 @@
       "id": 6,
       "name": "Plan 03-03: reminder repository + copy resolver + notification identity (wave 2)",
       "status": "done",
+      "commit": "5ccc129"
+    },
+    {
+      "id": 7,
+      "name": "Plan 03-04: Reminders list screen + single-select chip mode + form validation (wave 3)",
+      "status": "done",
       "commit": "WIP"
     }
   ],
   "remaining_tasks": [
     {
-      "id": 7,
-      "name": "Finish planner run — the UI slices (Reminders list, reminder editor, Detail summary row, dashboard status line, permission banner) and the platform-delivery slice (Android WorkManager + channel + POST_NOTIFICATIONS, iOS UNUserNotificationCenter + delegate + foreground check) have no PLAN.md yet as of this handoff",
-      "status": "not_started"
-    },
-    {
       "id": 8,
-      "name": "Spawn gsd-plan-checker and run the revision loop (max 3) — NOT YET RUN",
+      "name": "Confirm the planner run is finished — it was still emitting plans when the session paused, so plans 03-05+ may exist or may still be needed. As of this handoff no plan covers: the reminder editor, the vehicle-Detail summary row, the dashboard status line + permission banner, or the two-platform notification delivery",
       "status": "not_started"
     },
     {
       "id": 9,
-      "name": "Requirements coverage gate (§13) + decision coverage gate (§13a) for REM-01..04 / DSH-01 and D-41..D-65",
+      "name": "Spawn gsd-plan-checker and run the revision loop (max 3) — NOT YET RUN",
       "status": "not_started"
     },
     {
       "id": 10,
-      "name": "Record planning completion: state.planned-phase, roadmap.annotate-dependencies, commit plans + STATE.md + ROADMAP.md (§13b/13c/13d)",
+      "name": "Requirements coverage gate (§13) + decision coverage gate (§13a) for REM-01..04 / DSH-01 and D-41..D-65 — REM-04 and DSH-01 are currently claimed by no plan",
       "status": "not_started"
     },
     {
       "id": 11,
+      "name": "Record planning completion: state.planned-phase, roadmap.annotate-dependencies, commit plans + STATE.md + ROADMAP.md (§13b/13c/13d)",
+      "status": "not_started"
+    },
+    {
+      "id": 12,
       "name": "Post-planning gap analysis (§13e) and Present Final Status / Next Up routing (§14)",
       "status": "not_started"
     }
   ],
   "blockers": [
     {
-      "description": "The gsd-planner background run was paused before returning a completion marker. Plans 03-01, 03-02 and 03-03 exist on disk (written 2026-10-22 11:56-11:57 local) but the total plan count is unknown and no PLANNING COMPLETE marker was received.",
+      "description": "The gsd-planner background run was paused before returning a completion marker. Plans 03-01 through 03-04 exist on disk (written 2026-10-22 11:56-11:59 local) but the planner was still emitting plans while the handoff was being written, so the total plan count is unknown and no PLANNING COMPLETE marker was received.",
       "type": "technical",
-      "workaround": "Re-run /gsd-plan-phase 3. Step 6 detects the three existing plans and offers Add more plans / View existing / Replan from scratch — choose Add more plans so the UI and platform-delivery slices are appended without rewriting wave 1-2."
+      "workaround": "Re-run /gsd-plan-phase 3. Step 6 detects the existing plans and offers Add more plans / View existing / Replan from scratch — choose Add more plans so the remaining slices are appended without rewriting waves 1-3. Check `ls .planning/phases/03-reminders-dashboard/*-PLAN.md` first, since more plans may have landed after this handoff."
     },
     {
       "description": "Plan verification never ran. No 03-*-PLAN.md has been reviewed by gsd-plan-checker, and ROADMAP.md still reads 'Plans: TBD' while STATE.md still reads 'Ready to plan'.",
@@ -122,11 +128,8 @@
     }
   ],
   "uncommitted_files": [
-    ".planning/phases/03-reminders-dashboard/03-PATTERNS.md",
-    ".planning/phases/03-reminders-dashboard/03-01-PLAN.md",
-    ".planning/phases/03-reminders-dashboard/03-02-PLAN.md",
-    ".planning/phases/03-reminders-dashboard/03-03-PLAN.md"
+    ".planning/phases/03-reminders-dashboard/03-04-PLAN.md"
   ],
-  "next_action": "Run /gsd-plan-phase 3 and choose 'Add more plans'. The remaining slices are the Reminders screens + dashboard status line + permission banner, and the two-platform notification delivery. Then let gsd-plan-checker verify everything before any execution.",
-  "context_notes": "Planning was paused mid-pipeline. Research (03-RESEARCH.md) and pattern mapping (03-PATTERNS.md) are complete and confident; the planner had produced the first three plans covering the data foundation (03-01, wave 1), the pure calculation core (03-02, wave 2) and the persistence + copy + notification-identity layer (03-03, wave 2) when the session stopped. The three plans are coherent as a set but cover roughly the data and logic half of the phase: REM-01 and REM-02 are claimed, while REM-03, REM-04 and DSH-01 are not yet claimed by any plan. Nothing has been executed, so no code, schema, manifest, or Gradle file has changed — the working tree contains only planning documents. The single biggest execution risk carried forward is the duplicate-database failure mode described in the blockers and in 03-01's objective; the second is that iOS notification work cannot be verified in CI and must be an autonomous:false manual step."
+  "next_action": "Run /gsd-plan-phase 3 and choose 'Add more plans'. The remaining slices are the reminder editor + Detail summary row, the dashboard status line + permission banner, and the two-platform notification delivery. Then let gsd-plan-checker verify everything before any execution.",
+  "context_notes": "Planning was paused mid-pipeline. Research (03-RESEARCH.md) and pattern mapping (03-PATTERNS.md) are complete and confident; the planner had produced four plans covering the data foundation (03-01, wave 1), the pure calculation core (03-02, wave 2), the persistence + copy + notification-identity layer (03-03, wave 2) and the Reminders list screen (03-04, wave 3) when the session stopped — and it was still emitting plans, so more may exist by now. The four plans are coherent as a set but cover roughly the data, logic and first-screen half of the phase: REM-01 and REM-02 are claimed repeatedly, REM-03 is claimed by 03-03 for the notification-identity contract only, and REM-04 / DSH-01 are claimed by no plan yet. Nothing has been executed, so no code, schema, manifest, or Gradle file has changed — the working tree contains only planning documents. The single biggest execution risk carried forward is the duplicate-database failure mode described in the blockers and in 03-01's objective; the second is that iOS notification work cannot be verified in CI and must be an autonomous:false manual step."
 }
