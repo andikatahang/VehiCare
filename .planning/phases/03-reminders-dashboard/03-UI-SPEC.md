@@ -1,7 +1,8 @@
 ---
 phase: 3
 slug: reminders-dashboard
-status: draft
+status: approved
+reviewed_at: 2026-10-22
 shadcn_initialized: false
 preset: none
 created: 2026-10-22
@@ -255,16 +256,17 @@ The group a vehicle falls into is decided by its **most urgent enabled rule** �
 
 ### Rule row anatomy — `ReminderCard` (D-43, agent discretion locked here)
 
-The row mirrors the Phase 2 card language and the `ServiceSummaryRow` click technique:
+The row mirrors the Phase 2 card language, but its click technique deliberately differs from `ServiceSummaryRow`: the action sits on the text column, so the ripple paints inside that column rather than across the whole card surface:
 
-- Container: `Mist`, **12dp** corner radius, `md` 16px inner padding, `heightIn(min = 72dp)`, full content width, built as `Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(Mist).clickable(onClickLabel = <cd_edit_reminder>).heightIn(min = 72.dp).padding(16.dp)` — **the exact technique `ServiceSummaryRow` already uses**, so the ripple and the shape are identical.
-- **The whole row must NOT carry `mergeDescendants = true`.** It contains a live `Switch`, which must stay its **own** node — merging would swallow the toggle's role and state, and a screen-reader user could no longer flip it. The row's **text `Column` merges** instead, so the three lines are announced as one sentence.
+- Container: `Mist`, **12dp** corner radius, `md` 16px inner padding, `heightIn(min = 72dp)`, full content width, built as `Modifier.fillMaxWidth().clip(RoundedCornerShape(12.dp)).background(Mist).heightIn(min = 72.dp).padding(16.dp)` — the shape, surface and geometry match `ServiceSummaryRow`. **The container itself carries no click action.**
+- **The click action lives on the merged text `Column`, never on the container.** `Column(Modifier.weight(1f).clickable(onClickLabel = <cd_edit_reminder>).semantics(mergeDescendants = true))`. A `clickable` on the outer container would be a focusable but **label-less** button node (the container cannot merge, because of the `Switch`), so TalkBack would stop three times per row — unlabelled button → text → switch. Putting the click on the merging `Column` gives **two** stops: one labelled row item ("Brake service, Every 5.000 km, Overdue by 300 km, Edit reminder") and the independent switch.
+- **The whole row must NOT carry `mergeDescendants = true`.** It contains a live `Switch`, which must stay its **own** node — merging would swallow the toggle's role and state, and a screen-reader user could no longer flip it.
 - Row content: `Column(weight 1f, spacedBy 8dp)` then a trailing `Switch` (`sm` 8px gap):
   1. **Service type** — `Title` 16sp/500 `Ink`, `maxLines = 1`, ellipsis. (The stored type string verbatim, D-44/D-40 — no rewriting, no normalisation.)
   2. **Interval line** — `Body`/`Slate`, always present: `Every 5.000 km` · `Every 6 months` · `Every 5.000 km or 6 months` (both axes on one rule read as one interval sentence — "whichever comes first" is the mental model, D-46, and it is stated in words rather than as two rows).
   3. **Due-state line** — `Body`/`Slate`, or `Danger` when overdue/`Due now`: the due-state sentence from the helper, or **`Turned off`** when the rule is disabled. A rule with an unevaluable distance axis renders `No mileage data yet`.
 - Trailing `Switch` — **palette-locked (C-33)**: checked track `Ink`, checked thumb `Paper`; unchecked track `Mist`, unchecked thumb `Slate`, unchecked border `Hairline`. Its `contentDescription` is the rule's type (`cd_reminder_switch`, `%1$s reminder` → "Brake service reminder"); M3 supplies the on/off state and role. Never colour-alone: the switch position plus the announced state plus the `Turned off` line carry it.
-- Tap on the row (anywhere but the switch) opens the editor in edit mode (`ReminderEditRoute(vehicleId, ruleId)`). The switch toggles `enabled` in place — **one tap, no confirmation** (D-43: disabling is not destructive and loses nothing).
+- Tap on the row's text column (the switch sits outside the click target) opens the editor in edit mode (`ReminderEditRoute(vehicleId, ruleId)`). The switch toggles `enabled` in place — **one tap, no confirmation** (D-43: disabling is not destructive and loses nothing).
 - **Inline due status on the rule row: yes — decided here** (CONTEXT §discretion). Rationale: the phone is where the user checks "when is this due?", and making them open the editor to see the state would contradict the phase's whole point; the state sentence is also what makes the switch's consequence legible.
 
 ### Reminder editor (D-42) — `ReminderEditRoute(vehicleId, ruleId = 0L)`
@@ -354,6 +356,9 @@ Every screen implements these states explicitly. **No state may render a blank w
 | Home card | Status line — due soon | `{type} · Due soon — 900 km left` (`Slate`), with ` · +N due` when other rules are also due |
 | Home card | Status line — overdue | `{type} · Overdue by 300 km · +2 due` (**`Danger`**) — the worded sentence carries the meaning |
 | Home card | Status line — no mileage data | `{type} · No mileage data yet` (`Slate`) — never an invented odometer value |
+| Add/Edit reminder (edit mode) | Loading | Centred M3 `CircularProgressIndicator` on `Paper`, `contentDescription` = "Loading reminder"; the title bar already reads "Edit reminder". The form **never** renders empty while the rule resolves |
+| Add/Edit reminder (edit mode) | Rule not found | The form is not shown: centred `Body` copy "This reminder is no longer available." plus the title-bar back arrow. No submit, no delete, no retry loop |
+| Add/Edit reminder (edit mode) | Load failed | Same presentation as **Rule not found** — the form is not shown, centred copy "This reminder is no longer available." plus the title-bar back arrow. No spinner is left running and no retry loop is offered; reloading happens by re-entering from the Reminders list |
 | Add/Edit reminder | Idle | Normal form; submit enabled only when one type is picked and one interval is valid |
 | Add/Edit reminder | Invalid | Choosing **nothing** shows no error (the `*` and the disabled submit carry it); a **non-blank interval below 1** shows `Enter 1 or more.` (`Danger`, `Label`) under that field via `isError` + `supportingText` |
 | Add/Edit reminder | Saving | Submit shows an M3 `CircularProgressIndicator` in place of its label; every input disabled but readable (Phase 1 precedent) |
@@ -373,7 +378,7 @@ Every screen implements these states explicitly. **No state may render a blank w
 | Tap a vehicle card | *Unchanged* (`VehicleDetailRoute`) — the card gains a line, **not** a second gesture. **No long-press, no swipe, ever** (D-18 carry-forward) |
 | Tap the home permission banner | Askable → the explanation dialog, then the OS prompt. Denied → the OS app-settings screen. Nothing else happens |
 | Tap a rule row | Opens `ReminderEditRoute(vehicleId, ruleId)` — the row's `onClickLabel` is "Edit reminder" |
-| Tap a rule's switch | Toggles `enabled` immediately, no confirmation, no dialog, no navigation (the switch consumes the tap; the row's own click never fires from it) |
+| Tap a rule's switch | Toggles `enabled` immediately, no confirmation, no dialog, no navigation. The switch is a sibling of the clickable text column, so it consumes the tap and the row's own click never fires from it; the row ripple therefore only ever paints inside the text column |
 | Tap "Add reminder" (FAB or empty-state CTA) | Navigates to `ReminderEditRoute(vehicleId, ruleId = 0L)`. FAB `contentDescription` = "Add reminder" |
 | Tap the Reminders summary row on Detail | Navigates to `RemindersRoute(vehicleId)` — **navigation only**; it never opens the editor and never duplicates the list |
 | Tap a service-type chip (editor, single mode) | Moves the selection to that chip; tapping the selected chip does nothing. First tap is required before submit enables |
@@ -485,6 +490,8 @@ English only (D-11/D-65). **Every string below is the exact value to place in `c
     <!-- List states -->
     <string name="empty_reminders_body">Set a reminder so this vehicle\'s next service never slips past you.</string>
     <string name="loading_reminders">Loading reminders</string>
+    <string name="loading_reminder">Loading reminder</string>
+    <string name="reminder_not_found">This reminder is no longer available.</string>
 
     <!-- Permission surfaces -->
     <string name="notifications_off_title">Notifications are off</string>
@@ -529,7 +536,7 @@ English only (D-11/D-65). **Every string below is the exact value to place in `c
 |-------------|----------|
 | Touch targets | Every interactive element ≥ **48dp × 48dp**. New in this phase: the palette `Switch` satisfies it automatically (M3 applies `minimumInteractiveComponentSize()` when `onCheckedChange != null`); chips keep their explicit `defaultMinSize(minHeight = 48.dp)`; the banner/status row is ≥ 56dp tall and tappable across its full width; all dialog buttons `defaultMinSize(minHeight = 48.dp)`; the FAB is 56dp |
 | Content descriptions | "Add reminder" FAB → "Add reminder". Each rule's switch carries `cd_reminder_switch` (`%1$s reminder` → "Brake service reminder") so it is not an unlabelled toggle. The rule row's click carries the `onClickLabel` "Edit reminder". The `Notifications` glyphs (empty state, banner), the banner's chevron, the summary row's chevron, the `Check` glyph on a selected chip and the `Delete` glyph are **decorative (`contentDescription = null`)** — adjacent text always carries the meaning |
-| **Two nodes per rule row** | The row is clickable **and** contains a live `Switch`, so the row must **not** merge its descendants: the switch stays independently focusable with its own role and on/off state, while the row's **text `Column` merges** so the type, interval and due state are announced as one sentence followed by the toggle. Merging the row would make the switch untoggleable for screen-reader users |
+| **Two nodes per rule row** | The row contains a live `Switch`, so the outer container must **not** merge its descendants. The click action sits on the row's **text `Column`**, which does merge, so the type, interval and due state are announced as one labelled, clickable sentence; the switch stays an independent stop with its own role and on/off state. A `clickable` on the outer container would leave a focusable but label-less button (three stops per row) — explicitly rejected. Merging the whole row would make the switch untoggleable |
 | Merged nodes | Home cards keep `mergeDescendants = true` and now announce: name, meta, plate, **then the status sentence** ("Brake service, overdue by 300 km, 2 due"). Both summary rows merge as one navigation item ("Reminders, 2 reminders, overdue by 300 km"). The banner/status row merges into one clickable node |
 | **No colour-only meaning** | D-60's rule, enforced everywhere: **every** due state is a worded sentence ("Overdue by …", "Due soon — …", "Due in …", "Due now", "No mileage data yet"), so the `Danger` tone is never the carrier. The switch's state is carried by position **and** the announced role/state **and** the `Turned off` line. The `+N due` suffix is text, not a badge dot |
 | Form errors | Rendered through `OutlinedTextField`'s own `isError` + `supportingText` so the message is read with the field (Phase 1 mechanism); supporting lines styled to the declared `Label` role, never M3's `bodySmall` 12sp (C-27) |
@@ -587,11 +594,11 @@ Deliberately minimal — Phase 3 ships **no custom animation** (carry-forward):
 | D-54 permission asked on the first saved reminder, preceded by an explanation, non-blocking | 03-CONTEXT.md | Locked — the explanation dialog's copy, two trigger paths, and "Not now" |
 | D-55 tapping a notification opens that vehicle's Detail | 03-CONTEXT.md | Locked — the destination table's deep-link note |
 | D-56 notification names the vehicle and the type and states the reason | 03-CONTEXT.md | Locked — `notification_title` + the shared due-state sentences |
-| D-57 home list ordered by urgency; **supersedes D-16** | 03-CONTEXT.md | Locked — five groups, one cross-axis key, four tie-breaks; D-16 survives *inside* the no-active-reminder group |
+| D-57 home list ordered by urgency; **supersedes D-16** | 03-CONTEXT.md | Locked — four groups, one cross-axis key, four tie-breaks; D-16 survives *inside* the no-active-reminder group |
 | D-58 the existing `VehicleCard` gains one line; no second card component | 03-CONTEXT.md | Locked — the status line is the card's last line; no new card, no `Badge` |
 | D-59 one most-urgent rule + `+N due`; uniform height | 03-CONTEXT.md | Locked — `maxLines = 1`, one sentence, counter excludes the displayed rule |
 | D-60 three due states; only overdue uses `Danger`; every state carries text | 03-CONTEXT.md | Locked — the exact-zero boundary renders the worded `Due now` inside the overdue bucket |
-| D-61 thin banner on home + matching inline status on Reminders; tap leads to settings when denied; re-checked on foreground | 03-CONTEXT.md | Locked — one component, two placements, two copy variants |
+| D-61 thin banner on home + matching inline status on Reminders; tap leads to settings when denied; re-checked on foreground | 03-CONTEXT.md | Locked — one component, two placements, two copy variants. **Documented superset:** when permission has never been asked, the banner tap opens the in-app explanation dialog (C-38/C-39) instead of navigating; only the already-denied case leaves the app for the OS notification settings. The Reminders screen is reached from the Detail summary row, never from the banner |
 | D-62 `3.sqm` migration + regenerated `4.db` baseline | 03-CONTEXT.md | Out of UI scope — no visual consequence; noted for the planner |
 | D-63 all calculation in `commonMain`, delivery behind a platform seam | 03-CONTEXT.md | Locked — the due-state helper and the ordering key are pure `commonMain` |
 | D-64 vehicle deletion cascades to reminder rules | 03-CONTEXT.md | Locked — no UI change (the existing dialog sentence already covers it) |
@@ -613,7 +620,7 @@ Deliberately minimal — Phase 3 ships **no custom animation** (carry-forward):
 | # | Decision | Rationale |
 |---|----------|-----------|
 | C-28 | The due-state vocabulary is produced by **one pure `commonMain` helper**; four sentences per axis, `Due now` for the exact-zero boundary, `No mileage data yet` when the distance axis has no data, and the driving axis is the more urgent one | One source of truth for card, rule row, summary row and both platforms' notifications; unit-testable without a UI (the `ServiceDates`/`RupiahFormat` precedent) |
-| C-29 | Dashboard ordering: five groups (overdue → due soon → upcoming → **no active reminder, newest-first** → nothing else), one cross-axis key `urgency = elapsed / interval` descending, tie-breaks = distance axis → rule id → vehicle name (case-insensitive) → vehicle id | One comparable number orders both axes; D-16 is preserved inside the last group instead of being deleted; deterministic last key stops re-shuffling |
+| C-29 | Dashboard ordering: four groups (overdue → due soon → upcoming → **no active reminder, newest-first**), one cross-axis key `urgency = elapsed / interval` descending, tie-breaks = distance axis → rule id → vehicle name (case-insensitive) → vehicle id | One comparable number orders both axes; D-16 is preserved inside the last group instead of being deleted; deterministic last key stops re-shuffling |
 | C-30 | The card status line is `{type} · {sentence}` (+ ` · +N due`), appended as the card's **last** line, one `Text`, `Body` 16sp/400, `Slate` (or `Danger` when overdue), `maxLines = 1` | No existing line moves; a single line keeps the cards uniform (D-59); the tone never outranks the vehicle name |
 | C-31 | `+N due` counts the **other** enabled rules in the due-soon ∪ overdue set; `N = 0` renders nothing; unevaluable rules never count | The displayed rule is already named; a `+0 due` or a duplicate of the visible rule would be noise |
 | C-32 | `ServiceTypePicker` gains `selectionMode: SelectionMode = Multiple`; `Single` moves the selection and a tap on the selected chip is a **no-op** (never a deselect) | Default keeps every existing call site byte-identical; the editor can never silently become invalid |
@@ -649,11 +656,11 @@ Deliberately minimal — Phase 3 ships **no custom animation** (carry-forward):
 
 ## Checker Sign-Off
 
-- [ ] Dimension 1 Copywriting: PASS
-- [ ] Dimension 2 Visuals: PASS
-- [ ] Dimension 3 Color: PASS
-- [ ] Dimension 4 Typography: PASS
-- [ ] Dimension 5 Spacing: PASS
-- [ ] Dimension 6 Registry Safety: PASS
+- [x] Dimension 1 Copywriting: PASS
+- [x] Dimension 2 Visuals: PASS
+- [x] Dimension 3 Color: PASS
+- [x] Dimension 4 Typography: PASS
+- [x] Dimension 5 Spacing: PASS
+- [x] Dimension 6 Registry Safety: PASS
 
-**Approval:** pending
+**Approval:** approved 2026-10-22
