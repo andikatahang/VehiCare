@@ -11,7 +11,7 @@
 
 - [x] **Phase 1: Foundation & Vehicle Management** — KMP project scaffold, SQLDelight schema with WAL + migration CI, full vehicle CRUD (completed 2026-10-19)
 - [x] **Phase 2: Service Log** — Complete service entry logging, history view, parts, photos, edit/delete — all 8 plans complete; UAT 8/8 passed; threat-secure 50/50 (completed 2026-10-21)
-- [ ] **Phase 3: Reminders & Dashboard** — Mileage and time-based reminders, push notifications, iOS foreground-check pattern, home dashboard
+- [x] **Phase 3: Reminders & Dashboard** — Mileage and time-based reminders, push notifications, iOS foreground-check pattern, home dashboard (completed 2026-10-24)
 
 ---
 
@@ -122,7 +122,7 @@ Plans:
 3. On Android, overdue mileage reminders are evaluated by a background WorkManager task; on iOS, overdue mileage reminders are evaluated on app foreground via `triggerImmediateIfOverdue()` — both platforms deliver the notification correctly
 4. Home screen dashboard shows all vehicles with last service date and next due service at a glance
 
-**Plans:** 7/8 plans executed
+**Plans:** 8/8 plans complete
 Plans:
 
 **Wave 1**
@@ -152,7 +152,7 @@ Plans:
 
 **Wave 7** *(blocked on Wave 6 completion)*
 
-- [ ] 03-08-PLAN.md — permission: requester, persisted bits, coordinator, first-add explanation, two-placement banner/dialog
+- [x] 03-08-PLAN.md — permission: requester, persisted bits, coordinator, first-add explanation, two-placement banner/dialog
 
 **UI hint**: yes
 
@@ -164,7 +164,7 @@ Plans:
 |-------|----------------|--------|-----------|
 | 1. Foundation & Vehicle Management | 10/10 | Complete    | 2026-10-19 |
 | 2. Service Log | 8/8 | Complete    | 2026-10-21 |
-| 3. Reminders & Dashboard | 7/8 | In Progress|  |
+| 3. Reminders & Dashboard | 8/8 | Complete   | 2026-10-24 |
 
 ---
 

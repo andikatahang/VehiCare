@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: Executing Phase 3
-stopped_at: "Phase 3 wave 5 complete: 03-07 (notification delivery) merged after stashing an in-progress Android Studio repository-pattern refactor (stash@{0} on main, not yet restored — see Blockers). 7/8 plans complete. Next: wave 6 (03-08)."
-last_updated: "2026-10-24T11:15:00+07:00"
+stopped_at: "Phase 3 all 8 plans executed and merged (03-08 closed wave 6). REM-01…04 + DSH-01 delivered. Awaiting phase-level verification; manual device/simulator observation for 03-07 delivery and 03-08 permission flow is still outstanding."
+last_updated: "2026-10-24T13:10:00+07:00"
 progress:
   total_phases: 3
   completed_phases: 2
   total_plans: 26
-  completed_plans: 22
-  percent: 85
+  completed_plans: 23
+  percent: 88
 ---
 
 # STATE: VehiCare
@@ -22,15 +22,15 @@ progress:
 
 ## Current Position
 
-Phase: 3 (Reminders & Dashboard) — EXECUTING
-Plan: 7 of 8 complete — next is `03-08` (wave 6; expect a checkpoint)
+Phase: 3 (Reminders & Dashboard) — ALL PLANS EXECUTED, awaiting verification
+Plan: 8 of 8 complete
 
 | Field | Value |
 |-------|-------|
-| **Active Phase** | Phase 3: Reminders & Dashboard (7/8 plans executed — waves 1–5 done) |
-| **Active Plan** | Next is `03-08` (notification permission ask — not autonomous, expect a checkpoint) |
-| **Status** | **Phase 3 executing.** Waves 1–5 complete: `03-01`…`03-06` as before, plus `03-07` (notification delivery — Android WorkManager + iOS pre-scheduled triggers/foreground sweep; REM-03/REM-04 complete). `03-07`'s own full-suite run reported 232 Android tests passing (4 orchestrator tests `@Ignore`d pending a Robolectric sign-off decision — see Todos) and did not run the iOS simulator suite or any real-device/simulator check (no simulator in its sandboxed worktree) — **carried debt, not yet independently re-verified by the orchestrator.** Remaining: `03-08` (permission ask — checkpoint). Phase 2 remains complete (UAT 8/8, security 50/50 threats closed, verification `passed`). |
-| **Progress** | `[███████░░░] 2/3 phases (67%); Phase 3: 7/8 plans (88%)` |
+| **Active Phase** | Phase 3: Reminders & Dashboard (8/8 plans executed — all 6 waves done) |
+| **Active Plan** | None — next step is phase-level verification (`gsd-verifier` / `/gsd-verify-work`) |
+| **Status** | **Phase 3 all 8 plans executed and merged 2026-10-24.** `03-01` (schema v4) → `03-02` (due-state engine) → `03-03` (persistence/copy/notification-id) → `03-04` (Reminders screen, reconstructed after an interrupted run) → `03-05` (reminder editor + Detail summary row) → `03-06` (dashboard urgency ordering) → `03-07` (notification delivery, both platforms) → `03-08` (first-ask permission flow). Final gate after 03-08: **256 Android host tests and 318 iOS simulator tests, 0 failures** (4 skipped on each are 03-07's `@Ignore`d cases pending the Robolectric decision); `compileKotlinIosSimulatorArm64` and `:androidApp:assembleDebug` both succeed. **Not yet done:** phase-level verification, and the manual device/simulator observations for 03-07's delivery and 03-08's permission flow (nothing observed on a real OS — see Todos). Phase 2 remains complete (UAT 8/8, security 50/50 threats closed, verification `passed`). |
+| **Progress** | `[███████░░░] 2/3 phases (67%); Phase 3: 8/8 plans executed, verification pending` |
 
 ```
 Phase 1 [Complete] → Phase 2 [Complete] → Phase 3 [Not Started]
@@ -46,7 +46,7 @@ Phase 1 [Complete] → Phase 2 [Complete] → Phase 3 [Not Started]
 |-------|------|--------|
 | 1 | Foundation & Vehicle Management | Complete (2026-10-19) |
 | 2 | Service Log | Complete (2026-10-21) |
-| 3 | Reminders & Dashboard | Executing — 7/8 plans complete (2026-10-24) |
+| 3 | Reminders & Dashboard | 8/8 plans executed — awaiting verification (2026-10-24) |
 
 ---
 
@@ -55,11 +55,11 @@ Phase 1 [Complete] → Phase 2 [Complete] → Phase 3 [Not Started]
 | Metric | Value |
 |--------|-------|
 | Phases completed | 2 / 3 |
-| Plans completed | 22 / 26 |
+| Plans completed | 23 / 26 |
 | Requirements covered | 21 / 21 |
 | Sessions | 15 |
 
-Per-plan: `Phase 1 / 01` — ~28min, 3 tasks, 63 files · `Phase 1 / 02` — 17min, 3 tasks, 15 files · `Phase 1 / 03` — 20min, 3 tasks, 17 files · `Phase 1 / 04` — 24min, 3 tasks, 17 files · `Phase 1 / 05` — 11min, 3 tasks, 3 files · `Phase 1 / 06` — 10min, 3 tasks, 8 files · `Phase 1 / 07` — 21min, 3 tasks, 6 files · `Phase 1 / 08` — 21min, 3 tasks, 6 files · `Phase 1 / 09` — 4min, 3 tasks, 6 files · `Phase 1 / 10` — 12min, 3 tasks, 5 files · `Phase 2 / 01` — 11min, 3 tasks, 14 files · `Phase 2 / 02` — 15min, 2 tasks, 7 files · `Phase 2 / 03` — 45min, 3 tasks, 16 files · `Phase 3 / 04` — ~14min (reconstructed), 3 tasks, 11 files · `Phase 3 / 05` — ~40min, 3 tasks, 11 files · `Phase 3 / 06` — ~35min, 2 tasks, 7 files · `Phase 3 / 07` — ~55min, 3 tasks, 24 files.
+Per-plan: `Phase 1 / 01` — ~28min, 3 tasks, 63 files · `Phase 1 / 02` — 17min, 3 tasks, 15 files · `Phase 1 / 03` — 20min, 3 tasks, 17 files · `Phase 1 / 04` — 24min, 3 tasks, 17 files · `Phase 1 / 05` — 11min, 3 tasks, 3 files · `Phase 1 / 06` — 10min, 3 tasks, 8 files · `Phase 1 / 07` — 21min, 3 tasks, 6 files · `Phase 1 / 08` — 21min, 3 tasks, 6 files · `Phase 1 / 09` — 4min, 3 tasks, 6 files · `Phase 1 / 10` — 12min, 3 tasks, 5 files · `Phase 2 / 01` — 11min, 3 tasks, 14 files · `Phase 2 / 02` — 15min, 2 tasks, 7 files · `Phase 2 / 03` — 45min, 3 tasks, 16 files · `Phase 3 / 04` — ~14min (reconstructed), 3 tasks, 11 files · `Phase 3 / 05` — ~40min, 3 tasks, 11 files · `Phase 3 / 06` — ~35min, 2 tasks, 7 files · `Phase 3 / 07` — ~55min, 3 tasks, 24 files · `Phase 3 / 08` — ~100min (incl. a usage-limit interruption and resume), 3 tasks, 20 files.
 
 ---
 | Phase 2 P4 | 45min | 3 tasks | 15 files |
@@ -145,6 +145,7 @@ Unchanged from the contract: Gradle 9.5.1 · SQLDelight 2.4.1 · Koin 4.2.2 · N
 - [ ] **Restore `stash@{0}` on `main`** — an in-progress Android Studio repository-pattern refactor (moves `ReminderRepository`/`VehicleRepository`/`ServiceEntryRepository` + mappers into new `domain.repository`/`data.repository`/`data.mapper` packages, adds `domain/ReminderSummary.kt`), stashed by Claude on 2026-10-24 to unblock the 03-07 merge. Restoring it (`git stash pop`) may conflict with 03-07's own `AppModule.kt` edits (the two re-arm/cancel hooks) — needs the user's own resolution, not an automated one.
 - [ ] Decide on Robolectric for `:shared:testAndroidHostTest` — 4 tests in `ReminderDeliveryTest.kt` (03-07) are `@Ignore`d because `ReminderCopy`'s suspend resource resolvers throw on the plain JVM Android test target with no Robolectric configured. Adding it is a new, unaudited build dependency — needs explicit sign-off before an executor adds it.
 - [x] Run the full iOS simulator suite for 03-07 → done by the orchestrator post-merge: `:shared:iosSimulatorArm64Test` — 294 tests, 0 failures, 0 errors, 4 skipped (the same 4 `@Ignore`d `ReminderDeliveryTest` cases pending the Robolectric decision above). `ReminderDeliveryTest`/`ReminderScheduleTest` both ran and passed on the real iOS target.
+- [ ] **Manual device/simulator observation for 03-08's permission flow** — all 15 `<human-check>` steps are unobserved (no emulator/device attached, no booted simulator in the executor's worktree): A.1–A.8 Android (no ask on cold launch, dialog only after the first add, `Not now` silencing later adds *and* edits, deny → denied copy → settings, banner placement, both surfaces clearing on return from settings without relaunch, no surface at zero enabled rules), B.9–B.13 iOS (one-time prompt spent only by `Turn on`, deny → never again, `Not now` → manual row tap as the only way back), C.14 (granted + no rule → no surface). The static half is proven by the policy truth-table tests, signal semantics and grep structure checks, but no OS permission sheet has been seen.
 - [ ] Manual device/simulator observation for 03-07 (tap routing, foreground notification visibility, once-per-cycle across both iOS delivery paths) — still outstanding. Automated checks (compile + unit tests on both targets) all pass, but no notification has been observed firing on a real OS; this is exactly the kind of gap `/gsd-verify-work`'s human_verification items are for and should surface at phase-level verification.
 - [ ] Answer open questions 1–4, 6 and 7 when their phase needs them (Q1 km/miles and Q3 advance-notice shape the Phase 2 schema)
 - [x] Wave 1 / plan 02-01 (service-log data core) → verified by both CI guards locally (`verify…Migration` + regenerate-then-diff clean), 8 real-driver iOS repository tests, and 11 mapper/vocabulary host tests (see `02-01-SUMMARY.md`)
@@ -171,10 +172,10 @@ No blockers, but see carried debt below. **Phase 3 executing 2026-10-24** — wa
 
 ## Session Continuity
 
-**Last session:** 2026-10-24T11:20:00+07:00
-**Stopped at:** Phase 3 wave 5 complete. `03-01`…`03-07` done (7/8 plans); REM-01…04 and DSH-01 all complete. Merging `03-07` needed a stash of an in-progress Android Studio edit, now popped back cleanly (no conflicts). `03-07` verified on Android (232 tests) and iOS (294 tests), 4 skipped pending a Robolectric decision. Wave 6 (`03-08`) not started.
-**Resume file:** .planning/phases/03-reminders-dashboard/03-08-PLAN.md (wave 6); phase contract in `03-CONTEXT.md`, `03-RESEARCH.md`, `03-PATTERNS.md`, `03-UI-SPEC.md`
-**Next action:** Run `/gsd-execute-phase 3` for `03-08` (not autonomous — expect a checkpoint for the notification permission flow). The user's Android Studio repository-pattern refactor is still uncommitted in the working tree — be aware of it before any further orchestrator git operations on `main`. **User decisions 2026-10-23 (binding):** (1) DSH-01's last-service date joins the card's single status line — `Last service {date} · {sentence}`; (2) D-54's explanation dialog shows only after the first successful add, at most one automatic ask per install; (3) D-61's tap is two-case — askable → dialog, denied → OS settings. Carried debt: `01-VERIFICATION.md` remains `human_needed` (acknowledged; `/gsd-audit-uat` or re-verify to clear); `01-REVIEW.md` CR-01/WR-01…03/IN-01…06 open; `02-REVIEW.md` WR-01…WR-04 open. Local commits are **not pushed**.
+**Last session:** 2026-10-24T13:10:00+07:00
+**Stopped at:** Phase 3 fully executed — all 8 plans merged to `main` (tip `92c085d`). `03-08`'s executor was interrupted by a provider usage limit after Task 1 and resumed from its own transcript (Task 2 re-verified from scratch before committing, no work duplicated). Final gate: 256 Android + 318 iOS tests, 0 failures. Phase-level verification not yet run.
+**Resume file:** none — the phase's plans are done; next artifact is `03-VERIFICATION.md`.
+**Next action:** Run phase verification (`gsd-verifier`, or `/gsd-verify-work 3` for the human half). Expect the verifier to raise the two outstanding manual-observation items (03-07 delivery, 03-08 permission flow) as human_verification — nothing has been observed on a real OS for either. The user's Android Studio repository-pattern refactor is still uncommitted in the working tree (stashed and popped cleanly twice to land the 03-07 and 03-08 merges) — check `git status` before any further orchestrator git operation on `main`. **User decisions 2026-10-23 (binding):** (1) DSH-01's last-service date joins the card's single status line — `Last service {date} · {sentence}`; (2) D-54's explanation dialog shows only after the first successful add, at most one automatic ask per install; (3) D-61's tap is two-case — askable → dialog, denied → OS settings. Carried debt: `01-VERIFICATION.md` remains `human_needed` (acknowledged; `/gsd-audit-uat` or re-verify to clear); `01-REVIEW.md` CR-01/WR-01…03/IN-01…06 open; `02-REVIEW.md` WR-01…WR-04 open. Local commits are **not pushed**.
 
 ## Decisions
 
