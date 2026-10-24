@@ -21,7 +21,7 @@ private class IosSettingsStore(private val defaults: NSUserDefaults) : SettingsS
         if (months == null) {
             defaults.removeObjectForKey(KEY_INTERVAL_MONTHS)
         } else {
-            defaults.setLong(months, forKey = KEY_INTERVAL_MONTHS)
+            defaults.setInteger(value = months, forKey = KEY_INTERVAL_MONTHS)
         }
         observable.set(months)
     }
@@ -30,7 +30,7 @@ private class IosSettingsStore(private val defaults: NSUserDefaults) : SettingsS
 
     private fun readFromDefaults(): Long? =
         if (defaults.objectForKey(KEY_INTERVAL_MONTHS) != null) {
-            defaults.longForKey(KEY_INTERVAL_MONTHS)
+            defaults.integerForKey(KEY_INTERVAL_MONTHS)
         } else {
             null
         }

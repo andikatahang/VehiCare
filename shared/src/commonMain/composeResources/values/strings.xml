@@ -54,6 +54,12 @@
 
     <!-- Settings -->
     <string name="settings_app_version">App version</string>
+    <string name="settings_service_interval_label">Service interval</string>
+    <string name="settings_service_interval_field">Months</string>
+    <string name="settings_service_interval_hint">Not set — each reminder uses its own interval until you set a universal one here.</string>
+    <string name="settings_service_interval_save">Save</string>
+    <string name="settings_service_interval_saved">Saved</string>
+    <string name="error_interval_months_universal">Enter 1 or more, or leave blank.</string>
 
     <!-- Dialogs / feedback -->
     <string name="dialog_delete_title">Delete vehicle</string>

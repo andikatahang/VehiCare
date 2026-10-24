@@ -86,3 +86,15 @@ coverage and no device observation — `NotificationManagerCompat.notify` on And
 *decides* to post; it cannot prove the OS renders anything. The OS permission prompt
 is additionally one-time and irreversible per install, so it cannot be automated.
 No executor in this phase had an emulator or simulator attached.
+
+## Note — 2026-10-24 (quick task 261024-u9g)
+
+Tests 1 and 2 of this UAT expect month timing that comes from a rule's own
+`intervalMonths`. A later quick task (261024-u9g) introduced a **universal
+"Service interval (months)" setting** in Settings: when it is set, that one
+value overrides every reminder rule's per-rule months for evaluation, due-date
+arithmetic and cycle keys (all vehicles, all service types). Month timing now
+comes from the app-level Settings value — with a fallback to the rule's own
+interval only when the setting was never set. The reminder editor dropped its
+months field entirely (km stays per-rule, and is now the editor's mandatory
+interval). When re-running UAT Tests 1/2, set the interval in Settings first.

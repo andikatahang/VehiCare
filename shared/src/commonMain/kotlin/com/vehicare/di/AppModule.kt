@@ -19,6 +19,7 @@ import com.vehicare.ui.service.ServiceSummaryViewModel
 import com.vehicare.ui.vehicles.VehicleDetailViewModel
 import com.vehicare.ui.vehicles.VehicleEditViewModel
 import com.vehicare.ui.vehicles.VehicleListViewModel
+import com.vehicare.ui.settings.SettingsViewModel
 import com.vehicare.util.PhotoStorage
 import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
@@ -111,4 +112,7 @@ val appModule = module {
     }
     // The Detail's Reminders summary row: the same route id, three flat reads joined once.
     viewModel { (vehicleId: Long) -> ReminderSummaryViewModel(get(), vehicleId) }
+    // The Settings screen (261024-u9g, D-1): the interval setting write path — store + the
+    // fire-and-forget re-arm seam, both resolved from the graph.
+    viewModel { SettingsViewModel(get(), get<NotificationScheduler>()) }
 }
