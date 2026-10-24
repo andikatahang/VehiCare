@@ -1,5 +1,7 @@
 package com.vehicare.di
 
+import com.vehicare.data.ReminderRepository
+import com.vehicare.data.ReminderRepositoryImpl
 import com.vehicare.data.ServiceEntryRepository
 import com.vehicare.data.ServiceEntryRepositoryImpl
 import com.vehicare.data.VehicleRepository
@@ -46,6 +48,15 @@ val appModule = module {
     single<ServiceEntryRepository> {
         ServiceEntryRepositoryImpl(get(), photoDeleter = PhotoStorage::delete)
     }
+    // The reminder rules the Reminders screen, the Detail summary row, the dashboard and the
+    // notification worker all read (plan 03-03). Plan 07 replaces this binding with the
+    // notification-refresh hook the third constructor parameter exists for:
+    //   onRulesChanged = { _, ruleIds ->
+    //       val scheduler = get<NotificationScheduler>()
+    //       scheduler.cancel(ruleIds)
+    //       scheduler.evaluateNow()
+    //   }
+    single<ReminderRepository> { ReminderRepositoryImpl(get()) }
     viewModel { VehicleListViewModel(get()) }
     // The form's id comes from the route: `parametersOf(vehicleId)` at the call site, destructured
     // here. 0L is the add case; anything else loads that row for edit.

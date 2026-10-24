@@ -107,3 +107,11 @@ DELETE FROM reminder_rule WHERE vehicle_id = ?;
 
 countEnabledForVehicle:
 SELECT COUNT(*) FROM reminder_rule WHERE vehicle_id = ? AND enabled = 1;
+
+-- The insert id, read back on the same connection inside the same transaction (plan 03-03).
+-- `RETURNING` is unavailable at minSdk 26, so this is the minSdk-safe way to learn the id of a
+-- freshly inserted rule; plan 01 shipped the write queries without a writer, which is why this
+-- query lands here rather than with the schema. It is additive: the schema baseline (4.db) is
+-- unaffected because a query is not part of the schema.
+lastInsertId:
+SELECT last_insert_rowid();
