@@ -2,7 +2,9 @@ package com.vehicare.util
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 /**
  * Both dot-grouped numeric formats (D-29, UI-SPEC §Typography) plus the digits-only cost parser
@@ -27,6 +29,26 @@ class RupiahFormatTest {
         assertEquals("0 km", RupiahFormat.formatMileage(0))
         assertEquals("999 km", RupiahFormat.formatMileage(999))
         assertEquals("1.000 km", RupiahFormat.formatMileage(1_000))
+    }
+
+    @Test
+    fun kmValueIsGroupedWithoutAUnit() {
+        assertEquals("0", RupiahFormat.formatKmValue(0))
+        assertEquals("999", RupiahFormat.formatKmValue(999))
+        assertEquals("1.000", RupiahFormat.formatKmValue(1_000))
+        assertEquals("123.456", RupiahFormat.formatKmValue(123_456))
+        assertEquals("999.999", RupiahFormat.formatKmValue(999_999))
+    }
+
+    @Test
+    fun kmValueOwnsNoUnitWhileMileageKeepsItsUnit() {
+        // The sentence supplies "km" (C-28); only a standalone mileage may append it.
+        assertFalse(RupiahFormat.formatKmValue(123_456).contains(" km"))
+        assertTrue(RupiahFormat.formatMileage(123_456).contains(" km"))
+        assertEquals(
+            RupiahFormat.formatMileage(123_456).removeSuffix(" km"),
+            RupiahFormat.formatKmValue(123_456),
+        )
     }
 
     @Test

@@ -135,4 +135,102 @@
     <string name="cd_add_service">Add service</string>
     <string name="cd_remove_photo">Remove photo %1$d</string>
     <string name="cd_remove_part">Remove part %1$d</string>
+
+    <!-- Phase 3: reminders & dashboard (UI-SPEC §Copywriting Contract) -->
+
+    <!-- Titles -->
+    <string name="title_reminders">Reminders</string>
+    <string name="title_add_reminder">Add reminder</string>
+    <string name="title_edit_reminder">Edit reminder</string>
+
+    <!-- Actions -->
+    <string name="action_add_reminder">Add reminder</string>
+    <string name="action_update_reminder">Update reminder</string>
+    <string name="action_delete_reminder">Delete reminder</string>
+    <string name="action_turn_on">Turn on</string>
+    <string name="action_not_now">Not now</string>
+
+    <!-- Fields / sections (field_service_type is REUSED from Phase 2) -->
+    <string name="section_intervals">Intervals</string>
+    <string name="section_advance_notice">Advance notice</string>
+    <string name="field_interval_distance">Distance</string>
+    <string name="field_interval_time">Time</string>
+    <string name="field_suffix_km">km</string>
+    <string name="field_suffix_months">months</string>
+    <string name="field_lead_km">Km before</string>
+    <string name="field_lead_days">Days before</string>
+    <string name="field_reminder_on">Reminder on</string>
+
+    <!-- Hints (Label role, Slate) -->
+    <string name="hint_intervals">Whichever is reached first sets when this reminder is due.</string>
+    <string name="hint_advance_notice">Leave empty to be notified only when due.</string>
+
+    <!-- Intervals line (rule row) -->
+    <string name="reminder_interval_km">Every %1$s km</string>
+    <string name="reminder_interval_months">Every %1$s</string>
+    <plurals name="reminder_months_phrase">
+        <item quantity="one">%1$d month</item>
+        <item quantity="other">%1$d months</item>
+    </plurals>
+    <string name="reminder_interval_both">Every %1$s km or %2$s</string>
+
+    <!-- Due-state sentences (the one vocabulary every surface speaks) -->
+    <string name="reminder_due_in_km">Due in %1$s km</string>
+    <string name="reminder_due_on">Due on %1$s</string>
+    <string name="reminder_due_soon_km">Due soon — %1$s km left</string>
+    <plurals name="reminder_due_soon_days">
+        <item quantity="one">Due soon — %1$d day left</item>
+        <item quantity="other">Due soon — %1$d days left</item>
+    </plurals>
+    <string name="reminder_overdue_km">Overdue by %1$s km</string>
+    <plurals name="reminder_overdue_days">
+        <item quantity="one">Overdue by %1$d day</item>
+        <item quantity="other">Overdue by %1$d days</item>
+    </plurals>
+    <string name="reminder_due_now">Due now</string>
+    <string name="reminder_no_mileage_data">No mileage data yet</string>
+    <string name="reminder_turned_off">Turned off</string>
+
+    <!-- Dashboard / summary -->
+    <string name="vehicle_no_active_reminders">No active reminders</string>
+    <string name="vehicle_due_counter">+%1$d due</string>
+    <plurals name="reminder_summary_count">
+        <item quantity="one">%1$d reminder</item>
+        <item quantity="other">%1$d reminders</item>
+    </plurals>
+    <string name="reminder_summary_all_off">All turned off</string>
+    <string name="reminders_none">No reminders yet</string>
+
+    <!-- List states -->
+    <string name="empty_reminders_body">Set a reminder so this vehicle\'s next service never slips past you.</string>
+    <string name="loading_reminders">Loading reminders</string>
+    <string name="loading_reminder">Loading reminder</string>
+    <string name="reminder_not_found">This reminder is no longer available.</string>
+
+    <!-- Permission surfaces -->
+    <string name="notifications_off_title">Notifications are off</string>
+    <string name="notifications_off_ask_body">Service reminders won\'t reach you until you turn them on.</string>
+    <string name="notifications_off_denied_body">Service reminders won\'t reach you. Turn them on in your device settings.</string>
+    <string name="dialog_notifications_title">Turn on reminders</string>
+    <string name="dialog_notifications_message">VehiCare sends one notification when a service is due. Nothing else.</string>
+
+    <!-- Notification content -->
+    <string name="notification_title">%1$s · %2$s</string>
+    <string name="notification_channel_name">Service reminders</string>
+
+    <!-- Errors -->
+    <string name="error_interval_min">Enter 1 or more.</string>
+    <string name="error_load_reminders">Couldn\'t load your reminders. Check that your device has free storage space, then try again.</string>
+    <string name="error_save_reminder">Couldn\'t save this reminder. Check that your device has free storage space, then try again.</string>
+    <string name="error_delete_reminder">Couldn\'t delete this reminder. Try again.</string>
+
+    <!-- Dialogs / feedback -->
+    <string name="dialog_delete_reminder_title">Delete reminder</string>
+    <string name="dialog_delete_reminder_message">Delete this reminder? This can\'t be undone.</string>
+    <string name="snackbar_reminder_deleted">Reminder deleted.</string>
+
+    <!-- Accessibility -->
+    <string name="cd_add_reminder">Add reminder</string>
+    <string name="cd_edit_reminder">Edit reminder</string>
+    <string name="cd_reminder_switch">%1$s reminder</string>
 </resources>

@@ -23,6 +23,16 @@ object RupiahFormat {
     fun formatMileage(km: Long): String = groupDigits(km) + " km"
 
     /**
+     * `123_456` → `"123.456"` — the distance number **without a unit** (C-28).
+     *
+     * The due-state and interval sentences own the unit ("Due in %1$s km", "Every %1$s km"), so
+     * they need the grouped digits alone; appending `km` here and in the sentence would print it
+     * twice. This is the third caller of the one [groupDigits] helper, and [formatMileage] keeps
+     * its unit for the Phase 1/2 surfaces that show a standalone mileage.
+     */
+    fun formatKmValue(km: Long): String = groupDigits(km)
+
+    /**
      * Keeps only the digit characters of [raw], at most the first [MAX_DIGITS], and parses the
      * result; a blank/no-digit input becomes `null` (the cost is optional).
      *
