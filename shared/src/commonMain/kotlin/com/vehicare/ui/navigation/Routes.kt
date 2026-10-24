@@ -35,3 +35,12 @@ data class ServiceEntryDetailRoute(val entryId: Long)
 /** One vehicle's full service history — the sortable list of every entry (D-32). */
 @Serializable
 data class ServiceHistoryRoute(val vehicleId: Long)
+
+/**
+ * One vehicle's reminder rules (D-41), ordered most urgent first.
+ *
+ * The destination type only: plan 05 registers it in `App.kt` together with the Detail entry point
+ * and the editor destination, so this plan leaves no unreachable graph node behind.
+ */
+@Serializable
+data class RemindersRoute(val vehicleId: Long)

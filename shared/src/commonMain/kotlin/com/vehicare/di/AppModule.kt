@@ -8,6 +8,7 @@ import com.vehicare.data.VehicleRepository
 import com.vehicare.data.VehicleRepositoryImpl
 import com.vehicare.data.db.DatabaseProvider
 import com.vehicare.db.VehiCareDatabase
+import com.vehicare.ui.reminders.RemindersViewModel
 import com.vehicare.ui.service.ServiceEntryDetailViewModel
 import com.vehicare.ui.service.ServiceEntryEditViewModel
 import com.vehicare.ui.service.ServiceHistoryViewModel
@@ -72,4 +73,6 @@ val appModule = module {
     viewModel { (vehicleId: Long) -> ServiceHistoryViewModel(get(), vehicleId) }
     // The Detail's summary row: the same route id, one aggregate read.
     viewModel { (vehicleId: Long) -> ServiceSummaryViewModel(get(), vehicleId) }
+    // The Reminders list: one vehicleId from the route, three flat reads behind one state flow.
+    viewModel { (vehicleId: Long) -> RemindersViewModel(vehicleId, get()) }
 }
