@@ -99,6 +99,34 @@ FROM service_entry_type
 GROUP BY lower(label)
 ORDER BY last_used_id DESC;
 
+-- The baseline of every (vehicle, service type) pair: the date and the mileage of the most recent
+-- entry carrying that type, taken from the *same* row — the pairing D-47 requires. The bare
+-- `se.mileage_km` (and the bare `t.label`) are well defined because with exactly one MAX()
+-- aggregate SQLite takes bare columns from the row that supplied the maximum, so a rule can never
+-- measure its interval from one entry's date and another entry's odometer. The single-MAX idiom is
+-- the same one `selectLearnedTypes` uses, and this SQLite version has no window functions.
+-- Grouping on `lower(t.label)` matches Phase 2's case-insensitive label handling (D-24/D-25);
+-- `service_entry.service_type` is only a position-0 mirror and is never the matching key
+-- (D-40/D-44/D-47). The label returned is the newest entry's stored spelling, never normalized.
+selectTypeBaselines:
+SELECT se.vehicle_id                 AS vehicle_id,
+       t.label                       AS type_label,
+       MAX(se.service_date_epoch_ms) AS baseline_date_epoch_ms,
+       se.mileage_km                 AS baseline_km
+FROM service_entry se
+JOIN service_entry_type t ON t.entry_id = se.id
+GROUP BY se.vehicle_id, lower(t.label);
+
+-- One row per vehicle that has any entry: its newest service date and that entry's odometer, again
+-- from the same row. D-49 uses the mileage as the km baseline for a rule whose own type has no
+-- entry yet, so the dashboard can show a real number instead of inventing one.
+selectVehicleStats:
+SELECT vehicle_id,
+       MAX(service_date_epoch_ms) AS last_service_epoch_ms,
+       mileage_km                 AS last_mileage_km
+FROM service_entry
+GROUP BY vehicle_id;
+
 insertEntry:
 INSERT INTO service_entry(vehicle_id, service_date_epoch_ms, mileage_km, service_type, cost_rupiah, notes, workshop, mechanic)
 VALUES (?, ?, ?, ?, ?, ?, ?, ?);

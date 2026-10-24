@@ -14,16 +14,21 @@ import kotlin.test.AfterTest
 import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertTrue
 
 /**
- * Proves the v2 → v3 schema upgrade on a real
+ * Proves the schema upgrades on a real
  * [app.cash.sqldelight.driver.native.NativeSqliteDriver], never a mock and never the repository:
- * this answers "does an upgraded database have the type rows?" and nothing else.
+ * these answer "does an upgraded database have the rows and tables it should?" and nothing else.
  *
- * The scratch driver creates the v3 schema, then the v3 machinery is removed with raw SQL so the
- * only way a type row can reappear is `2.sqm`. Two legacy rows with different labels are inserted
- * before the upgrade, so the backfill has to give each of them its **own** stored `service_type`
- * verbatim at position 0 (D-40) — a shared or normalized label would fail here.
+ * v2 → v3: the scratch driver creates the current schema, then the v3 machinery is removed with raw
+ * SQL so the only way a type row can reappear is `2.sqm`. Two legacy rows with different labels are
+ * inserted before the upgrade, so the backfill has to give each of them its **own** stored
+ * `service_type` verbatim at position 0 (D-40) — a shared or normalized label would fail here.
+ *
+ * v3 → v4: `reminder_rule` and its index are dropped first, so the only way they can reappear is
+ * `3.sqm`. Both bookkeeping markers must survive, because D-51's claim and D-53's armed proof are
+ * the whole once-per-cycle guarantee.
  */
 class ServiceEntryMigrationTest {
 
@@ -44,8 +49,8 @@ class ServiceEntryMigrationTest {
     }
 
     @Test
-    fun schemaVersionIsThree() {
-        assertEquals(3L, VehiCareDatabase.Schema.version)
+    fun schemaVersionIsFour() {
+        assertEquals(4L, VehiCareDatabase.Schema.version)
     }
 
     @Test
@@ -87,6 +92,33 @@ class ServiceEntryMigrationTest {
         )
     }
 
+    /**
+     * Proves the v3 → v4 upgrade creates the `reminder_rule` table and its index on a real
+     * [app.cash.sqldelight.driver.native.NativeSqliteDriver]. The scratch driver created the v4
+     * schema, so the table and index are dropped first: the only way they can reappear is
+     * `3.sqm`, and a `Schema.create()` side effect cannot satisfy this test.
+     */
+    @Test
+    fun migratingFromThreeCreatesReminderRule() {
+        // Index first: dropping the table would take the index with it and make this statement fail.
+        driver.execute(null, "DROP INDEX reminder_rule_vehicle", 0).value
+        driver.execute(null, "DROP TABLE reminder_rule", 0).value
+        assertEquals(0L, sqliteMasterCount("table", "reminder_rule"))
+
+        VehiCareDatabase.Schema.migrate(driver, 3, 4).value
+
+        assertEquals(1L, sqliteMasterCount("table", "reminder_rule"))
+        assertEquals(1L, sqliteMasterCount("index", "reminder_rule_vehicle"))
+
+        // Both bookkeeping markers must survive the migration: D-51's claim and D-53's armed proof.
+        val columns = tableColumns("reminder_rule")
+        assertTrue("notified_cycle_key" in columns, "notified_cycle_key missing: $columns")
+        assertTrue("armed_cycle_key" in columns, "armed_cycle_key missing: $columns")
+
+        // A freshly migrated table has no rules, and the generated query agrees.
+        assertEquals(0, database.reminderRuleQueries.selectAll().executeAsList().size)
+    }
+
     /** The raw `position` values of one entry's type rows — proof of the backfill's position 0. */
     private fun storedPositions(entryId: Long): List<Long> = driver.executeQuery(
         identifier = null,
@@ -100,6 +132,35 @@ class ServiceEntryMigrationTest {
         },
         parameters = 1,
         binders = { bindLong(0, entryId) },
+    ).value
+
+    /** How many `sqlite_master` rows of [type] carry exactly [name]. */
+    private fun sqliteMasterCount(type: String, name: String): Long = driver.executeQuery(
+        identifier = null,
+        sql = "SELECT COUNT(*) FROM sqlite_master WHERE type = ? AND name = ?",
+        mapper = { cursor ->
+            cursor.next()
+            QueryResult.Value(cursor.getLong(0) ?: 0L)
+        },
+        parameters = 2,
+        binders = {
+            bindString(0, type)
+            bindString(1, name)
+        },
+    ).value
+
+    /** The declared column names of [table], in `PRAGMA table_info` order. */
+    private fun tableColumns(table: String): List<String> = driver.executeQuery(
+        identifier = null,
+        sql = "PRAGMA table_info($table)",
+        mapper = { cursor ->
+            val names = mutableListOf<String>()
+            while (cursor.next().value) {
+                names += cursor.getString(1) ?: error("PRAGMA table_info name is NOT NULL")
+            }
+            QueryResult.Value(names)
+        },
+        parameters = 0,
     ).value
 
     private fun insertVehicle(): Long = database.transactionWithResult {

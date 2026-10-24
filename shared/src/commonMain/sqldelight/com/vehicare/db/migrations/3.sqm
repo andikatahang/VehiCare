@@ -1,0 +1,26 @@
+-- Migrates v3 (vehicles + service log) → v4 (reminder rules). File name = the version being
+-- upgraded FROM.
+-- The DDL below must stay structurally identical to the CREATE TABLE and CREATE INDEX statements
+-- for reminder_rule in ReminderRule.sq — verifyCommonMainVehiCareDatabaseMigration compares the
+-- two, and a drifted column order or constraint fails the build (D-62).
+-- The migration is additive: one table plus one index, no ALTER TABLE, no backfill. That keeps it
+-- clear of the SQLite 3.18 rewrite hazards documented in ServiceEntry.sq (Android API 26 ships
+-- 3.18, which has neither DROP COLUMN nor a RENAME that leaves sqlite_master byte-identical).
+-- No PRAGMA lines: the iOS non-query path rejects row-returning statements, and
+-- `PRAGMA journal_mode=wal` returns a row.
+
+CREATE TABLE reminder_rule (
+    id                  INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    vehicle_id          INTEGER NOT NULL REFERENCES vehicle(id),
+    service_type        TEXT    NOT NULL,
+    interval_km         INTEGER,
+    interval_months     INTEGER,
+    lead_km             INTEGER,
+    lead_days           INTEGER,
+    enabled             INTEGER NOT NULL DEFAULT 1,
+    created_at_epoch_ms INTEGER NOT NULL,
+    notified_cycle_key  TEXT,
+    armed_cycle_key     TEXT
+);
+
+CREATE INDEX reminder_rule_vehicle ON reminder_rule(vehicle_id);

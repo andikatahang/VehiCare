@@ -1,0 +1,109 @@
+-- WAL is deliberately NOT set in this file: every unlabeled statement here is replayed inside
+-- the generated Schema.create() through driver.execute(), and `PRAGMA journal_mode=wal` returns
+-- a row — which the SQLiter non-query path rejects, aborting the first launch on iOS. The driver
+-- factories establish WAL on the first connection instead (see com.vehicare.data.db.DriverFactory).
+
+-- One reminder rule: "every N km and/or every M months, measured from the last service of this
+-- type" (D-46/D-47). Keyed by vehicle plus the stable service-type string Phase 2 established —
+-- a rule always matches a stored label, never free text (D-40/D-44).
+--
+-- `interval_km` and `interval_months` are both nullable and at least one is set: one rule may
+-- carry either interval or both, and it becomes due when *either* is reached (D-46). `lead_km`
+-- and `lead_days` are the optional per-rule advance-notice window (D-50); NULL means "notify
+-- exactly at due".
+--
+-- `enabled` is INTEGER rather than a boolean because SQLDelight maps INTEGER to Long and the
+-- project ships no ColumnAdapter, so the mapper does `enabled != 0L`. A second custom-type
+-- mechanism for one column would buy nothing.
+--
+-- `created_at_epoch_ms` is UTC start-of-day millis of the civil date — the *same* convention as
+-- `service_entry.service_date_epoch_ms`, because D-49 makes it the time baseline for a rule whose
+-- type has no entry yet, and that value is compared against entry dates (D-46/D-49/D-50). A
+-- wall-clock instant here would make a rule created at 23:50 behave differently from one created
+-- at 00:10 on the same day.
+--
+-- Two markers, deliberately distinct:
+--   * `notified_cycle_key` is D-51's CLAIM. It is written by the compare-and-set `markNotified`
+--     and its affected-row count is what gates delivery — one notification per due cycle.
+--   * `armed_cycle_key` is D-53's PROOF that the OS scheduler accepted a request for that cycle.
+--     It gates nothing and is never a substitute for the claim: a pre-scheduled iOS request fires
+--     with no app code running, so the app cannot write the claim at delivery and needs this
+--     second fact to tell "the OS already had this cycle" from "this cycle was never armed".
+--
+-- `ON DELETE CASCADE` is deliberately absent: foreign keys are never enabled (no
+-- `PRAGMA foreign_keys=ON` anywhere), so a cascade clause would be decorative. D-64 is satisfied
+-- by the explicit `deleteRulesForVehicle` inside the vehicle-delete transaction instead.
+CREATE TABLE reminder_rule (
+    id                  INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+    vehicle_id          INTEGER NOT NULL REFERENCES vehicle(id),
+    service_type        TEXT    NOT NULL,
+    interval_km         INTEGER,
+    interval_months     INTEGER,
+    lead_km             INTEGER,
+    lead_days           INTEGER,
+    enabled             INTEGER NOT NULL DEFAULT 1,
+    created_at_epoch_ms INTEGER NOT NULL,
+    notified_cycle_key  TEXT,
+    armed_cycle_key     TEXT
+);
+
+CREATE INDEX reminder_rule_vehicle ON reminder_rule(vehicle_id);
+
+selectForVehicle:
+SELECT * FROM reminder_rule WHERE vehicle_id = ? ORDER BY id;
+
+selectAll:
+SELECT * FROM reminder_rule ORDER BY vehicle_id, id;
+
+selectById:
+SELECT * FROM reminder_rule WHERE id = ?;
+
+-- Both markers are written as NULL on purpose: a brand-new rule has never been notified in its
+-- current cycle and has never been armed with the OS.
+insert:
+INSERT INTO reminder_rule(vehicle_id, service_type, interval_km, interval_months,
+                          lead_km, lead_days, enabled, created_at_epoch_ms,
+                          notified_cycle_key, armed_cycle_key)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL);
+
+-- Editing any interval or lead starts a new cycle, so both markers are reset here as well as by
+-- the cycle key itself — defence in depth for D-51/D-53.
+update:
+UPDATE reminder_rule
+SET service_type=?, interval_km=?, interval_months=?, lead_km=?, lead_days=?,
+    enabled=?, notified_cycle_key=NULL, armed_cycle_key=NULL
+WHERE id=?;
+
+-- Turning a rule back on re-arms it: the user expects the next evaluation to speak again, so the
+-- claim and the armed marker both reset with the flag.
+setEnabled:
+UPDATE reminder_rule
+SET enabled=?, notified_cycle_key=NULL, armed_cycle_key=NULL
+WHERE id=?;
+
+-- The whole of D-51's guarantee, in one statement: a compare-and-set, never a read-then-write.
+-- The affected-row count *is* the decision — 1 means this caller won the cycle and may post, 0
+-- means the cycle was already claimed and this caller must stay silent. Two evaluations of the
+-- same cycle therefore cannot both notify.
+markNotified:
+UPDATE reminder_rule SET notified_cycle_key = ?
+WHERE id = ? AND (notified_cycle_key IS NULL OR notified_cycle_key <> ?);
+
+-- Bookkeeping only, never a claim: the caller writes this after the platform scheduler accepted
+-- the request. Its affected-row count is ignored. A later sweep reads it to distinguish "the OS
+-- already had this cycle" from "this cycle was never armed", and a failed schedule leaves the
+-- cycle unarmed so the next sweep retries. It never touches `notified_cycle_key`.
+markArmed:
+UPDATE reminder_rule SET armed_cycle_key = ?
+WHERE id = ? AND (armed_cycle_key IS NULL OR armed_cycle_key <> ?);
+
+delete:
+DELETE FROM reminder_rule WHERE id = ?;
+
+-- The vehicle-delete cascade (D-64), called inside VehicleRepositoryImpl.delete's transaction —
+-- not an ON DELETE CASCADE clause, because foreign keys are never enabled.
+deleteRulesForVehicle:
+DELETE FROM reminder_rule WHERE vehicle_id = ?;
+
+countEnabledForVehicle:
+SELECT COUNT(*) FROM reminder_rule WHERE vehicle_id = ? AND enabled = 1;
