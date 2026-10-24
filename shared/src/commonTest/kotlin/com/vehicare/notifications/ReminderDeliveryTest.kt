@@ -11,6 +11,7 @@ import com.vehicare.domain.ReminderStatus
 import com.vehicare.domain.TypeBaseline
 import com.vehicare.domain.Vehicle
 import com.vehicare.domain.VehicleStats
+import com.vehicare.testing.IgnoreOnAndroidHost
 import com.vehicare.util.ServiceDates
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -19,7 +20,6 @@ import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.DatePeriod
 import kotlinx.datetime.LocalDate
 import kotlinx.datetime.plus
-import kotlin.test.Ignore
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -346,19 +346,23 @@ class ReminderDeliveryTest {
     }
 
     /**
-     * **Environment-blocked, not logic-blocked** (deferred item, Task 1): this scenario calls
+     * **Blocked on the JVM host target only** — see [IgnoreOnAndroidHost]. This scenario calls
      * [ReminderCopy.notificationTitle]/[ReminderCopy.dueSentence] through the real
      * `evaluateAndDeliver` path, and Compose Resources' `getString` resolves the system locale via
      * `android.content.res.Resources.getSystem()` — a real Android framework call that the plain
      * JVM `android.jar` stub throws `RuntimeException("not mocked")` for outside Robolectric. No
      * Robolectric dependency exists in this project yet, and adding one is a new build dependency
-     * outside this plan's audited package set (RESEARCH's Package Legitimacy Audit covers only
-     * `androidx.work:work-runtime`), so it is deliberately not added here without sign-off. The
-     * same scenario is proven by [ReminderScheduleTest] and by the pure-function tests above
-     * (`immediateCandidates`/`timePathOwnedRuleIds`/`capScheduled`), and is expected to pass on a
-     * real resource environment (`iosSimulatorArm64Test`, or an instrumented `androidDeviceTest`).
+     * outside Phase 3's audited package set (RESEARCH's Package Legitimacy Audit covers only
+     * `androidx.work:work-runtime`), so it is deliberately not added without sign-off.
+     *
+     * It **does** run on `iosSimulatorArm64Test` and on an instrumented `androidDeviceTest`, which
+     * matters: this scenario and the three below are the only ones that positively assert a
+     * notification is ever posted or scheduled — every other assertion on
+     * `triggeredCalls`/`scheduledCalls`/`markArmedCalls` in this file is negative (`isEmpty`), so an
+     * unconditional `@Ignore` here would leave the claim-then-post and schedule-then-`markArmed`
+     * ordering with no standing regression gate at all (Phase 3 verification, 2026-10-24).
      */
-    @Ignore
+    @IgnoreOnAndroidHost
     @Test
     fun theSameCycleWithNoArmedMarkerIsClaimedAndPosted() = runTest {
         val neverArmedRule = rule(id = 1L, createdAt = LocalDate(2026, 1, 1))
@@ -382,8 +386,8 @@ class ReminderDeliveryTest {
         assertEquals("Overdue by 28 days", posted.body)
     }
 
-    /** Environment-blocked, not logic-blocked — see the KDoc above [theSameCycleWithNoArmedMarkerIsClaimedAndPosted]. */
-    @Ignore
+    /** JVM-host-blocked only, not logic-blocked — see the KDoc above [theSameCycleWithNoArmedMarkerIsClaimedAndPosted]. */
+    @IgnoreOnAndroidHost
     @Test
     fun aDueTodayArmedCycleIsScheduledWithTodayAndNeverClaimed() = runTest {
         val baseRule = rule(id = 1L, createdAt = LocalDate(2026, 1, 1))
@@ -408,8 +412,8 @@ class ReminderDeliveryTest {
         assertEquals("Due now", scheduled.body)
     }
 
-    /** Environment-blocked, not logic-blocked — see the KDoc above [theSameCycleWithNoArmedMarkerIsClaimedAndPosted]. */
-    @Ignore
+    /** JVM-host-blocked only, not logic-blocked — see the KDoc above [theSameCycleWithNoArmedMarkerIsClaimedAndPosted]. */
+    @IgnoreOnAndroidHost
     @Test
     fun aFutureCycleIsScheduledAndMarkedArmedOnlyAfterScheduleSucceeds() = runTest {
         val futureRule = rule(id = 1L, createdAt = LocalDate(2026, 1, 1))
@@ -442,8 +446,8 @@ class ReminderDeliveryTest {
         assertTrue(retryRepository.markArmedCalls.isEmpty())
     }
 
-    /** Environment-blocked, not logic-blocked — see the KDoc above [theSameCycleWithNoArmedMarkerIsClaimedAndPosted]. */
-    @Ignore
+    /** JVM-host-blocked only, not logic-blocked — see the KDoc above [theSameCycleWithNoArmedMarkerIsClaimedAndPosted]. */
+    @IgnoreOnAndroidHost
     @Test
     fun aLeadSevenRuleSchedulesOnDueMinusSevenWithADueSoonBody() = runTest {
         // due = 2026-02-08 (createdAt + 1 month), leadDays = 7 -> notificationDate = 2026-02-01.
