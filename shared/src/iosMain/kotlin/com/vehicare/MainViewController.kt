@@ -4,6 +4,7 @@ import androidx.compose.ui.window.ComposeUIViewController
 import com.vehicare.data.db.DatabaseFactory
 import com.vehicare.data.db.DatabaseProvider
 import com.vehicare.data.db.createDriverFactory
+import com.vehicare.di.iosPlatformModule
 import platform.UIKit.UIViewController
 
 /**
@@ -18,5 +19,5 @@ import platform.UIKit.UIViewController
  */
 fun MainViewController(): UIViewController {
     DatabaseProvider.initialize(DatabaseFactory(createDriverFactory().createDriver()))
-    return ComposeUIViewController { App() }
+    return ComposeUIViewController { App(iosPlatformModule()) }
 }
