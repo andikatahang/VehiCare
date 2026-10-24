@@ -102,8 +102,9 @@ fun VehicleListRoute(
                 is VehicleListUiState.Content -> {
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
-                        // Rows arrive newest-first (D-16). The 64px bottom band is what keeps the
-                        // last card clear of the 56dp FAB that floats over it.
+                        // Rows arrive urgency-ordered (D-57, superseding D-16 for this list). The
+                        // 64px bottom band is what keeps the last card clear of the 56dp FAB that
+                        // floats over it.
                         contentPadding = PaddingValues(
                             start = 16.dp,
                             end = 16.dp,
@@ -112,10 +113,16 @@ fun VehicleListRoute(
                         ),
                         verticalArrangement = Arrangement.spacedBy(16.dp),
                     ) {
-                        items(state.items, key = { vehicle -> vehicle.id }) { vehicle ->
+                        // Plan 08 inserts the permission banner here, as the first item of this
+                        // Content state only — no placeholder item belongs here until then, or
+                        // every user's list would shift by 16dp for no reason.
+                        items(state.items, key = { row -> row.vehicle.id }) { row ->
                             VehicleCard(
-                                vehicle = vehicle,
-                                onClick = { onOpenVehicle(vehicle.id) },
+                                vehicle = row.vehicle,
+                                top = row.top,
+                                otherDueCount = row.otherDueCount,
+                                lastServiceEpochMs = row.lastServiceEpochMs,
+                                onClick = { onOpenVehicle(row.vehicle.id) },
                             )
                         }
                     }
