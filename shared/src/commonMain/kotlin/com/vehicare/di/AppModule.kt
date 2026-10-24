@@ -60,7 +60,9 @@ val appModule = module {
     //       scheduler.evaluateNow()
     //   }
     single<ReminderRepository> { ReminderRepositoryImpl(get()) }
-    viewModel { VehicleListViewModel(get()) }
+    // The home dashboard reads the same reminder repository the Reminders screen uses — one
+    // aggregated evaluation join, never a second reminder read path (D-57, DSH-01).
+    viewModel { VehicleListViewModel(get(), get()) }
     // The form's id comes from the route: `parametersOf(vehicleId)` at the call site, destructured
     // here. 0L is the add case; anything else loads that row for edit.
     viewModel { (vehicleId: Long) -> VehicleEditViewModel(get(), vehicleId) }
