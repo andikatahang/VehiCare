@@ -32,7 +32,7 @@
 
 ### Dashboard
 
-- [ ] **DSH-01**: User sees an overview of all vehicles with the last service date and next due service on the home screen
+- [x] **DSH-01**: User sees an overview of all vehicles with the last service date and next due service on the home screen
 
 ### Data & Platform
 
@@ -99,7 +99,7 @@ Which phases cover which requirements. Updated during roadmap creation.
 | REM-02 | Phase 3: Reminders & Dashboard | Complete |
 | REM-03 | Phase 3: Reminders & Dashboard | Pending |
 | REM-04 | Phase 3: Reminders & Dashboard | Pending |
-| DSH-01 | Phase 3: Reminders & Dashboard | Pending |
+| DSH-01 | Phase 3: Reminders & Dashboard | Complete |
 | DAT-01 | Phase 1: Foundation & Vehicle Management | Complete |
 | DAT-02 | Phase 1: Foundation & Vehicle Management | Complete |
 | DAT-03 | Phase 1: Foundation & Vehicle Management | Complete |
