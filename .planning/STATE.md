@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: Ready to execute
-stopped_at: Phase 3 plans complete — 8/8 verified (`## VERIFICATION PASSED`), requirements 5/5 and decisions 25/25 covered; awaiting `/gsd-execute-phase 3`
-last_updated: "2026-10-24T01:39:39.000Z"
+status: Executing Phase 3
+stopped_at: "Phase 3 wave 3 closed (03-04 reconstructed after an interrupted executor run — see 03-04-SUMMARY.md). 4/8 plans complete. Next: wave 4 (03-05)."
+last_updated: "2026-10-24T09:35:00+07:00"
 progress:
   total_phases: 3
   completed_phases: 2
   total_plans: 26
-  completed_plans: 18
-  percent: 69
+  completed_plans: 19
+  percent: 73
 ---
 
 # STATE: VehiCare
@@ -22,15 +22,15 @@ progress:
 
 ## Current Position
 
-Phase: 3
-Plan: Not started — 8 plans ready (wave 1 = 03-01)
+Phase: 3 (Reminders & Dashboard) — EXECUTING
+Plan: 4 of 8 complete — next is `03-05` (wave 4)
 
 | Field | Value |
 |-------|-------|
-| **Active Phase** | Phase 3: Reminders & Dashboard (8/8 plans verified 2026-10-24 — ready to execute) |
-| **Active Plan** | Not started — next is `03-01` (wave 1) |
-| **Status** | **Phase 3 planning complete 2026-10-24.** 8 plans (`03-01`…`03-08`) across 7 waves; plan checker returned `## VERIFICATION PASSED`; requirements coverage 5/5 (REM-01…04, DSH-01); decision coverage 25/25 (D-41…D-65). No Phase 3 code has been written — the working tree still contains planning documents only. Phase 2 remains complete (UAT 8/8, security 50/50 threats closed, verification `passed`). |
-| **Progress** | `[███████░░░] 2/3 phases (67%)` |
+| **Active Phase** | Phase 3: Reminders & Dashboard (4/8 plans executed — waves 1–3 done) |
+| **Active Plan** | Next is `03-05` (wave 4, depends on 03-03 + 03-04) |
+| **Status** | **Phase 3 executing.** Waves 1–3 complete: `03-01` (schema v4), `03-02` (due-state engine), `03-03` (persistence/copy/notification-id), `03-04` (Reminders screen, single-select chips, form rules — reconstructed after an interrupted executor run, see `03-04-SUMMARY.md`). Full Android host suite (166 tests) and full iOS simulator suite (228 tests) both green with 0 failures as of the 03-04 close-out. Waves 4–6 remain: `03-05` (editor), `03-06`/`03-07` (dashboard / notifications — `03-07` has a checkpoint), `03-08` (permission ask — checkpoint). Phase 2 remains complete (UAT 8/8, security 50/50 threats closed, verification `passed`). |
+| **Progress** | `[███████░░░] 2/3 phases (67%); Phase 3: 4/8 plans (50%)` |
 
 ```
 Phase 1 [Complete] → Phase 2 [Complete] → Phase 3 [Not Started]
@@ -46,7 +46,7 @@ Phase 1 [Complete] → Phase 2 [Complete] → Phase 3 [Not Started]
 |-------|------|--------|
 | 1 | Foundation & Vehicle Management | Complete (2026-10-19) |
 | 2 | Service Log | Complete (2026-10-21) |
-| 3 | Reminders & Dashboard | Planned — 8/8 verified (2026-10-24) |
+| 3 | Reminders & Dashboard | Executing — 4/8 plans complete (2026-10-24) |
 
 ---
 
@@ -55,11 +55,11 @@ Phase 1 [Complete] → Phase 2 [Complete] → Phase 3 [Not Started]
 | Metric | Value |
 |--------|-------|
 | Phases completed | 2 / 3 |
-| Plans completed | 18 / 26 |
+| Plans completed | 19 / 26 |
 | Requirements covered | 17 / 21 |
-| Sessions | 14 |
+| Sessions | 15 |
 
-Per-plan: `Phase 1 / 01` — ~28min, 3 tasks, 63 files · `Phase 1 / 02` — 17min, 3 tasks, 15 files · `Phase 1 / 03` — 20min, 3 tasks, 17 files · `Phase 1 / 04` — 24min, 3 tasks, 17 files · `Phase 1 / 05` — 11min, 3 tasks, 3 files · `Phase 1 / 06` — 10min, 3 tasks, 8 files · `Phase 1 / 07` — 21min, 3 tasks, 6 files · `Phase 1 / 08` — 21min, 3 tasks, 6 files · `Phase 1 / 09` — 4min, 3 tasks, 6 files · `Phase 1 / 10` — 12min, 3 tasks, 5 files · `Phase 2 / 01` — 11min, 3 tasks, 14 files · `Phase 2 / 02` — 15min, 2 tasks, 7 files · `Phase 2 / 03` — 45min, 3 tasks, 16 files.
+Per-plan: `Phase 1 / 01` — ~28min, 3 tasks, 63 files · `Phase 1 / 02` — 17min, 3 tasks, 15 files · `Phase 1 / 03` — 20min, 3 tasks, 17 files · `Phase 1 / 04` — 24min, 3 tasks, 17 files · `Phase 1 / 05` — 11min, 3 tasks, 3 files · `Phase 1 / 06` — 10min, 3 tasks, 8 files · `Phase 1 / 07` — 21min, 3 tasks, 6 files · `Phase 1 / 08` — 21min, 3 tasks, 6 files · `Phase 1 / 09` — 4min, 3 tasks, 6 files · `Phase 1 / 10` — 12min, 3 tasks, 5 files · `Phase 2 / 01` — 11min, 3 tasks, 14 files · `Phase 2 / 02` — 15min, 2 tasks, 7 files · `Phase 2 / 03` — 45min, 3 tasks, 16 files · `Phase 3 / 04` — ~14min (reconstructed), 3 tasks, 11 files.
 
 ---
 | Phase 2 P4 | 45min | 3 tasks | 15 files |
@@ -161,16 +161,16 @@ Unchanged from the contract: Gradle 9.5.1 · SQLDelight 2.4.1 · Koin 4.2.2 · N
 
 ### Blockers
 
-No blockers. **Phase 3 planning complete 2026-10-24** — 8 plans verified, execution not started. **Phase 2 closed 2026-10-21** — UAT 8/8 passed (`02-UAT.md`), security audit threat-secure (`02-SECURITY.md`, 50/50 threats closed, `threats_open: 0`), verification `status: passed` (52/52 must-haves). **Phase 1 closed 2026-10-19** — UAT 6/6 passed (`01-UAT.md`), security audit threat-secure (`01-SECURITY.md`, 72/72 threats closed, `threats_open: 0`). **Carried-forward debt (acknowledged at completion):** `01-VERIFICATION.md` remains `status: human_needed` — all six human checks passed via UAT; the stale field was acknowledged, not re-verified — gates requiring `status: passed` stay blocked until a re-verification (canonical fix; review via `/gsd-audit-uat`). Open code-review findings (`01-REVIEW.md`: CR-01, WR-01…03, IN-01…06) are tracked separately for the review-fix path.
+No blockers. **Phase 3 executing 2026-10-24** — waves 1–3 complete (03-01…03-04, 4/8 plans), wave 4 (`03-05`) next. `03-04` was reconstructed after an interrupted executor run (commits existed, `SUMMARY.md` did not) — see `03-04-SUMMARY.md` "Issues Encountered" for the recovery detail; both full test suites (166 Android + 228 iOS) are green as of the close-out. **Phase 2 closed 2026-10-21** — UAT 8/8 passed (`02-UAT.md`), security audit threat-secure (`02-SECURITY.md`, 50/50 threats closed, `threats_open: 0`), verification `status: passed` (52/52 must-haves). **Phase 1 closed 2026-10-19** — UAT 6/6 passed (`01-UAT.md`), security audit threat-secure (`01-SECURITY.md`, 72/72 threats closed, `threats_open: 0`). **Carried-forward debt (acknowledged at completion):** `01-VERIFICATION.md` remains `status: human_needed` — all six human checks passed via UAT; the stale field was acknowledged, not re-verified — gates requiring `status: passed` stay blocked until a re-verification (canonical fix; review via `/gsd-audit-uat`). Open code-review findings (`01-REVIEW.md`: CR-01, WR-01…03, IN-01…06) are tracked separately for the review-fix path.
 
 ---
 
 ## Session Continuity
 
-**Last session:** 2026-10-24T01:39:39.000Z
-**Stopped at:** Phase 3 planning complete — 8 plans verified (`## VERIFICATION PASSED`), requirements 5/5 and decisions 25/25 covered, STATE/ROADMAP updated, plans committed locally. No Phase 3 code executed.
-**Resume file:** .planning/phases/03-reminders-dashboard/03-01-PLAN.md (wave 1 start); phase contract in `03-CONTEXT.md`, `03-RESEARCH.md`, `03-PATTERNS.md`, `03-UI-SPEC.md`
-**Next action:** Run `/gsd-execute-phase 3`. Wave order: 01 → 02/03 → 04 → 05 → 06 → 07 → 08. **User decisions 2026-10-23 (binding):** (1) DSH-01's last-service date joins the card's single status line — `Last service {date} · {sentence}`; (2) D-54's explanation dialog shows only after the first successful add, at most one automatic ask per install; (3) D-61's tap is two-case — askable → dialog, denied → OS settings. Carried debt: `01-VERIFICATION.md` remains `human_needed` (acknowledged; `/gsd-audit-uat` or re-verify to clear); `01-REVIEW.md` CR-01/WR-01…03/IN-01…06 open; `02-REVIEW.md` WR-01…WR-04 open. Local commits are **not pushed**.
+**Last session:** 2026-10-24T09:35:00+07:00
+**Stopped at:** Phase 3 wave 3 closed. `03-01`…`03-04` complete (4/8 plans); `03-04` was reconstructed after an interrupted executor run (commits existed, no SUMMARY.md) — verified against code and both full test suites (166 Android + 228 iOS, 0 failures) before closing it out. Waves 4–6 (`03-05`…`03-08`) not started.
+**Resume file:** .planning/phases/03-reminders-dashboard/03-05-PLAN.md (wave 4 start); phase contract in `03-CONTEXT.md`, `03-RESEARCH.md`, `03-PATTERNS.md`, `03-UI-SPEC.md`
+**Next action:** Run `/gsd-execute-phase 3`. Remaining wave order: 05 → 06/07 → 08 (`03-07` and `03-08` are not autonomous — expect checkpoints). **User decisions 2026-10-23 (binding):** (1) DSH-01's last-service date joins the card's single status line — `Last service {date} · {sentence}`; (2) D-54's explanation dialog shows only after the first successful add, at most one automatic ask per install; (3) D-61's tap is two-case — askable → dialog, denied → OS settings. Carried debt: `01-VERIFICATION.md` remains `human_needed` (acknowledged; `/gsd-audit-uat` or re-verify to clear); `01-REVIEW.md` CR-01/WR-01…03/IN-01…06 open; `02-REVIEW.md` WR-01…WR-04 open. Local commits are **not pushed**.
 
 ## Decisions
 
@@ -239,3 +239,4 @@ No blockers. **Phase 3 planning complete 2026-10-24** — 8 plans verified, exec
 - [Phase 02]: 02-07 keeps the form and both display surfaces single-select; 02-08 owns the multi-select UI and serviceTypeLine — The plan ships the storage/repository half only, with two documented firstOrNull() compile bridges in detail and history, so no second display rule exists to delete later
 - [Phase 02]: GAP 1 is fixed by one pure transition, not a call-site patch: confirmCustomServiceType returns both the next selection and the next learned chip list, and withConfirmedCustomType writes both in one copy — the picker's selected-label union is defensive only — The UAT bug survived 39/39 static must-haves because a selection outside presets+learned had no chip to render; one transition makes the two lists unable to drift, and the iosTest asserts both
 - [Phase 02]: The form and both display surfaces are multi-select with serviceTypeLine as the single join: one type renders verbatim, several join with the locked middle dot, detail caps at 2 lines and the history row at 1 — D-26's one-of rule was superseded by the user's 2026-10-21 decision; keeping one helper and one separator literal prevents two display rules from diverging as more surfaces list types
+- [Phase 03]: 03-04 closed out manually instead of re-executed — its 3 task commits existed with no SUMMARY.md (interrupted executor run); re-executing risked duplicating finished work, so the orchestrator verified every must_haves/key_links symbol against the committed code and re-ran both full test suites (166 Android host + 228 iOS simulator, 0 failures) before writing the SUMMARY retroactively
