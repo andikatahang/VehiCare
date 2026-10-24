@@ -63,6 +63,48 @@ internal fun confirmCustomServiceType(
 }
 
 /**
+ * Which gesture model a chip group follows.
+ *
+ * [Multiple] is the service-entry form's contract (any number selected, a tap toggles). [Single] is
+ * the reminder editor's (C-32): exactly one type per rule, and a tap on the selected chip is a
+ * **no-op** rather than a deselect, so the submit gate can never become unreachable while the form
+ * shows no error.
+ */
+enum class SelectionMode {
+    /** Toggle semantics: a tap adds an unselected label, removes a selected one. */
+    Multiple,
+
+    /** One-of semantics: a tap moves the selection, and a tap on the selected label does nothing. */
+    Single,
+}
+
+/**
+ * The single chip-tap transition for both modes (C-32).
+ *
+ * In [SelectionMode.Multiple] this **delegates** to [toggleServiceType] unchanged, so the
+ * service-entry form's behaviour cannot drift from its own tests. In [SelectionMode.Single] the
+ * result is always a one-element list: a different label replaces the selection, and the label that
+ * is already selected (compared case-insensitively, like every other chip transition) returns
+ * [selected] untouched.
+ *
+ * Returning the *same list instance* for a no-op tap is deliberate: callers can compare identity
+ * and skip a redundant `copy`, and the group can never transiently become empty (T-03-18).
+ *
+ * @param label    the tapped chip's label, in its stored casing
+ * @param selected the current selection, in tap order
+ * @param mode     which gesture model the picker is rendering
+ */
+internal fun selectServiceType(
+    label: String,
+    selected: List<String>,
+    mode: SelectionMode,
+): List<String> = when (mode) {
+    SelectionMode.Multiple -> toggleServiceType(label, selected)
+    SelectionMode.Single ->
+        if (selected.any { it.equals(label, ignoreCase = true) }) selected else listOf(label)
+}
+
+/**
  * The single chip-tap transition: a chip that is selected is removed, any other is appended.
  *
  * Matching is case-insensitive so a `Battery` / `battery` pair can never both enter the selection

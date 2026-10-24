@@ -25,6 +25,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.vehicare.domain.ServiceTypePresets
+import com.vehicare.ui.service.SelectionMode
 import com.vehicare.ui.theme.Hairline
 import com.vehicare.ui.theme.Ink
 import com.vehicare.ui.theme.Mist
@@ -43,6 +44,17 @@ import vehicare.shared.generated.resources.action_add_type
  * overrides D-26's original one-of rule; its order, geometry, palette and glyph rules stay in force.
  * M3 gives each chip `Role.Checkbox`, so every chip announces its own state and selection is never
  * carried by colour alone.
+ *
+ * [selectionMode] adds the reminder editor's one-of model (C-32) **without a second component**: it
+ * defaults to [SelectionMode.Multiple], so every existing call site compiles and behaves exactly as
+ * before, and the editor passes [SelectionMode.Single]. In single mode a tap on another chip moves
+ * the selection and a tap on the already-selected chip is a no-op — never a deselect.
+ *
+ * **Recorded limitation (do not "fix" it by hand-rolling a chip):** the pinned M3 `FilterChip` is
+ * built on `SelectableChip`, which applies `semantics { role = Role.Checkbox }` *inside* the
+ * component, after the caller's modifier. An external `Role.RadioButton` would therefore be
+ * overridden. A single-select group announces checkbox semantics; that is accepted because exactly
+ * one chip is always selected once the user picks (UI-SPEC Verification Notes #3).
  *
  * The six presets are code constants from [ServiceTypePresets.ALL] (locked order: Oil change,
  * Tire rotation, Brake service, Inspection, Battery, Filters). Learned labels come from the
@@ -69,6 +81,7 @@ fun ServiceTypePicker(
     onToggle: (String) -> Unit,
     onAddCustom: () -> Unit,
     enabled: Boolean = true,
+    selectionMode: SelectionMode = SelectionMode.Multiple,
     modifier: Modifier = Modifier,
 ) {
     val allOptions = buildList {
@@ -93,6 +106,7 @@ fun ServiceTypePicker(
                     option = option,
                     isSelected = selected.any { it.equals(option, ignoreCase = true) },
                     enabled = enabled,
+                    selectionMode = selectionMode,
                     onToggle = onToggle,
                 )
             }
@@ -136,11 +150,15 @@ private fun renderChip(
     option: String,
     isSelected: Boolean,
     enabled: Boolean,
+    selectionMode: SelectionMode,
     onToggle: (String) -> Unit,
 ) {
+    // C-32: in single mode the selected chip's tap is a no-op, so the group can never be emptied
+    // by a gesture. The transition itself enforces the same rule; this keeps the ripple honest.
+    val tapIsNoOp = isSelected && selectionMode == SelectionMode.Single
     FilterChip(
         selected = isSelected,
-        onClick = { if (enabled) onToggle(option) },
+        onClick = { if (enabled && !tapIsNoOp) onToggle(option) },
         modifier = Modifier
             .defaultMinSize(minHeight = 48.dp)
             .width(IntrinsicSize.Min),

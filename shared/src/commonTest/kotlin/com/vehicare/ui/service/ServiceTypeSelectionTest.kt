@@ -3,6 +3,7 @@ package com.vehicare.ui.service
 import com.vehicare.domain.ServiceTypePresets
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertSame
 
 /**
  * Unit tests for the pure chip transitions in `ServiceTypeSelection.kt`.
@@ -132,5 +133,55 @@ class ServiceTypeSelectionTest {
         val result = toggleServiceType("Filters", listOf("Filters"))
 
         assertEquals(emptyList(), result)
+    }
+
+    @Test
+    fun multipleModeStillTogglesExactlyLikeTheServiceForm() {
+        val afterFirstTap = selectServiceType("Battery", emptyList(), SelectionMode.Multiple)
+        assertEquals(listOf("Battery"), afterFirstTap)
+
+        val afterSecondTap = selectServiceType("battery", afterFirstTap, SelectionMode.Multiple)
+        assertEquals(emptyList(), afterSecondTap)
+    }
+
+    @Test
+    fun singleModeMovesTheSelectionInsteadOfAppending() {
+        val result = selectServiceType(
+            label = "Brake service",
+            selected = listOf("Oil change"),
+            mode = SelectionMode.Single,
+        )
+
+        assertEquals(listOf("Brake service"), result)
+    }
+
+    @Test
+    fun singleModeTappingTheSelectedLabelReturnsTheSameList() {
+        val selected = listOf("Brake service")
+
+        val result = selectServiceType("Brake service", selected, SelectionMode.Single)
+
+        // C-32: never a deselect — the form cannot silently become invalid.
+        assertEquals(selected, result)
+        assertSame(selected, result, "a no-op tap must not even copy the list")
+    }
+
+    @Test
+    fun singleModeCaseVariantTapOnTheSelectedLabelIsAlsoANoOp() {
+        val selected = listOf("Brake service")
+
+        val result = selectServiceType("BRAKE SERVICE", selected, SelectionMode.Single)
+
+        assertEquals(listOf("Brake service"), result, "the stored casing is never rewritten")
+    }
+
+    @Test
+    fun singleModeSelectsFromEmptyAndKeepsExactlyOneLabel() {
+        val first = selectServiceType("Filters", emptyList(), SelectionMode.Single)
+        assertEquals(listOf("Filters"), first)
+
+        val second = selectServiceType("Battery", first, SelectionMode.Single)
+        assertEquals(listOf("Battery"), second)
+        assertEquals(1, second.size)
     }
 }
