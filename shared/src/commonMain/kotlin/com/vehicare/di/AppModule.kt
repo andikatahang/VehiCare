@@ -8,6 +8,7 @@ import com.vehicare.data.VehicleRepository
 import com.vehicare.data.VehicleRepositoryImpl
 import com.vehicare.data.db.DatabaseProvider
 import com.vehicare.db.VehiCareDatabase
+import com.vehicare.notifications.NotificationScheduler
 import com.vehicare.ui.reminders.ReminderEditViewModel
 import com.vehicare.ui.reminders.ReminderSummaryViewModel
 import com.vehicare.ui.reminders.RemindersViewModel
@@ -42,8 +43,19 @@ val appModule = module {
     single<VehiCareDatabase> { DatabaseProvider.require() }
     // Deleting a vehicle removes its photo file through the real storage seam (D-07), replacing the
     // no-op default plan 01-03 left in place while the write side did not exist yet (T-01-18).
+    // A deleted vehicle must not leave a delivered or scheduled notification behind, so the hook
+    // cancels every rule id the cascade removed before re-evaluating through the same platform
+    // seam the iOS sweep uses to clear and re-schedule its own pending requests (D-64).
     single<VehicleRepository> {
-        VehicleRepositoryImpl(get(), photoDeleter = PhotoStorage::delete)
+        VehicleRepositoryImpl(
+            get(),
+            photoDeleter = PhotoStorage::delete,
+            onVehicleDeleted = { _, ruleIds ->
+                val scheduler = get<NotificationScheduler>()
+                scheduler.cancel(ruleIds)
+                scheduler.evaluateNow()
+            },
+        )
     }
     // The service entry repository with the real photo deleter (02-03) — this is the phase's only
     // repository binding; 02-01 wires nothing (its impl default deleter stays `{}` for tests only)
@@ -52,14 +64,22 @@ val appModule = module {
         ServiceEntryRepositoryImpl(get(), photoDeleter = PhotoStorage::delete)
     }
     // The reminder rules the Reminders screen, the Detail summary row, the dashboard and the
-    // notification worker all read (plan 03-03). Plan 07 replaces this binding with the
-    // notification-refresh hook the third constructor parameter exists for:
-    //   onRulesChanged = { _, ruleIds ->
-    //       val scheduler = get<NotificationScheduler>()
-    //       scheduler.cancel(ruleIds)
-    //       scheduler.evaluateNow()
-    //   }
-    single<ReminderRepository> { ReminderRepositoryImpl(get()) }
+    // notification worker all read (plan 03-03). The graph cancels the changed rule's
+    // delivered/pending notification and re-arms delivery after a user edit through the platform
+    // seam. The delivery orchestrator is deliberately not bound in this graph — both delivery
+    // paths (the Android worker, the iOS sweep) build their own instance through the
+    // notifications module's own factory object, so a third construction point here would be an
+    // untested path.
+    single<ReminderRepository> {
+        ReminderRepositoryImpl(
+            get(),
+            onRulesChanged = { _, ruleIds ->
+                val scheduler = get<NotificationScheduler>()
+                scheduler.cancel(ruleIds)
+                scheduler.evaluateNow()
+            },
+        )
+    }
     // The home dashboard reads the same reminder repository the Reminders screen uses — one
     // aggregated evaluation join, never a second reminder read path (D-57, DSH-01).
     viewModel { VehicleListViewModel(get(), get()) }

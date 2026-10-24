@@ -10,17 +10,37 @@ import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Build
 import android.provider.Settings
+import androidx.work.ExistingPeriodicWorkPolicy
 import androidx.work.ExistingWorkPolicy
 import androidx.work.OneTimeWorkRequestBuilder
+import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import com.vehicare.util.ReminderCopy
 import com.vehicare.util.ReminderNotificationId
+import java.util.concurrent.TimeUnit
 
 /** Unique one-shot work name for a foreground/edit-triggered re-evaluation. */
 internal const val REMINDER_EVAL_NOW_WORK = "reminder-eval-now"
 
 /** Unique periodic work name for the daily background evaluation (D-52). */
 internal const val REMINDER_EVAL_PERIODIC_WORK = "reminder-eval-periodic"
+
+/**
+ * Enqueues the daily periodic reminder evaluation (D-52). Called once from `:androidApp`'s
+ * `VehiCareApp.onCreate`.
+ *
+ * `androidx.work` is an `implementation`-scoped dependency of `:shared`'s `androidMain` only (it
+ * must never leak onto `:androidApp`'s own compile classpath), so the host module calls this
+ * wrapper instead of naming `WorkManager`/`PeriodicWorkRequestBuilder` itself. `KEEP` so a process
+ * restart never resets the daily cadence; no constraints because the work is purely local.
+ */
+fun enqueueDailyReminderEvaluation(context: Context) {
+    WorkManager.getInstance(context).enqueueUniquePeriodicWork(
+        REMINDER_EVAL_PERIODIC_WORK,
+        ExistingPeriodicWorkPolicy.KEEP,
+        PeriodicWorkRequestBuilder<ReminderWorker>(1, TimeUnit.DAYS).build(),
+    )
+}
 
 /**
  * The Android [NotificationScheduler]: permission state via platform APIs only, notification

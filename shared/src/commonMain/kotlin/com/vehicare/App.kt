@@ -5,18 +5,24 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.Lifecycle
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import coil3.ImageLoader
 import coil3.compose.setSingletonImageLoaderFactory
 import com.vehicare.di.appModule
+import com.vehicare.notifications.NotificationScheduler
+import com.vehicare.notifications.NotificationTapBus
 import com.vehicare.ui.navigation.BottomTabs
 import com.vehicare.ui.navigation.ReminderEditRoute
 import com.vehicare.ui.navigation.RemindersRoute
@@ -41,6 +47,7 @@ import io.github.vinceglb.filekit.coil.addPlatformFileSupport
 import kotlinx.coroutines.launch
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.KoinApplication
+import org.koin.compose.koinInject
 import org.koin.core.module.Module
 import org.koin.dsl.module
 import vehicare.shared.generated.resources.Res
@@ -77,6 +84,26 @@ fun App(platformModule: Module = noPlatformModule) {
     VehiCareTheme {
         KoinApplication(application = { modules(appModule, platformModule) }) {
             val navController = rememberNavController()
+
+            // The sweep is the iOS delivery path and an Android `evaluateNow` that enqueues the
+            // unique worker, so one call covers both platforms without a platform branch.
+            // `evaluateNow` is fire-and-forget by contract (no coroutine here), which is what
+            // makes a cancelled composition incapable of claiming a cycle and then dropping the
+            // notification.
+            val notificationScheduler = koinInject<NotificationScheduler>()
+            androidx.lifecycle.compose.LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
+                notificationScheduler.evaluateNow()
+            }
+
+            // The tap navigates on top of whatever the back stack holds so Back returns to where
+            // the user was (D-55); `consume()` precedes `navigate` so a recomposition cannot
+            // re-open Detail.
+            val pendingTap by NotificationTapBus.pending.collectAsState()
+            LaunchedEffect(pendingTap) {
+                val vehicleId = pendingTap ?: return@LaunchedEffect
+                NotificationTapBus.consume()
+                navController.navigate(VehicleDetailRoute(vehicleId))
+            }
 
             // The bottom bar belongs to the two tab roots only. Detail and the Add/Edit form are
             // pushed sub-screens: each carries its own simple title bar with a back arrow (D-20),
