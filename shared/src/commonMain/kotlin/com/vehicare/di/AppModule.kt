@@ -4,9 +4,7 @@ import com.vehicare.data.ServiceEntryRepository
 import com.vehicare.data.ServiceEntryRepositoryImpl
 import com.vehicare.data.VehicleRepository
 import com.vehicare.data.VehicleRepositoryImpl
-import com.vehicare.data.db.DatabaseFactory
-import com.vehicare.data.db.DriverFactory
-import com.vehicare.data.db.createDriverFactory
+import com.vehicare.data.db.DatabaseProvider
 import com.vehicare.db.VehiCareDatabase
 import com.vehicare.ui.service.ServiceEntryDetailViewModel
 import com.vehicare.ui.service.ServiceEntryEditViewModel
@@ -20,22 +18,23 @@ import org.koin.core.module.dsl.viewModel
 import org.koin.dsl.module
 
 /**
- * The shared Koin graph: driver → database → repository.
+ * The shared Koin graph: database holder → repository → ViewModel.
+ *
+ * The graph no longer owns driver construction. [DatabaseProvider] holds the process's single
+ * [VehiCareDatabase], and each platform entry point installs it before Compose starts:
+ * `VehiCareApp.onCreate` on Android, `MainViewController` on iOS. That is not a stylistic choice —
+ * SQLDelight's change-notification listener registry lives on the **driver instance**, so a second
+ * database over the same file would write successfully while the UI's `asFlow()` queries never
+ * emitted, leaving due states stale until a restart (03-RESEARCH Pattern 1 / Pitfall 1). The holder
+ * is also what lets the future Android `CoroutineWorker` — which has no Koin container at all —
+ * read the same driver the UI observes (D-63).
  *
  * The graph grows with the plans that author each type: ViewModels are registered by the plan
  * that writes them (01-04/01-07/01-09) because binding a type that does not exist yet cannot
  * compile.
- *
- * Driver construction stays platform-owned: Android loads its platform module which registers
- * a [DriverFactory] built with the real application `Context`; platforms without such a module
- * (iOS) fall back to the context-less platform entry point.
  */
 val appModule = module {
-    single {
-        val driverFactory = getOrNull<DriverFactory>() ?: createDriverFactory()
-        DatabaseFactory(driverFactory.createDriver())
-    }
-    single<VehiCareDatabase> { get<DatabaseFactory>().database }
+    single<VehiCareDatabase> { DatabaseProvider.require() }
     // Deleting a vehicle removes its photo file through the real storage seam (D-07), replacing the
     // no-op default plan 01-03 left in place while the write side did not exist yet (T-01-18).
     single<VehicleRepository> {

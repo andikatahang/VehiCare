@@ -1,9 +1,6 @@
 package com.vehicare.di
 
 import android.content.Context
-import com.vehicare.data.db.DriverFactory
-import com.vehicare.data.db.createDriverFactory
-import com.vehicare.data.db.defaultDatabaseName
 import org.koin.core.module.Module
 import org.koin.dsl.module
 
@@ -15,10 +12,14 @@ import org.koin.dsl.module
  * extensions, not as module declarations. Passing the context in keeps the module self-contained
  * and lets the host hand it straight to `App(...)`.
  *
+ * This module no longer constructs the database: `VehiCareApp.onCreate` installs the process-wide
+ * holder before Compose starts and `appModule` reads it. A `DriverFactory` binding here would be
+ * dead — nothing consumes it any more — and a dead binding that still calls `createDriverFactory`
+ * is a second driver waiting to happen (03-PATTERNS C-4).
+ *
  * @param androidContext the application context; only `applicationContext` is kept so no
  *   Activity is ever retained by the graph.
  */
 fun platformModule(androidContext: Context): Module = module {
     single<Context> { androidContext.applicationContext }
-    single<DriverFactory> { createDriverFactory(get<Context>(), defaultDatabaseName) }
 }
