@@ -122,7 +122,7 @@ Plans:
 3. On Android, overdue mileage reminders are evaluated by a background WorkManager task; on iOS, overdue mileage reminders are evaluated on app foreground via `triggerImmediateIfOverdue()` — both platforms deliver the notification correctly
 4. Home screen dashboard shows all vehicles with last service date and next due service at a glance
 
-**Plans:** 6/8 plans executed
+**Plans:** 7/8 plans executed
 Plans:
 
 **Wave 1**
@@ -148,7 +148,7 @@ Plans:
 
 **Wave 6** *(blocked on Wave 5 completion)*
 
-- [ ] 03-07-PLAN.md — delivery: `ReminderDelivery`, `NotificationScheduler` seam, WorkManager worker, iOS pre-scheduling + foreground sweep
+- [x] 03-07-PLAN.md — delivery: `ReminderDelivery`, `NotificationScheduler` seam, WorkManager worker, iOS pre-scheduling + foreground sweep
 
 **Wave 7** *(blocked on Wave 6 completion)*
 
@@ -164,7 +164,7 @@ Plans:
 |-------|----------------|--------|-----------|
 | 1. Foundation & Vehicle Management | 10/10 | Complete    | 2026-10-19 |
 | 2. Service Log | 8/8 | Complete    | 2026-10-21 |
-| 3. Reminders & Dashboard | 6/8 | In Progress|  |
+| 3. Reminders & Dashboard | 7/8 | In Progress|  |
 
 ---
 
