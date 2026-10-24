@@ -3,14 +3,14 @@ gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
 status: Executing Phase 3
-stopped_at: "Phase 3 wave 4 (03-05, reminder editor + Detail summary row) complete, worktree merged and cleaned up. 5/8 plans complete. Next: wave 5 (03-06, 03-07)."
-last_updated: "2026-10-24T10:05:00+07:00"
+stopped_at: "Phase 3 wave 5 in progress: 03-06 (dashboard) merged and closed out; 03-07 (notifications, has a checkpoint) next, run sequentially due to a shared AppModule.kt edit. 6/8 plans complete."
+last_updated: "2026-10-24T10:25:00+07:00"
 progress:
   total_phases: 3
   completed_phases: 2
   total_plans: 26
-  completed_plans: 20
-  percent: 77
+  completed_plans: 21
+  percent: 81
 ---
 
 # STATE: VehiCare
@@ -23,14 +23,14 @@ progress:
 ## Current Position
 
 Phase: 3 (Reminders & Dashboard) — EXECUTING
-Plan: 5 of 8 complete — next is wave 5 (`03-06`, `03-07`)
+Plan: 6 of 8 complete — next is `03-07` (wave 5, part 2; has a checkpoint)
 
 | Field | Value |
 |-------|-------|
-| **Active Phase** | Phase 3: Reminders & Dashboard (5/8 plans executed — waves 1–4 done) |
-| **Active Plan** | Next is wave 5: `03-06` (dashboard) + `03-07` (notifications, has a checkpoint) |
-| **Status** | **Phase 3 executing.** Waves 1–4 complete: `03-01` (schema v4), `03-02` (due-state engine), `03-03` (persistence/copy/notification-id), `03-04` (Reminders screen — reconstructed after an interrupted executor run), `03-05` (reminder add/edit/delete editor + Vehicle Detail summary row; REM-01/REM-02 now marked complete in REQUIREMENTS.md). Full Android host suite (186 tests) and full iOS simulator suite (248 tests) both green with 0 failures as of 03-05. Waves 5–6 remain: `03-06`/`03-07` (dashboard / notifications — `03-07` has a checkpoint), `03-08` (permission ask — checkpoint). Phase 2 remains complete (UAT 8/8, security 50/50 threats closed, verification `passed`). |
-| **Progress** | `[███████░░░] 2/3 phases (67%); Phase 3: 5/8 plans (63%)` |
+| **Active Phase** | Phase 3: Reminders & Dashboard (6/8 plans executed — waves 1–4 done, wave 5 half done) |
+| **Active Plan** | Next is `03-07` (notifications — not autonomous, expect a checkpoint); run after `03-06` sequentially since both touch `AppModule.kt` |
+| **Status** | **Phase 3 executing.** Waves 1–5a complete: `03-01` (schema v4), `03-02` (due-state engine), `03-03` (persistence/copy/notification-id), `03-04` (Reminders screen — reconstructed after an interrupted executor run), `03-05` (reminder editor + Detail summary row; REM-01/REM-02 complete), `03-06` (dashboard urgency ordering + status line; DSH-01 complete). Full Android host suite (199 tests) and full iOS simulator suite (261 tests) both green with 0 failures as of 03-06. Remaining: `03-07` (notifications — checkpoint), `03-08` (permission ask — checkpoint). Phase 2 remains complete (UAT 8/8, security 50/50 threats closed, verification `passed`). |
+| **Progress** | `[███████░░░] 2/3 phases (67%); Phase 3: 6/8 plans (75%)` |
 
 ```
 Phase 1 [Complete] → Phase 2 [Complete] → Phase 3 [Not Started]
@@ -46,7 +46,7 @@ Phase 1 [Complete] → Phase 2 [Complete] → Phase 3 [Not Started]
 |-------|------|--------|
 | 1 | Foundation & Vehicle Management | Complete (2026-10-19) |
 | 2 | Service Log | Complete (2026-10-21) |
-| 3 | Reminders & Dashboard | Executing — 5/8 plans complete (2026-10-24) |
+| 3 | Reminders & Dashboard | Executing — 6/8 plans complete (2026-10-24) |
 
 ---
 
@@ -55,11 +55,11 @@ Phase 1 [Complete] → Phase 2 [Complete] → Phase 3 [Not Started]
 | Metric | Value |
 |--------|-------|
 | Phases completed | 2 / 3 |
-| Plans completed | 20 / 26 |
-| Requirements covered | 19 / 21 |
+| Plans completed | 21 / 26 |
+| Requirements covered | 20 / 21 |
 | Sessions | 15 |
 
-Per-plan: `Phase 1 / 01` — ~28min, 3 tasks, 63 files · `Phase 1 / 02` — 17min, 3 tasks, 15 files · `Phase 1 / 03` — 20min, 3 tasks, 17 files · `Phase 1 / 04` — 24min, 3 tasks, 17 files · `Phase 1 / 05` — 11min, 3 tasks, 3 files · `Phase 1 / 06` — 10min, 3 tasks, 8 files · `Phase 1 / 07` — 21min, 3 tasks, 6 files · `Phase 1 / 08` — 21min, 3 tasks, 6 files · `Phase 1 / 09` — 4min, 3 tasks, 6 files · `Phase 1 / 10` — 12min, 3 tasks, 5 files · `Phase 2 / 01` — 11min, 3 tasks, 14 files · `Phase 2 / 02` — 15min, 2 tasks, 7 files · `Phase 2 / 03` — 45min, 3 tasks, 16 files · `Phase 3 / 04` — ~14min (reconstructed), 3 tasks, 11 files · `Phase 3 / 05` — ~40min, 3 tasks, 11 files.
+Per-plan: `Phase 1 / 01` — ~28min, 3 tasks, 63 files · `Phase 1 / 02` — 17min, 3 tasks, 15 files · `Phase 1 / 03` — 20min, 3 tasks, 17 files · `Phase 1 / 04` — 24min, 3 tasks, 17 files · `Phase 1 / 05` — 11min, 3 tasks, 3 files · `Phase 1 / 06` — 10min, 3 tasks, 8 files · `Phase 1 / 07` — 21min, 3 tasks, 6 files · `Phase 1 / 08` — 21min, 3 tasks, 6 files · `Phase 1 / 09` — 4min, 3 tasks, 6 files · `Phase 1 / 10` — 12min, 3 tasks, 5 files · `Phase 2 / 01` — 11min, 3 tasks, 14 files · `Phase 2 / 02` — 15min, 2 tasks, 7 files · `Phase 2 / 03` — 45min, 3 tasks, 16 files · `Phase 3 / 04` — ~14min (reconstructed), 3 tasks, 11 files · `Phase 3 / 05` — ~40min, 3 tasks, 11 files · `Phase 3 / 06` — ~35min, 2 tasks, 7 files.
 
 ---
 | Phase 2 P4 | 45min | 3 tasks | 15 files |
@@ -161,16 +161,16 @@ Unchanged from the contract: Gradle 9.5.1 · SQLDelight 2.4.1 · Koin 4.2.2 · N
 
 ### Blockers
 
-No blockers. **Phase 3 executing 2026-10-24** — waves 1–4 complete (03-01…03-05, 5/8 plans), wave 5 (`03-06`, `03-07`) next. `03-04` was reconstructed after an interrupted executor run (commits existed, `SUMMARY.md` did not) — see `03-04-SUMMARY.md` "Issues Encountered" for the recovery detail. This repo has no git remote, which made the worktree fork-base check unable to resolve `origin/HEAD` and caused one 03-05 executor dispatch to correctly halt on a base mismatch (no work lost, `exit 42` self-halt per #48/#2924); fixed for the rest of the session by setting `worktree.baseRef: "head"` in `.claude/settings.local.json`. Both full test suites (186 Android + 248 iOS) are green as of 03-05. **Phase 2 closed 2026-10-21** — UAT 8/8 passed (`02-UAT.md`), security audit threat-secure (`02-SECURITY.md`, 50/50 threats closed, `threats_open: 0`), verification `status: passed` (52/52 must-haves). **Phase 1 closed 2026-10-19** — UAT 6/6 passed (`01-UAT.md`), security audit threat-secure (`01-SECURITY.md`, 72/72 threats closed, `threats_open: 0`). **Carried-forward debt (acknowledged at completion):** `01-VERIFICATION.md` remains `status: human_needed` — all six human checks passed via UAT; the stale field was acknowledged, not re-verified — gates requiring `status: passed` stay blocked until a re-verification (canonical fix; review via `/gsd-audit-uat`). Open code-review findings (`01-REVIEW.md`: CR-01, WR-01…03, IN-01…06) are tracked separately for the review-fix path.
+No blockers. **Phase 3 executing 2026-10-24** — waves 1–5a complete (03-01…03-06, 6/8 plans), `03-07` (checkpoint expected) next. `03-04` was reconstructed after an interrupted executor run (commits existed, `SUMMARY.md` did not) — see `03-04-SUMMARY.md` "Issues Encountered" for the recovery detail. This repo has no git remote, which made the worktree fork-base check unable to resolve `origin/HEAD` and caused one 03-05 executor dispatch to correctly halt on a base mismatch (no work lost, `exit 42` self-halt per #48/#2924); fixed for the rest of the session by setting `worktree.baseRef: "head"` in `.claude/settings.local.json`. Both full test suites (199 Android + 261 iOS) are green as of 03-06. **Phase 2 closed 2026-10-21** — UAT 8/8 passed (`02-UAT.md`), security audit threat-secure (`02-SECURITY.md`, 50/50 threats closed, `threats_open: 0`), verification `status: passed` (52/52 must-haves). **Phase 1 closed 2026-10-19** — UAT 6/6 passed (`01-UAT.md`), security audit threat-secure (`01-SECURITY.md`, 72/72 threats closed, `threats_open: 0`). **Carried-forward debt (acknowledged at completion):** `01-VERIFICATION.md` remains `status: human_needed` — all six human checks passed via UAT; the stale field was acknowledged, not re-verified — gates requiring `status: passed` stay blocked until a re-verification (canonical fix; review via `/gsd-audit-uat`). Open code-review findings (`01-REVIEW.md`: CR-01, WR-01…03, IN-01…06) are tracked separately for the review-fix path.
 
 ---
 
 ## Session Continuity
 
-**Last session:** 2026-10-24T10:05:00+07:00
-**Stopped at:** Phase 3 wave 4 closed. `03-01`…`03-05` complete (5/8 plans); `03-04` was reconstructed after an interrupted executor run, and one `03-05` worktree dispatch halted cleanly on a fork-base mismatch (fixed via `worktree.baseRef: "head"`, no work lost) before a clean retry succeeded. REM-01/REM-02 now complete. Waves 5–6 (`03-06`…`03-08`) not started.
-**Resume file:** .planning/phases/03-reminders-dashboard/03-06-PLAN.md and 03-07-PLAN.md (wave 5 start, both depend on 03-05); phase contract in `03-CONTEXT.md`, `03-RESEARCH.md`, `03-PATTERNS.md`, `03-UI-SPEC.md`
-**Next action:** Run `/gsd-execute-phase 3`. Remaining wave order: 06/07 (wave 5) → 08 (wave 6) (`03-07` and `03-08` are not autonomous — expect checkpoints). **User decisions 2026-10-23 (binding):** (1) DSH-01's last-service date joins the card's single status line — `Last service {date} · {sentence}`; (2) D-54's explanation dialog shows only after the first successful add, at most one automatic ask per install; (3) D-61's tap is two-case — askable → dialog, denied → OS settings. Carried debt: `01-VERIFICATION.md` remains `human_needed` (acknowledged; `/gsd-audit-uat` or re-verify to clear); `01-REVIEW.md` CR-01/WR-01…03/IN-01…06 open; `02-REVIEW.md` WR-01…WR-04 open. Local commits are **not pushed**.
+**Last session:** 2026-10-24T10:25:00+07:00
+**Stopped at:** Phase 3 wave 5 half-done: `03-06` (dashboard) merged and closed out (6/8 plans). `03-07` and `03-06` both touch `AppModule.kt`, so they run sequentially — `03-07` is next. DSH-01 now complete. Wave 6 (`03-08`) not started.
+**Resume file:** .planning/phases/03-reminders-dashboard/03-07-PLAN.md (wave 5, part 2); phase contract in `03-CONTEXT.md`, `03-RESEARCH.md`, `03-PATTERNS.md`, `03-UI-SPEC.md`
+**Next action:** Run `/gsd-execute-phase 3`. Remaining: 03-07 (wave 5) → 03-08 (wave 6) — both are not autonomous, expect checkpoints (03-07: likely a dependency/package-legitimacy gate for `androidx.work`; 03-08: notification permission flow). **User decisions 2026-10-23 (binding):** (1) DSH-01's last-service date joins the card's single status line — `Last service {date} · {sentence}`; (2) D-54's explanation dialog shows only after the first successful add, at most one automatic ask per install; (3) D-61's tap is two-case — askable → dialog, denied → OS settings. Carried debt: `01-VERIFICATION.md` remains `human_needed` (acknowledged; `/gsd-audit-uat` or re-verify to clear); `01-REVIEW.md` CR-01/WR-01…03/IN-01…06 open; `02-REVIEW.md` WR-01…WR-04 open. Local commits are **not pushed**.
 
 ## Decisions
 
