@@ -8,6 +8,8 @@ import com.vehicare.data.VehicleRepository
 import com.vehicare.data.VehicleRepositoryImpl
 import com.vehicare.data.db.DatabaseProvider
 import com.vehicare.db.VehiCareDatabase
+import com.vehicare.ui.reminders.ReminderEditViewModel
+import com.vehicare.ui.reminders.ReminderSummaryViewModel
 import com.vehicare.ui.reminders.RemindersViewModel
 import com.vehicare.ui.service.ServiceEntryDetailViewModel
 import com.vehicare.ui.service.ServiceEntryEditViewModel
@@ -75,4 +77,11 @@ val appModule = module {
     viewModel { (vehicleId: Long) -> ServiceSummaryViewModel(get(), vehicleId) }
     // The Reminders list: one vehicleId from the route, three flat reads behind one state flow.
     viewModel { (vehicleId: Long) -> RemindersViewModel(vehicleId, get()) }
+    // The reminder editor: vehicleId + ruleId from the route (ruleId = 0L means add). The
+    // editor's learned-chip source is the entry repository's own flow, not a second reminder read.
+    viewModel { (vehicleId: Long, ruleId: Long) ->
+        ReminderEditViewModel(get(), get<ServiceEntryRepository>().observeLearnedTypes(), vehicleId, ruleId)
+    }
+    // The Detail's Reminders summary row: the same route id, three flat reads joined once.
+    viewModel { (vehicleId: Long) -> ReminderSummaryViewModel(get(), vehicleId) }
 }

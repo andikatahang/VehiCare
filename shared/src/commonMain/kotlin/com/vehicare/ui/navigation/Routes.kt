@@ -44,3 +44,10 @@ data class ServiceHistoryRoute(val vehicleId: Long)
  */
 @Serializable
 data class RemindersRoute(val vehicleId: Long)
+
+/**
+ * The shared Add/Edit reminder form (D-08/D-42). `ruleId == 0L` means "add"; any `ruleId > 0`
+ * means "edit [ruleId]" — the `ServiceEntryEditRoute` convention.
+ */
+@Serializable
+data class ReminderEditRoute(val vehicleId: Long, val ruleId: Long = 0L)

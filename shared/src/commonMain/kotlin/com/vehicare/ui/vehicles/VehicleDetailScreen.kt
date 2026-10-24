@@ -44,6 +44,9 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.vehicare.domain.ServiceSummary
 import com.vehicare.domain.Vehicle
+import com.vehicare.ui.reminders.ReminderSummary
+import com.vehicare.ui.reminders.ReminderSummaryViewModel
+import com.vehicare.ui.reminders.components.ReminderSummaryRow
 import com.vehicare.ui.service.ServiceSummaryViewModel
 import com.vehicare.ui.service.components.ServiceSummaryRow
 import com.vehicare.ui.theme.Ink
@@ -77,8 +80,9 @@ import vehicare.shared.generated.resources.title_vehicle_fallback
 
 /**
  * One vehicle's Detail screen (D-18): the hero photo or the type-circle placeholder, the name at
- * `Display` size, the five locked field rows, the Service history summary row and the recessive
- * destructive action — under a D-20 simple title bar with a back arrow and one Edit action.
+ * `Display` size, the five locked field rows, the Service history summary row, the Reminders
+ * summary row (D-45) and the recessive destructive action — under a D-20 simple title bar with a
+ * back arrow and one Edit action.
  *
  * All three states of [VehicleDetailUiState] render something: a progress indicator while the row
  * is being read, a not-available message with a way back when it is gone, and the content above.
@@ -96,6 +100,8 @@ import vehicare.shared.generated.resources.title_vehicle_fallback
  *   to the list. A failure never reaches it.
  * @param onOpenServiceHistory opens this vehicle's full service history — navigation stays injected,
  *   so this screen never touches a nav controller (D-32).
+ * @param onOpenReminders opens this vehicle's Reminders destination — the Reminders summary row's
+ *   only action (D-45), injected the same way as [onOpenServiceHistory].
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -105,6 +111,7 @@ fun VehicleDetailRoute(
     onBack: () -> Unit,
     onDeleted: () -> Unit,
     onOpenServiceHistory: () -> Unit,
+    onOpenReminders: () -> Unit,
 ) {
     val viewModel = koinViewModel<VehicleDetailViewModel>(
         parameters = { parametersOf(vehicleId) },
@@ -115,6 +122,12 @@ fun VehicleDetailRoute(
         parameters = { parametersOf(vehicleId) },
     )
     val summary = summaryViewModel.summary.collectAsState().value
+    // The Reminders row's own aggregate (D-45) — the same join `RemindersViewModel` and the
+    // dashboard use, so this row cannot name a different "most urgent rule" than either of them.
+    val reminderSummaryViewModel = koinViewModel<ReminderSummaryViewModel>(
+        parameters = { parametersOf(vehicleId) },
+    )
+    val reminderSummary = reminderSummaryViewModel.summary.collectAsState().value
     val state = viewModel.uiState.collectAsState().value
     val deleting = viewModel.deleting.collectAsState().value
     val deleteFailed = viewModel.deleteFailed.collectAsState().value
@@ -213,6 +226,8 @@ fun VehicleDetailRoute(
                 contentPadding = innerPadding,
                 summary = summary,
                 onOpenServiceHistory = onOpenServiceHistory,
+                reminderSummary = reminderSummary,
+                onOpenReminders = onOpenReminders,
                 // The visible half of the single-flight guard: a deletion that is already running
                 // cannot be started again from here.
                 deleteEnabled = !deleting,
@@ -251,6 +266,8 @@ private fun VehicleDetailContent(
     contentPadding: PaddingValues,
     summary: ServiceSummary?,
     onOpenServiceHistory: () -> Unit,
+    reminderSummary: ReminderSummary?,
+    onOpenReminders: () -> Unit,
     deleteEnabled: Boolean,
     onDeleteClick: () -> Unit,
 ) {
@@ -321,6 +338,13 @@ private fun VehicleDetailContent(
         ServiceSummaryRow(
             summary = summary,
             onClick = onOpenServiceHistory,
+        )
+        // The Reminders summary row (D-45): lg 24px below Service history, inside the same pair
+        // of 48px breaks — the screen gains one row, it does not re-time.
+        Spacer(modifier = Modifier.height(24.dp))
+        ReminderSummaryRow(
+            summary = reminderSummary,
+            onClick = onOpenReminders,
         )
         Spacer(modifier = Modifier.height(48.dp))
 

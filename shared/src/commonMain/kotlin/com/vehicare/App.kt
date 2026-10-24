@@ -18,6 +18,8 @@ import coil3.ImageLoader
 import coil3.compose.setSingletonImageLoaderFactory
 import com.vehicare.di.appModule
 import com.vehicare.ui.navigation.BottomTabs
+import com.vehicare.ui.navigation.ReminderEditRoute
+import com.vehicare.ui.navigation.RemindersRoute
 import com.vehicare.ui.navigation.ServiceEntryDetailRoute
 import com.vehicare.ui.navigation.ServiceEntryEditRoute
 import com.vehicare.ui.navigation.ServiceHistoryRoute
@@ -25,6 +27,8 @@ import com.vehicare.ui.navigation.SettingsRoute
 import com.vehicare.ui.navigation.VehicleDetailRoute
 import com.vehicare.ui.navigation.VehicleEditRoute
 import com.vehicare.ui.navigation.VehicleListRoute
+import com.vehicare.ui.reminders.ReminderEditRoute as ReminderEditScreen
+import com.vehicare.ui.reminders.RemindersRoute as RemindersScreen
 import com.vehicare.ui.service.ServiceEntryDetailRoute as ServiceEntryDetailScreen
 import com.vehicare.ui.service.ServiceEntryEditRoute as ServiceEntryEditScreen
 import com.vehicare.ui.service.ServiceHistoryRoute as ServiceHistoryScreen
@@ -41,6 +45,7 @@ import org.koin.core.module.Module
 import org.koin.dsl.module
 import vehicare.shared.generated.resources.Res
 import vehicare.shared.generated.resources.snackbar_entry_deleted
+import vehicare.shared.generated.resources.snackbar_reminder_deleted
 import vehicare.shared.generated.resources.snackbar_vehicle_deleted
 
 /**
@@ -129,6 +134,11 @@ fun App(platformModule: Module = noPlatformModule) {
                             onOpenServiceHistory = {
                                 navController.navigate(ServiceHistoryRoute(detailRoute.id))
                             },
+                            // The Reminders summary row's only action (D-45): the Reminders
+                            // destination plan 04 declared and this plan registers below.
+                            onOpenReminders = {
+                                navController.navigate(RemindersRoute(detailRoute.id))
+                            },
                             // A deletion that really happened (the ViewModel reports success only
                             // after the repository returned): the message is launched on the
                             // shell's scope first, so the pop to the list cannot take it away,
@@ -147,6 +157,36 @@ fun App(platformModule: Module = noPlatformModule) {
                             entryId = route.entryId,
                             onBack = { navController.popBackStack() },
                             onSaved = { navController.popBackStack() },
+                        )
+                    }
+                    composable<RemindersRoute> { backStackEntry ->
+                        val route = backStackEntry.toRoute<RemindersRoute>()
+                        RemindersScreen(
+                            vehicleId = route.vehicleId,
+                            onAddReminder = {
+                                navController.navigate(ReminderEditRoute(route.vehicleId, 0L))
+                            },
+                            onOpenRule = { ruleId ->
+                                navController.navigate(ReminderEditRoute(route.vehicleId, ruleId))
+                            },
+                            onBack = { navController.popBackStack() },
+                        )
+                    }
+                    composable<ReminderEditRoute> { backStackEntry ->
+                        val route = backStackEntry.toRoute<ReminderEditRoute>()
+                        // The Detail screen is popped the instant the delete succeeds, so this
+                        // message is hosted here on the shell's scope — the vehicle-delete and
+                        // entry-delete pattern repeated for the third destructive flow.
+                        val reminderDeletedMessage = stringResource(Res.string.snackbar_reminder_deleted)
+                        ReminderEditScreen(
+                            vehicleId = route.vehicleId,
+                            ruleId = route.ruleId,
+                            onBack = { navController.popBackStack() },
+                            onSaved = { navController.popBackStack() },
+                            onDeleted = {
+                                scope.launch { snackbarHostState.showSnackbar(reminderDeletedMessage) }
+                                navController.popBackStack()
+                            },
                         )
                     }
                     composable<ServiceEntryDetailRoute> { backStackEntry ->
