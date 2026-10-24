@@ -7,9 +7,13 @@ import com.vehicare.domain.ReminderRule
  *
  * Every numeric field is a `String` (not a nullable and not a `Long`) because that is what a text
  * field holds; [ReminderFormValidation.toRule] is the single place where "empty text" becomes `null`
- * for the domain model. Numeric fields hold raw digits only — [ReminderFormValidation.sanitizeKm] and
- * [ReminderFormValidation.sanitizeMonths] are the only writers, so no grouping separator or unit ever
- * enters the value.
+ * for the domain model. Numeric fields hold raw digits only — [ReminderFormValidation.sanitizeKm]
+ * is the distance fields' only writer, so no grouping separator or unit ever enters the value.
+ *
+ * There is **no months field** (261024-u9g, D-3): the monthly interval is one app-level setting
+ * (Settings → Service interval), not a per-rule editor choice. The stored `ReminderRule` keeps
+ * `intervalMonths` — legacy rows keep rendering through the fallback — and a saved form writes
+ * `null` there, deferring to the global setting or to the row's legacy value.
  *
  * [serviceTypes] is the single-select chip group's selection, in tap order. It is a list rather than
  * a `String` so the picker's existing `selected: List<String>` contract is reused unchanged; the
@@ -20,7 +24,6 @@ import com.vehicare.domain.ReminderRule
 data class ReminderFormValues(
     val serviceTypes: List<String> = emptyList(),
     val intervalKm: String = "",
-    val intervalMonths: String = "",
     val leadKm: String = "",
     val leadDays: String = "",
     val enabled: Boolean = true,
@@ -29,13 +32,12 @@ data class ReminderFormValues(
 /**
  * The identity of one invalid numeric field — an enum, never copy.
  *
- * The user-facing message is one string for all four fields (C-34: one rule, one message), resolved
+ * The user-facing message is one string for all three fields (C-34: one rule, one message), resolved
  * in the screen as `error_interval_min`; keeping the identity here means the screen only has to ask
  * "is this field in the set?".
  */
 enum class ReminderFormField {
     INTERVAL_KM,
-    INTERVAL_MONTHS,
     LEAD_KM,
     LEAD_DAYS,
 }
@@ -66,15 +68,16 @@ object ReminderFormValidation {
     /**
      * The month input cap (UI-SPEC §Reminder editor: max 3 digits).
      *
-     * Three digits caps the parsed value at 999, which is what keeps `intervalMonths` inside the
-     * engine's `1..1200` precondition without the form having to know that number (T-03-17).
+     * The "days before" field is now its only consumer (261024-u9g, D-3 removed the per-rule
+     * months field; this cap is a display bound, not the engine's 1..1200 precondition). The
+     * monthly interval a user configures lives in Settings, not in this editor.
      */
     const val MAX_MONTH_DIGITS = 3
 
     /** The distance field's input filter: digits only, at most [MAX_KM_DIGITS]. */
     fun sanitizeKm(raw: String): String = raw.filter { it.isDigit() }.take(MAX_KM_DIGITS)
 
-    /** The time field's input filter: digits only, at most [MAX_MONTH_DIGITS]. */
+    /** The "days before" field's input filter: digits only, at most [MAX_MONTH_DIGITS]. */
     fun sanitizeMonths(raw: String): String = raw.filter { it.isDigit() }.take(MAX_MONTH_DIGITS)
 
     /**
@@ -92,23 +95,24 @@ object ReminderFormValidation {
      */
     fun errors(values: ReminderFormValues): Set<ReminderFormField> = buildSet {
         if (isInvalidCount(values.intervalKm)) add(ReminderFormField.INTERVAL_KM)
-        if (isInvalidCount(values.intervalMonths)) add(ReminderFormField.INTERVAL_MONTHS)
         if (isInvalidCount(values.leadKm)) add(ReminderFormField.LEAD_KM)
         if (isInvalidCount(values.leadDays)) add(ReminderFormField.LEAD_DAYS)
     }
 
     /**
-     * The submit gate (C-35): open only with **exactly one** service type selected, **at least one**
-     * non-blank interval, and no invalid field.
+     * The submit gate (C-35): open only with **exactly one** service type selected, a **non-blank
+     * distance interval**, and no invalid field.
      *
-     * The interval clause is deliberately "at least one non-blank", not "at least one valid": a form
-     * whose only interval is `"0"` has a non-blank interval and an error, so it stays closed — which
-     * is exactly what [errors] is for. The chip group carries no error line; its `*` marker and this
-     * disabled button carry the requirement (Phase 2 precedent).
+     * The distance axis is the editor's only interval input since 261024-u9g (D-3): the per-rule
+     * months field is gone, so C-35's "at least one interval" collapses to "the km field is set".
+     * The interval clause is deliberately "non-blank", not "valid": a form whose
+     * only interval is `"0"` has a non-blank interval and an error, so it stays closed — which
+     * is exactly what [errors] is for. The chip group carries no error line; its `*` marker and
+     * this disabled button carry the requirement (Phase 2 precedent).
      */
     fun isSubmittable(values: ReminderFormValues): Boolean =
         values.serviceTypes.size == 1 &&
-            (values.intervalKm.isNotBlank() || values.intervalMonths.isNotBlank()) &&
+            values.intervalKm.isNotBlank() &&
             errors(values).isEmpty()
 
     /**
@@ -148,7 +152,10 @@ object ReminderFormValidation {
             vehicleId = vehicleId,
             serviceType = serviceType,
             intervalKm = values.intervalKm.toOptionalCount(),
-            intervalMonths = values.intervalMonths.toOptionalCount(),
+            // No months field anymore (261024-u9g, D-3): a saved form always writes null, deferring
+            // to the global settings value or to the legacy row's stored months on an edit of a
+            // months-only rule. The stored schema is unchanged.
+            intervalMonths = null,
             leadKm = values.leadKm.toOptionalCount(),
             leadDays = values.leadDays.toOptionalCount(),
             enabled = values.enabled,

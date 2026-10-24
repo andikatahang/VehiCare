@@ -154,15 +154,13 @@
     <string name="section_intervals">Intervals</string>
     <string name="section_advance_notice">Advance notice</string>
     <string name="field_interval_distance">Distance</string>
-    <string name="field_interval_time">Time</string>
     <string name="field_suffix_km">km</string>
-    <string name="field_suffix_months">months</string>
     <string name="field_lead_km">Km before</string>
     <string name="field_lead_days">Days before</string>
     <string name="field_reminder_on">Reminder on</string>
 
     <!-- Hints (Label role, Slate) -->
-    <string name="hint_intervals">Whichever is reached first sets when this reminder is due.</string>
+    <string name="hint_intervals">Set the kilometres between services. The monthly interval is a universal setting (see Settings).</string>
     <string name="hint_advance_notice">Leave empty to be notified only when due.</string>
 
     <!-- Intervals line (rule row) -->

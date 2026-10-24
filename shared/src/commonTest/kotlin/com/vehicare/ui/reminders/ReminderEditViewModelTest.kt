@@ -64,7 +64,6 @@ class ReminderEditViewModelTest {
         assertTrue(ready.values.enabled)
         assertTrue(ready.values.serviceTypes.isEmpty())
         assertTrue(ready.values.intervalKm.isEmpty())
-        assertTrue(ready.values.intervalMonths.isEmpty())
     }
 
     @Test
@@ -103,7 +102,8 @@ class ReminderEditViewModelTest {
         val ready = assertIs<ReminderEditUiState.Ready>(viewModel.uiState.value)
         assertEquals(listOf("Oil change"), ready.values.serviceTypes)
         assertEquals("5000", ready.values.intervalKm)
-        assertEquals("6", ready.values.intervalMonths)
+        // The legacy months value is deliberately NOT seeded into the form (261024-u9g, D-3):
+        // the form has no months field at all, and a save writes intervalMonths = null.
         assertEquals("500", ready.values.leadKm)
         assertEquals("14", ready.values.leadDays)
         assertTrue(ready.values.enabled)
@@ -190,12 +190,12 @@ class ReminderEditViewModelTest {
         advanceUntilIdle()
 
         viewModel.onFieldChange(ReminderFormField.INTERVAL_KM, "12a34bc5678901")
-        viewModel.onFieldChange(ReminderFormField.INTERVAL_MONTHS, "1a2b3c4d5")
+        viewModel.onFieldChange(ReminderFormField.LEAD_DAYS, "1a2b3c4d5")
         advanceUntilIdle()
 
         val ready = assertIs<ReminderEditUiState.Ready>(viewModel.uiState.value)
         assertEquals("123456", ready.values.intervalKm)
-        assertEquals("123", ready.values.intervalMonths)
+        assertEquals("123", ready.values.leadDays)
     }
 
     @Test
@@ -336,6 +336,12 @@ class ReminderEditViewModelTest {
         assertEquals(ORIGINAL_CREATED_AT, saved.createdAtEpochMs)
         assertNull(saved.notifiedCycleKey)
         assertNull(saved.armedCycleKey)
+        // The edit stores intervalKm and writes intervalMonths = null (261024-u9g, D-3): the
+        // monthly interval is global now, and a save never rewrites the legacy stored value.
+        assertEquals(RULE_ID, saved.id)
+        assertEquals("Oil change", saved.serviceType)
+        assertEquals(5_000L, saved.intervalKm)
+        assertNull(saved.intervalMonths)
 
         val ready = assertIs<ReminderEditUiState.Ready>(viewModel.uiState.value)
         assertFalse(ready.saving)

@@ -80,14 +80,12 @@ import vehicare.shared.generated.resources.error_delete_reminder
 import vehicare.shared.generated.resources.error_interval_min
 import vehicare.shared.generated.resources.error_save_reminder
 import vehicare.shared.generated.resources.field_interval_distance
-import vehicare.shared.generated.resources.field_interval_time
 import vehicare.shared.generated.resources.field_lead_days
 import vehicare.shared.generated.resources.field_lead_km
 import vehicare.shared.generated.resources.field_reminder_on
 import vehicare.shared.generated.resources.field_required_marker
 import vehicare.shared.generated.resources.field_service_type
 import vehicare.shared.generated.resources.field_suffix_km
-import vehicare.shared.generated.resources.field_suffix_months
 import vehicare.shared.generated.resources.hint_advance_notice
 import vehicare.shared.generated.resources.hint_intervals
 import vehicare.shared.generated.resources.loading_reminder
@@ -312,7 +310,7 @@ private fun ReminderEditForm(
             )
         }
 
-        // 2. Intervals (required: at least one) — two stacked fields, md 16dp apart.
+        // 2. Intervals (km mandatory) — the monthly interval lives in Settings (261024-u9g, D-3).
         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
             Text(
                 text = stringResource(Res.string.section_intervals),
@@ -341,27 +339,6 @@ private fun ReminderEditForm(
                     },
                     isError = ReminderFormField.INTERVAL_KM in errors,
                     supportingText = if (ReminderFormField.INTERVAL_KM in errors) {
-                        { Text(text = errorText, style = MaterialTheme.typography.labelLarge, color = Danger) }
-                    } else {
-                        null
-                    },
-                )
-                OutlinedTextField(
-                    value = values.intervalMonths,
-                    onValueChange = { onFieldChange(ReminderFormField.INTERVAL_MONTHS, it) },
-                    modifier = Modifier.fillMaxWidth(),
-                    label = { Text(text = stringResource(Res.string.field_interval_time)) },
-                    singleLine = true,
-                    enabled = inputsEnabled,
-                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
-                    suffix = {
-                        Text(
-                            text = stringResource(Res.string.field_suffix_months),
-                            style = MaterialTheme.typography.labelLarge,
-                        )
-                    },
-                    isError = ReminderFormField.INTERVAL_MONTHS in errors,
-                    supportingText = if (ReminderFormField.INTERVAL_MONTHS in errors) {
                         { Text(text = errorText, style = MaterialTheme.typography.labelLarge, color = Danger) }
                     } else {
                         null

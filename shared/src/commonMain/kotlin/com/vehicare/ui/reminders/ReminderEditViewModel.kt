@@ -159,7 +159,9 @@ class ReminderEditViewModel(
                 values = ReminderFormValues(
                     serviceTypes = listOf(rule.serviceType),
                     intervalKm = rule.intervalKm?.toString().orEmpty(),
-                    intervalMonths = rule.intervalMonths?.toString().orEmpty(),
+                    // No months field anymore (261024-u9g, D-3): the legacy stored value is
+                    // intentionally NOT rewritten here — an edit rebuilds the form from the
+                    // km axis only, and a save writes intervalMonths = null (D-3's fallback).
                     leadKm = rule.leadKm?.toString().orEmpty(),
                     leadDays = rule.leadDays?.toString().orEmpty(),
                     enabled = rule.enabled,
@@ -175,8 +177,8 @@ class ReminderEditViewModel(
 
     /**
      * The single text entry point. Dispatches on [field] to [ReminderFormValidation.sanitizeKm] for
-     * the two distance fields and [ReminderFormValidation.sanitizeMonths] for the two time fields,
-     * then writes one `copy`. No composable may sanitize on its own.
+     * the two distance fields and [ReminderFormValidation.sanitizeMonths] for the "days before"
+     * field, then writes one `copy`. No composable may sanitize on its own.
      */
     fun onFieldChange(field: ReminderFormField, raw: String) {
         val current = _uiState.value as? ReminderEditUiState.Ready ?: return
@@ -184,12 +186,11 @@ class ReminderEditViewModel(
             ReminderFormField.INTERVAL_KM, ReminderFormField.LEAD_KM ->
                 ReminderFormValidation.sanitizeKm(raw)
 
-            ReminderFormField.INTERVAL_MONTHS, ReminderFormField.LEAD_DAYS ->
+            ReminderFormField.LEAD_DAYS ->
                 ReminderFormValidation.sanitizeMonths(raw)
         }
         val values = when (field) {
             ReminderFormField.INTERVAL_KM -> current.values.copy(intervalKm = sanitized)
-            ReminderFormField.INTERVAL_MONTHS -> current.values.copy(intervalMonths = sanitized)
             ReminderFormField.LEAD_KM -> current.values.copy(leadKm = sanitized)
             ReminderFormField.LEAD_DAYS -> current.values.copy(leadDays = sanitized)
         }

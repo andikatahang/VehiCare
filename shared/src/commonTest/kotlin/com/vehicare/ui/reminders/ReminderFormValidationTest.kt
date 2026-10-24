@@ -28,7 +28,6 @@ class ReminderFormValidationTest {
     fun whitespaceOnlyFieldsCountAsBlank() {
         val values = ReminderFormValues(
             intervalKm = "   ",
-            intervalMonths = "\t",
             leadKm = " ",
             leadDays = "\n",
         )
@@ -43,7 +42,6 @@ class ReminderFormValidationTest {
         val errors = ReminderFormValidation.errors(
             ReminderFormValues(
                 intervalKm = "0",
-                intervalMonths = "0",
                 leadKm = "0",
                 leadDays = "0",
             ),
@@ -52,7 +50,6 @@ class ReminderFormValidationTest {
         assertEquals(
             setOf(
                 ReminderFormField.INTERVAL_KM,
-                ReminderFormField.INTERVAL_MONTHS,
                 ReminderFormField.LEAD_KM,
                 ReminderFormField.LEAD_DAYS,
             ),
@@ -64,7 +61,6 @@ class ReminderFormValidationTest {
     fun oneIsValidInEveryNumericField() {
         val values = ReminderFormValues(
             intervalKm = "1",
-            intervalMonths = "1",
             leadKm = "1",
             leadDays = "1",
         )
@@ -75,10 +71,10 @@ class ReminderFormValidationTest {
     @Test
     fun onlyTheInvalidFieldIsReported() {
         val errors = ReminderFormValidation.errors(
-            ReminderFormValues(intervalKm = "5000", intervalMonths = "0"),
+            ReminderFormValues(intervalKm = "5000", leadDays = "0"),
         )
 
-        assertEquals(setOf(ReminderFormField.INTERVAL_MONTHS), errors)
+        assertEquals(setOf(ReminderFormField.LEAD_DAYS), errors)
     }
 
     @Test
@@ -105,19 +101,20 @@ class ReminderFormValidationTest {
 
     @Test
     fun sanitizeMonthsKeepsDigitsOnlyAndCapsAtThree() {
-        assertEquals("6", ReminderFormValidation.sanitizeMonths("6 months"))
+        // Since 261024-u9g (D-3) this sanitizer serves the "days before" field only.
+        assertEquals("6", ReminderFormValidation.sanitizeMonths("6 days"))
         assertEquals("120", ReminderFormValidation.sanitizeMonths("1200"))
-        assertEquals("", ReminderFormValidation.sanitizeMonths("months"))
+        assertEquals("", ReminderFormValidation.sanitizeMonths("days"))
         assertEquals(ReminderFormValidation.MAX_MONTH_DIGITS, ReminderFormValidation.sanitizeMonths("9".repeat(20)).length)
     }
 
     @Test
-    fun theMonthCapKeepsTheValueInsideTheEnginesPrecondition() {
+    fun theDayCapKeepsTheValueInsideAnySaneLeadWindow() {
         val capped = ReminderFormValidation.sanitizeMonths("999999")
 
         assertTrue(
             capped.toLong() in 1L..1200L,
-            "the 3-digit cap must keep intervalMonths inside 1..1200 (T-03-17)",
+            "the 3-digit cap keeps a days lead inside a sane range",
         )
     }
 
@@ -161,20 +158,30 @@ class ReminderFormValidationTest {
     }
 
     @Test
-    fun theGateIsOpenWithOneTypeAndOneValidInterval() {
+    fun theGateIsOpenWithOneTypeAndAValidKmInterval() {
         val kmOnly = ReminderFormValues(serviceTypes = listOf("Oil change"), intervalKm = "5000")
-        val monthsOnly = ReminderFormValues(serviceTypes = listOf("Oil change"), intervalMonths = "6")
 
-        assertTrue(ReminderFormValidation.isSubmittable(kmOnly))
-        assertTrue(ReminderFormValidation.isSubmittable(monthsOnly))
+        assertTrue(
+            ReminderFormValidation.isSubmittable(kmOnly),
+            "the km axis is the editor's only interval since 261024-u9g (D-3)",
+        )
     }
 
     @Test
-    fun theGateStaysOpenWithBothIntervalsAndBothLeadsSet() {
+    fun theGateIsClosedWithoutAnyKmInterval() {
+        val blankKm = ReminderFormValues(serviceTypes = listOf("Oil change"), intervalKm = "")
+
+        assertFalse(
+            ReminderFormValidation.isSubmittable(blankKm),
+            "a rule needs at least one interval; with months gone, km is mandatory (C-35/D-3)",
+        )
+    }
+
+    @Test
+    fun theGateStaysOpenWithKmAndBothLeadsSet() {
         val values = ReminderFormValues(
             serviceTypes = listOf("Brake service"),
             intervalKm = "5000",
-            intervalMonths = "6",
             leadKm = "500",
             leadDays = "14",
         )
@@ -213,7 +220,7 @@ class ReminderFormValidationTest {
     }
 
     @Test
-    fun toRuleKeepsBothIntervalsWhenBothAreSet() {
+    fun toRuleKeepsKmAndLeadsAndAlwaysWritesANullMonthsInterval() {
         val rule = ReminderFormValidation.toRule(
             id = 0L,
             vehicleId = 7L,
@@ -221,14 +228,13 @@ class ReminderFormValidationTest {
             values = ReminderFormValues(
                 serviceTypes = listOf("Brake service"),
                 intervalKm = "5000",
-                intervalMonths = "6",
                 leadKm = "500",
                 leadDays = "14",
             ),
         )
 
         assertEquals(5_000L, rule.intervalKm)
-        assertEquals(6L, rule.intervalMonths)
+        assertNull(rule.intervalMonths, "the editor no longer writes a per-rule months value (D-3)")
         assertEquals(500L, rule.leadKm)
         assertEquals(14L, rule.leadDays)
     }
@@ -254,7 +260,7 @@ class ReminderFormValidationTest {
             id = 0L,
             vehicleId = 7L,
             createdAtEpochMs = 1_700_000_000_000L,
-            values = ReminderFormValues(serviceTypes = listOf("Filters"), intervalMonths = "12"),
+            values = ReminderFormValues(serviceTypes = listOf("Filters"), intervalKm = "5000"),
         )
 
         assertTrue(rule.enabled)
@@ -270,7 +276,7 @@ class ReminderFormValidationTest {
             createdAtEpochMs = 1_700_000_000_000L,
             values = ReminderFormValues(
                 serviceTypes = listOf("Filters"),
-                intervalMonths = "12",
+                intervalKm = "5000",
                 enabled = false,
             ),
         )
