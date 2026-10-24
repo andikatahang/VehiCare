@@ -173,6 +173,7 @@ No blockers, but see carried debt below. **Phase 3 verification done 2026-10-24 
 | # | Description | Date | Commit | Directory |
 |---|-------------|------|--------|-----------|
 | 261024-nf0 | Fix the builder error while run the App! make it no mistakes | 2026-10-24 | 329fd91 | [261024-nf0-fix-the-builder-error-while-run-the-app-](./quick/261024-nf0-fix-the-builder-error-while-run-the-app-/) |
+| 261024-u9g | rebuild bagian reminder service | 2026-10-24 | 38a66f1 | [261024-u9g-rebuild-bagian-reminder-service](./quick/261024-u9g-rebuild-bagian-reminder-service/) |
 
 ---
 
