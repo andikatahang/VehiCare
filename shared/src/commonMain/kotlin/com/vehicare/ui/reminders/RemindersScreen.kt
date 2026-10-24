@@ -42,6 +42,7 @@ import com.vehicare.notifications.NotificationPermissionPolicy
 import com.vehicare.ui.components.EmptyState
 import com.vehicare.ui.reminders.components.NotificationsPermissionDialog
 import com.vehicare.ui.reminders.components.ReminderCard
+import com.vehicare.ui.reminders.components.ReminderStatusRow
 import com.vehicare.ui.theme.Slate
 import org.jetbrains.compose.resources.stringResource
 import org.koin.compose.viewmodel.koinViewModel
@@ -67,8 +68,9 @@ import vehicare.shared.generated.resources.title_reminders
  * injected, never owned: the screen receives callbacks so the single graph in `App.kt` stays the only
  * place that knows about destinations.
  *
- * The permission status row is deliberately **not** here yet: plan 08 inserts it as the first item of
- * the Content list. The comment in the list marks that spot; there is no placeholder item and no stub.
+ * This screen is also the host of the notification permission ask (D-54/D-61): the inline status row
+ * is the first item of the **Content** state only, and the one explanation dialog below serves both
+ * the automatic post-save ask and a manual tap on that row.
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -177,6 +179,18 @@ fun RemindersRoute(
                 }
 
                 is RemindersUiState.Content -> {
+                    // Snapshotted once, before the list: `null` means "not read yet", so no
+                    // surface renders until the coordinator's first read lands. The askable value
+                    // is computed here so the row's copy and its tap target cannot disagree.
+                    val ui = permissionUi
+                    val askable = ui != null &&
+                        NotificationPermissionPolicy.isAskable(ui.permission, ui.hasRequestedSystemPrompt)
+                    val showStatusRow = ui != null &&
+                        NotificationPermissionPolicy.shouldShowSurface(
+                            ui.permission,
+                            hasEnabledRule = state.rows.any { it.rule.enabled },
+                        )
+
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
                         // `md` 16px around the list, `3xl` 64px at the bottom to clear the FAB.
@@ -188,8 +202,26 @@ fun RemindersRoute(
                         ),
                         verticalArrangement = Arrangement.spacedBy(16.dp),
                     ) {
-                        // Plan 08 inserts the notifications permission status row as the first item
-                        // here (Content state only). No placeholder and no empty item until then.
+                        // The same component as the home banner, under the same policy, as the
+                        // first item of this Content state only — never in Loading, Empty or
+                        // Error. Its 16dp gap to the first rule row comes free from the list's own
+                        // `spacedBy(16.dp)`. The tap reuses the dialog hosted below: askable →
+                        // the explanation dialog (the manual way back after a "Not now"), denied →
+                        // straight to the OS app settings (D-61, amended 2026-10-23).
+                        if (showStatusRow) {
+                            item(key = "permission-status") {
+                                ReminderStatusRow(
+                                    askable = askable,
+                                    onClick = {
+                                        if (askable) {
+                                            showPermissionDialog = true
+                                        } else {
+                                            coordinator.openSettings()
+                                        }
+                                    },
+                                )
+                            }
+                        }
 
                         // Keys are mandatory: rows re-order as due states change, and a key keeps
                         // each row's switch and click target attached to its own rule.

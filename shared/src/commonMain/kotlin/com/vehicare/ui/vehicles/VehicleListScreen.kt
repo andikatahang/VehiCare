@@ -22,13 +22,21 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.vehicare.notifications.LocalNotificationPermissionCoordinator
+import com.vehicare.notifications.NotificationPermissionPolicy
 import com.vehicare.ui.components.EmptyState
+import com.vehicare.ui.reminders.components.NotificationsPermissionDialog
+import com.vehicare.ui.reminders.components.ReminderStatusRow
 import com.vehicare.ui.theme.Slate
 import com.vehicare.ui.vehicles.components.VehicleCard
 import org.jetbrains.compose.resources.stringResource
@@ -61,6 +69,12 @@ fun VehicleListRoute(
     onOpenVehicle: (Long) -> Unit,
     viewModel: VehicleListViewModel = koinViewModel(),
 ) {
+    // The one coordinator the shell provides (D-61): the banner below and the Reminders inline
+    // row read the same state, so the two surfaces can never disagree about the permission.
+    val coordinator = LocalNotificationPermissionCoordinator.current
+    val permissionUi by coordinator.state.collectAsState()
+    var showPermissionDialog by remember { mutableStateOf(false) }
+
     Scaffold(
         topBar = { TopAppBar(title = { Text(text = stringResource(Res.string.title_vehicles)) }) },
     ) { innerPadding ->
@@ -100,6 +114,20 @@ fun VehicleListRoute(
                 }
 
                 is VehicleListUiState.Content -> {
+                    // Snapshotted once, before the list: `null` means "not read yet", so no
+                    // surface renders until the coordinator's first read lands. The askable value
+                    // is computed here so the row's copy and its tap target cannot disagree.
+                    val ui = permissionUi
+                    val askable = ui != null &&
+                        NotificationPermissionPolicy.isAskable(ui.permission, ui.hasRequestedSystemPrompt)
+                    val showStatusRow = ui != null &&
+                        NotificationPermissionPolicy.shouldShowSurface(
+                            ui.permission,
+                            // `top` is the vehicle's most urgent *enabled* rule, so this is
+                            // exactly "at least one enabled rule across the fleet" (D-61).
+                            hasEnabledRule = state.items.any { it.top != null },
+                        )
+
                     LazyColumn(
                         modifier = Modifier.fillMaxSize(),
                         // Rows arrive urgency-ordered (D-57, superseding D-16 for this list). The
@@ -113,9 +141,26 @@ fun VehicleListRoute(
                         ),
                         verticalArrangement = Arrangement.spacedBy(16.dp),
                     ) {
-                        // Plan 08 inserts the permission banner here, as the first item of this
-                        // Content state only — no placeholder item belongs here until then, or
-                        // every user's list would shift by 16dp for no reason.
+                        // The banner is the first item of this Content state only — never in
+                        // Loading, Empty or Error. Its 16dp gap to the first card comes free from
+                        // the list's own `spacedBy(16.dp)`, so the item adds no padding of its own.
+                        if (showStatusRow) {
+                            item(key = "notifications-off") {
+                                ReminderStatusRow(
+                                    askable = askable,
+                                    onClick = {
+                                        // D-61 (amended 2026-10-23): askable → the explanation
+                                        // dialog; denied → straight to the OS app settings. Never
+                                        // a navigation, and there is no dismiss control.
+                                        if (askable) {
+                                            showPermissionDialog = true
+                                        } else {
+                                            coordinator.openSettings()
+                                        }
+                                    },
+                                )
+                            }
+                        }
                         items(state.items, key = { row -> row.vehicle.id }) { row ->
                             VehicleCard(
                                 vehicle = row.vehicle,
@@ -163,6 +208,19 @@ fun VehicleListRoute(
                 Icon(
                     imageVector = Icons.Filled.Add,
                     contentDescription = stringResource(Res.string.cd_add_vehicle),
+                )
+            }
+
+            // Outside the state `when`, like the FAB: the banner's tap is the only thing that
+            // opens this dialog on the home tab — there is no automatic ask here, because D-54
+            // spends the automatic one on the Reminders screen after the first add.
+            if (showPermissionDialog) {
+                NotificationsPermissionDialog(
+                    onConfirm = {
+                        showPermissionDialog = false
+                        coordinator.requestPermission()
+                    },
+                    onDismiss = { showPermissionDialog = false },
                 )
             }
         }
