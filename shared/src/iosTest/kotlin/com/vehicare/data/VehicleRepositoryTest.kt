@@ -3,6 +3,7 @@ package com.vehicare.data
 import app.cash.sqldelight.db.SqlDriver
 import com.vehicare.data.db.createDriverFactory
 import com.vehicare.db.VehiCareDatabase
+import com.vehicare.domain.ServiceEntry
 import com.vehicare.domain.Vehicle
 import com.vehicare.domain.VehicleType
 import kotlinx.coroutines.flow.first
@@ -97,6 +98,70 @@ class VehicleRepositoryTest {
         assertTrue(repository.observeVehicles().first().isEmpty())
         assertEquals(listOf<String?>("photos/a.jpg"), deletedPaths)
     }
+
+    @Test
+    fun deletingAVehicleAlsoDeletesItsReminderRules() = runTest {
+        val deletedId = repository.save(Vehicle(name = "A"))
+        val keptId = repository.save(Vehicle(name = "B"))
+        val serviceRepository = ServiceEntryRepositoryImpl(database)
+        serviceRepository.save(
+            ServiceEntry(vehicleId = deletedId, dateEpochMs = 1_000L, mileageKm = 500L, serviceTypes = listOf("Oil change")),
+        )
+        val firstRule = insertRule(deletedId, "Oil change")
+        val secondRule = insertRule(deletedId, "Battery")
+        val otherVehicleRule = insertRule(keptId, "Oil change")
+        val deletions = mutableListOf<Pair<Long, List<Long>>>()
+        val deletingRepository = VehicleRepositoryImpl(
+            database = database,
+            onVehicleDeleted = { vehicleId, ruleIds -> deletions += vehicleId to ruleIds },
+        )
+
+        deletingRepository.delete(deletedId)
+
+        assertTrue(
+            database.reminderRuleQueries.selectForVehicle(deletedId).executeAsList().isEmpty(),
+            "D-64: a vehicle's reminder rules must not outlive it",
+        )
+        assertEquals(
+            listOf(otherVehicleRule),
+            database.reminderRuleQueries.selectForVehicle(keptId).executeAsList().map { it.id },
+            "another vehicle's rules must survive the cascade",
+        )
+        assertTrue(
+            database.serviceEntryQueries.selectForVehicleByDate(deletedId).executeAsList().isEmpty(),
+            "the existing service-entry cascade is unchanged",
+        )
+        assertEquals(1, deletions.size, "the hook fires exactly once per delete")
+        assertEquals(deletedId, deletions.single().first)
+        assertEquals(
+            setOf(firstRule, secondRule),
+            deletions.single().second.toSet(),
+            "every cascaded rule id must reach the notification hook",
+        )
+    }
+
+    /**
+     * Seeds a rule through the real query set so the cascade deletes real rows.
+     *
+     * Insert and id read share one transaction: `last_insert_rowid()` is per-connection, and the
+     * native driver hands out pooled connections, so reading it outside the insert's transaction
+     * can observe a different connection and return 0 (the same reason every repository save wraps
+     * the pair).
+     */
+    private fun insertRule(vehicleId: Long, serviceType: String): Long =
+        database.transactionWithResult {
+            database.reminderRuleQueries.insert(
+                vehicle_id = vehicleId,
+                service_type = serviceType,
+                interval_km = 5_000L,
+                interval_months = null,
+                lead_km = null,
+                lead_days = null,
+                enabled = 1L,
+                created_at_epoch_ms = 1_700_000_000_000L,
+            )
+            database.reminderRuleQueries.lastInsertId().executeAsOne()
+        }
 
     /**
      * SQLiter resolves a bare database name to
