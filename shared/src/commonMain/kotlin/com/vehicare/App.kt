@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -21,8 +22,10 @@ import androidx.compose.runtime.collectAsState
 import coil3.ImageLoader
 import coil3.compose.setSingletonImageLoaderFactory
 import com.vehicare.di.appModule
+import com.vehicare.notifications.LocalNotificationPermissionCoordinator
 import com.vehicare.notifications.NotificationScheduler
 import com.vehicare.notifications.NotificationTapBus
+import com.vehicare.notifications.rememberNotificationPermissionCoordinator
 import com.vehicare.ui.navigation.BottomTabs
 import com.vehicare.ui.navigation.ReminderEditRoute
 import com.vehicare.ui.navigation.RemindersRoute
@@ -91,8 +94,16 @@ fun App(platformModule: Module = noPlatformModule) {
             // makes a cancelled composition incapable of claiming a cycle and then dropping the
             // notification.
             val notificationScheduler = koinInject<NotificationScheduler>()
+
+            // One coordinator for the whole composition, created by the shell and provided once
+            // below so both the home banner and the Reminders inline row read the same state
+            // (D-61). The foreground refresh rides inside the existing ON_RESUME effect above —
+            // a second LifecycleEventEffect would evaluate delivery twice per resume on Android
+            // and would be a lie on iOS — which is why the shell keeps exactly one such effect.
+            val permissionCoordinator = rememberNotificationPermissionCoordinator(notificationScheduler)
             androidx.lifecycle.compose.LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
                 notificationScheduler.evaluateNow()
+                permissionCoordinator.refresh()
             }
 
             // The tap navigates on top of whatever the back stack holds so Back returns to where
@@ -122,6 +133,9 @@ fun App(platformModule: Module = noPlatformModule) {
             val snackbarHostState = remember { SnackbarHostState() }
             val scope = rememberCoroutineScope()
 
+            // Provided once, around the whole Scaffold/NavHost: both the home banner and the
+            // Reminders inline row resolve this same coordinator instance, never a second read.
+            CompositionLocalProvider(LocalNotificationPermissionCoordinator provides permissionCoordinator) {
             Scaffold(
                 bottomBar = { if (isTabRoot) BottomTabs(navController) },
                 snackbarHost = { SnackbarHost(snackbarHostState) },
@@ -250,6 +264,7 @@ fun App(platformModule: Module = noPlatformModule) {
                         )
                     }
                 }
+            }
             }
         }
     }

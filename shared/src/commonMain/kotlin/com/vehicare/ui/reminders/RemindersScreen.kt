@@ -28,14 +28,19 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.vehicare.notifications.LocalNotificationPermissionCoordinator
+import com.vehicare.notifications.NotificationPermissionPolicy
 import com.vehicare.ui.components.EmptyState
+import com.vehicare.ui.reminders.components.NotificationsPermissionDialog
 import com.vehicare.ui.reminders.components.ReminderCard
 import com.vehicare.ui.theme.Slate
 import org.jetbrains.compose.resources.stringResource
@@ -87,6 +92,33 @@ fun RemindersRoute(
         if (toggleFailed) {
             snackbarHostState.showSnackbar(saveErrorText)
             viewModel.acknowledgeToggleFailure()
+        }
+    }
+
+    // D-54 (amended 2026-10-23): this screen is the only host for the automatic explanation
+    // dialog. A post-save ask never appears over the editor, because the editor has already
+    // popped by the time its signal is consumed here.
+    val coordinator = LocalNotificationPermissionCoordinator.current
+    val permissionUi by coordinator.state.collectAsState()
+    val pendingAsk by viewModel.pendingPermissionAsk.collectAsState()
+    var showPermissionDialog by remember { mutableStateOf(false) }
+
+    LaunchedEffect(pendingAsk, permissionUi) {
+        if (!pendingAsk) return@LaunchedEffect
+        // Wait for the coordinator's first read instead of dropping the ask: `null` means "not
+        // read yet", not "no permission" (the coordinator's own contract).
+        val ui = permissionUi ?: return@LaunchedEffect
+        viewModel.consumePermissionAsk()
+        if (NotificationPermissionPolicy.shouldAutoExplain(
+                ui.permission,
+                ui.hasRequestedSystemPrompt,
+                ui.hasAutoExplained,
+            )
+        ) {
+            // Spent at the moment it is presented, not at the moment it is dismissed — a second
+            // add or an edit while this dialog is still open can never buy a second automatic ask.
+            coordinator.markAutoExplained()
+            showPermissionDialog = true
         }
     }
 
@@ -205,6 +237,19 @@ fun RemindersRoute(
                 Icon(
                     imageVector = Icons.Filled.Add,
                     contentDescription = stringResource(Res.string.cd_add_reminder),
+                )
+            }
+
+            // Outside the state `when`: the automatic post-save ask and a manual tap on the
+            // inline status row (Task 3) both drive the same flag and the same dialog instance —
+            // there is no second dialog and no second state.
+            if (showPermissionDialog) {
+                NotificationsPermissionDialog(
+                    onConfirm = {
+                        showPermissionDialog = false
+                        coordinator.requestPermission()
+                    },
+                    onDismiss = { showPermissionDialog = false },
                 )
             }
         }

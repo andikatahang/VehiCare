@@ -6,6 +6,7 @@ import com.vehicare.data.ReminderRepository
 import com.vehicare.domain.ReminderOrdering
 import com.vehicare.domain.ReminderRow
 import com.vehicare.domain.ReminderStatus
+import com.vehicare.notifications.FirstReminderAskSignal
 import com.vehicare.util.ServiceDates
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -13,6 +14,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
@@ -86,6 +88,37 @@ class RemindersViewModel(
      * the screen reads one state object.
      */
     private val toggleFailed = MutableStateFlow(false)
+
+    /**
+     * One-shot "a first add just published an ask for this vehicle" flag — exactly like
+     * [toggleFailed]. It is not part of [RemindersUiState] because it is an event, not a data
+     * state, and folding it into the matrix would make [RemindersUiState.Content] equality depend
+     * on a transient signal.
+     *
+     * The single collector below iterates [FirstReminderAskSignal.pending]: a non-null value that
+     * matches this ViewModel's [vehicleId] is consumed (so it is never delivered twice) and raises
+     * the flag; a non-matching vehicle's id is left untouched on the bus, so another vehicle's
+     * Reminders screen can still consume it. The bus is a process-wide object, so no constructor
+     * parameter changes and `AppModule` stays untouched.
+     */
+    private val _pendingPermissionAsk = MutableStateFlow(false)
+    val pendingPermissionAsk: StateFlow<Boolean> = _pendingPermissionAsk.asStateFlow()
+
+    init {
+        viewModelScope.launch {
+            FirstReminderAskSignal.pending.collect { pendingVehicleId ->
+                if (pendingVehicleId != null && pendingVehicleId == vehicleId) {
+                    FirstReminderAskSignal.consume()
+                    _pendingPermissionAsk.value = true
+                }
+            }
+        }
+    }
+
+    /** Lets the screen retire the one-shot ask flag once it has reacted to it. */
+    fun consumePermissionAsk() {
+        _pendingPermissionAsk.value = false
+    }
 
     val uiState: StateFlow<RemindersUiState> =
         combine(

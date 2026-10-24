@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.vehicare.data.ReminderRepository
 import com.vehicare.domain.ReminderRule
+import com.vehicare.notifications.FirstReminderAskSignal
 import com.vehicare.ui.service.SelectionMode
 import com.vehicare.ui.service.confirmCustomServiceType
 import com.vehicare.ui.service.selectServiceType
@@ -236,8 +237,12 @@ class ReminderEditViewModel(
      * the Detail screen are Flow-driven and show the new state by themselves.
      *
      * Never touches `notifiedCycleKey`: the factory leaves it null and only the claim writes it
-     * (D-51/D-53). Leaves no permission call here — plan 08's hook goes in this method and its
-     * absence is deliberate, not an omission.
+     * (D-51/D-53). [FirstReminderAskSignal.publish] runs **after** [repo.save] returns and
+     * **before** [onSaved] — publish only after the write landed (D-54 — a failed save must
+     * never ask), publish before the pop (the Reminders screen must find it already pending) —
+     * and **only when [isAdd] is true**: the amended D-54 (2026-10-23) says "the first successful
+     * add", so an update never touches this bus. Whether a dialog then actually appears is still
+     * the policy's call: the signal only says "a reminder was just added", never "ask now".
      */
     fun save(onSaved: () -> Unit) {
         val current = _uiState.value as? ReminderEditUiState.Ready ?: return
@@ -259,6 +264,7 @@ class ReminderEditViewModel(
                 )
                 repo.save(rule)
                 clearSaving()
+                if (isAdd) FirstReminderAskSignal.publish(vehicleId)
                 onSaved()
             } catch (cancelled: CancellationException) {
                 throw cancelled

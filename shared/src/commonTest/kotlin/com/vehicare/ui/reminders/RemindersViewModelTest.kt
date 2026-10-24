@@ -6,9 +6,13 @@ import com.vehicare.domain.ReminderAxis
 import com.vehicare.domain.ReminderRule
 import com.vehicare.domain.TypeBaseline
 import com.vehicare.domain.VehicleStats
+import com.vehicare.notifications.FirstReminderAskSignal
 import com.vehicare.util.ServiceDates
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.cancel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.flow
@@ -46,19 +50,46 @@ class RemindersViewModelTest {
 
     private val mainDispatcher = StandardTestDispatcher()
 
+    /**
+     * Every [RemindersViewModel] created by a test is tracked here so [tearDown] can cancel its
+     * `viewModelScope`. Without this, the `init` block's collector on the process-wide
+     * [FirstReminderAskSignal] singleton would outlive the test — a real `ViewModel` is cancelled
+     * by the framework's `onCleared()` when its screen leaves the back stack, but a raw
+     * `RemindersViewModel(...)` built directly in a test has no such owner, so an orphaned
+     * collector from an earlier test would still be registered when a later test publishes,
+     * racing the later test's own (freshly registered) collector for the same emission.
+     */
+    private val createdScopes = mutableListOf<CoroutineScope>()
+
+    private fun createViewModel(
+        vehicleId: Long = VEHICLE_ID,
+        repo: ReminderRepository,
+    ): RemindersViewModel {
+        val viewModel = RemindersViewModel(vehicleId, repo)
+        createdScopes += viewModel.viewModelScope
+        return viewModel
+    }
+
     @BeforeTest
     fun setUp() {
         Dispatchers.setMain(mainDispatcher)
+        FirstReminderAskSignal.consume()
     }
 
     @AfterTest
     fun tearDown() {
+        // Cancel every tracked scope before touching Dispatchers.Main again: a still-registered
+        // collector resumed after resetMain() would try to dispatch onto a broken Main and crash
+        // tearDown itself.
+        createdScopes.forEach { it.cancel() }
+        createdScopes.clear()
+        FirstReminderAskSignal.consume()
         Dispatchers.resetMain()
     }
 
     @Test
     fun noRulesIsEmpty() = runTest {
-        val viewModel = RemindersViewModel(VEHICLE_ID, FakeReminderRepository())
+        val viewModel = createViewModel(repo = FakeReminderRepository())
         val states = collect(viewModel)
 
         assertEquals(RemindersUiState.Empty, states.last())
@@ -68,9 +99,8 @@ class RemindersViewModelTest {
     fun anOverdueRuleSortsBeforeAnUpcomingOne() = runTest {
         val overdue = rule(id = 1L, intervalKm = 1_000L)
         val upcoming = rule(id = 2L, intervalKm = 10_000L)
-        val viewModel = RemindersViewModel(
-            VEHICLE_ID,
-            FakeReminderRepository(
+        val viewModel = createViewModel(
+            repo = FakeReminderRepository(
                 rules = flowOf(listOf(upcoming, overdue)),
                 baselines = listOf(baseline(km = 10_000L)),
                 stats = listOf(stats(mileage = 15_000L)),
@@ -95,9 +125,8 @@ class RemindersViewModelTest {
         val disabled = rule(id = 3L, intervalKm = 1_000L, enabled = false)
         val upcoming = rule(id = 2L, intervalKm = 10_000L)
         val overdue = rule(id = 1L, intervalKm = 1_000L)
-        val viewModel = RemindersViewModel(
-            VEHICLE_ID,
-            FakeReminderRepository(
+        val viewModel = createViewModel(
+            repo = FakeReminderRepository(
                 rules = flowOf(listOf(disabled, overdue, upcoming)),
                 baselines = listOf(baseline(km = 10_000L)),
                 stats = listOf(stats(mileage = 15_000L)),
@@ -121,9 +150,8 @@ class RemindersViewModelTest {
             intervalMonths = 1L,
             createdAtEpochMs = ServiceDates.toStorage(today),
         )
-        val viewModel = RemindersViewModel(
-            VEHICLE_ID,
-            FakeReminderRepository(
+        val viewModel = createViewModel(
+            repo = FakeReminderRepository(
                 rules = flowOf(listOf(distanceOnly, timeOnly)),
                 // No type baseline at all: both rules must use D-49's fallbacks.
                 baselines = emptyList(),
@@ -155,7 +183,7 @@ class RemindersViewModelTest {
     @Test
     fun toggleForwardsTheRuleIdAndTheNewValue() = runTest {
         val repo = FakeReminderRepository(rules = MutableStateFlow(listOf(rule(id = 5L))))
-        val viewModel = RemindersViewModel(VEHICLE_ID, repo)
+        val viewModel = createViewModel(repo = repo)
         collect(viewModel)
 
         viewModel.toggle(ruleId = 5L, enabled = false)
@@ -170,7 +198,7 @@ class RemindersViewModelTest {
             rules = MutableStateFlow(listOf(rule(id = 5L))),
             failSetEnabled = true,
         )
-        val viewModel = RemindersViewModel(VEHICLE_ID, repo)
+        val viewModel = createViewModel(repo = repo)
         val states = collect(viewModel)
 
         viewModel.toggle(ruleId = 5L, enabled = false)
@@ -190,9 +218,8 @@ class RemindersViewModelTest {
 
     @Test
     fun aFailingObservationProducesError() = runTest {
-        val viewModel = RemindersViewModel(
-            VEHICLE_ID,
-            FakeReminderRepository(rules = flow { throw IllegalStateException("boom") }),
+        val viewModel = createViewModel(
+            repo = FakeReminderRepository(rules = flow { throw IllegalStateException("boom") }),
         )
         val states = collect(viewModel)
 
@@ -208,9 +235,8 @@ class RemindersViewModelTest {
             if (attempts == 1) throw IllegalStateException("boom")
             emit(listOf(rule(id = 1L)))
         }
-        val viewModel = RemindersViewModel(
-            VEHICLE_ID,
-            FakeReminderRepository(rules = flakyRules),
+        val viewModel = createViewModel(
+            repo = FakeReminderRepository(rules = flakyRules),
         )
         val states = collect(viewModel)
 
@@ -223,6 +249,57 @@ class RemindersViewModelTest {
         val content = assertIs<RemindersUiState.Content>(states.last())
         assertEquals(listOf(1L), content.rows.map { it.rule.id })
         assertEquals(2, attempts, "retry must re-run the three flat reads")
+    }
+
+    @Test
+    fun publishingThisVehiclesIdFlipsTheFlagAndConsumesTheBus() = runTest {
+        val viewModel = createViewModel(repo = FakeReminderRepository())
+        advanceUntilIdle()
+
+        FirstReminderAskSignal.publish(VEHICLE_ID)
+        advanceUntilIdle()
+
+        assertTrue(viewModel.pendingPermissionAsk.value)
+        assertNull(FirstReminderAskSignal.pending.value, "a matching id must be consumed")
+    }
+
+    @Test
+    fun publishingAnotherVehiclesIdLeavesTheFlagFalseAndTheBusIntact() = runTest {
+        val viewModel = createViewModel(repo = FakeReminderRepository())
+        advanceUntilIdle()
+
+        FirstReminderAskSignal.publish(VEHICLE_ID + 1L)
+        advanceUntilIdle()
+
+        assertFalse(viewModel.pendingPermissionAsk.value)
+        assertEquals(VEHICLE_ID + 1L, FirstReminderAskSignal.pending.value, "a non-matching id must not be consumed")
+    }
+
+    @Test
+    fun consumePermissionAskClearsTheFlag() = runTest {
+        val viewModel = createViewModel(repo = FakeReminderRepository())
+        advanceUntilIdle()
+
+        FirstReminderAskSignal.publish(VEHICLE_ID)
+        advanceUntilIdle()
+        assertTrue(viewModel.pendingPermissionAsk.value)
+
+        viewModel.consumePermissionAsk()
+        advanceUntilIdle()
+
+        assertFalse(viewModel.pendingPermissionAsk.value)
+    }
+
+    @Test
+    fun aViewModelCreatedAfterAPublishStillReceivesIt() = runTest {
+        // The replay-1 proof: the bus already holds the value before the ViewModel's collector
+        // starts, exactly like NotificationTapBus's cold-start case.
+        FirstReminderAskSignal.publish(VEHICLE_ID)
+
+        val viewModel = createViewModel(repo = FakeReminderRepository())
+        advanceUntilIdle()
+
+        assertTrue(viewModel.pendingPermissionAsk.value)
     }
 
     /**

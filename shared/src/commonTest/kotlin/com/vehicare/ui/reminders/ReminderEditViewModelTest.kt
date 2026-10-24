@@ -4,6 +4,7 @@ import com.vehicare.data.ReminderRepository
 import com.vehicare.domain.ReminderRule
 import com.vehicare.domain.TypeBaseline
 import com.vehicare.domain.VehicleStats
+import com.vehicare.notifications.FirstReminderAskSignal
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
@@ -39,11 +40,13 @@ class ReminderEditViewModelTest {
     @BeforeTest
     fun setUp() {
         Dispatchers.setMain(mainDispatcher)
+        FirstReminderAskSignal.consume()
     }
 
     @AfterTest
     fun tearDown() {
         Dispatchers.resetMain()
+        FirstReminderAskSignal.consume()
     }
 
     @Test
@@ -337,6 +340,84 @@ class ReminderEditViewModelTest {
         val ready = assertIs<ReminderEditUiState.Ready>(viewModel.uiState.value)
         assertFalse(ready.saving)
         assertFalse(ready.saveFailed)
+    }
+
+    @Test
+    fun aSuccessfulAddPublishesTheVehicleIdExactlyOnce() = runTest {
+        val viewModel = ReminderEditViewModel(
+            repo = FakeReminderEditRepository(),
+            learnedTypes = flowOf(emptyList()),
+            vehicleId = VEHICLE_ID,
+            ruleId = 0L,
+        )
+        advanceUntilIdle()
+
+        viewModel.onTypeSelected("Oil change")
+        viewModel.onFieldChange(ReminderFormField.INTERVAL_KM, "5000")
+        advanceUntilIdle()
+
+        viewModel.save(onSaved = {})
+        advanceUntilIdle()
+
+        assertEquals(VEHICLE_ID, FirstReminderAskSignal.pending.value)
+    }
+
+    @Test
+    fun aSuccessfulUpdatePublishesNothing() = runTest {
+        // This is the amendment's case: before 2026-10-23 an update also re-offered the dialog.
+        val rule = rule(id = RULE_ID)
+        val repo = FakeReminderEditRepository(rules = MutableStateFlow(mapOf(RULE_ID to rule)))
+        val viewModel = ReminderEditViewModel(
+            repo = repo,
+            learnedTypes = flowOf(emptyList()),
+            vehicleId = VEHICLE_ID,
+            ruleId = RULE_ID,
+        )
+        advanceUntilIdle()
+
+        viewModel.save(onSaved = {})
+        advanceUntilIdle()
+
+        assertNull(FirstReminderAskSignal.pending.value)
+    }
+
+    @Test
+    fun aFailedAddLeavesTheSignalNull() = runTest {
+        val repo = FakeReminderEditRepository(failSave = true)
+        val viewModel = ReminderEditViewModel(
+            repo = repo,
+            learnedTypes = flowOf(emptyList()),
+            vehicleId = VEHICLE_ID,
+            ruleId = 0L,
+        )
+        advanceUntilIdle()
+
+        viewModel.onTypeSelected("Oil change")
+        viewModel.onFieldChange(ReminderFormField.INTERVAL_KM, "5000")
+        advanceUntilIdle()
+
+        viewModel.save(onSaved = {})
+        advanceUntilIdle()
+
+        assertNull(FirstReminderAskSignal.pending.value)
+    }
+
+    @Test
+    fun aNotSubmittableAddLeavesTheSignalNull() = runTest {
+        val viewModel = ReminderEditViewModel(
+            repo = FakeReminderEditRepository(),
+            learnedTypes = flowOf(emptyList()),
+            vehicleId = VEHICLE_ID,
+            ruleId = 0L,
+        )
+        advanceUntilIdle()
+
+        // No service type and no interval selected: isSubmittable is false, so save() returns
+        // before the repository (and the signal) is ever touched.
+        viewModel.save(onSaved = {})
+        advanceUntilIdle()
+
+        assertNull(FirstReminderAskSignal.pending.value)
     }
 
     @Test
