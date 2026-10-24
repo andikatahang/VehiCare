@@ -5,6 +5,8 @@ import com.vehicare.data.db.DatabaseFactory
 import com.vehicare.data.db.DatabaseProvider
 import com.vehicare.data.db.createDriverFactory
 import com.vehicare.data.db.defaultDatabaseName
+import com.vehicare.data.settings.SettingsProvider
+import com.vehicare.data.settings.createSettingsStore
 import com.vehicare.notifications.enqueueDailyReminderEvaluation
 
 /**
@@ -31,6 +33,11 @@ class VehiCareApp : Application() {
         DatabaseProvider.initialize(
             DatabaseFactory(createDriverFactory(this, defaultDatabaseName).createDriver()),
         )
+        // Exactly once per process, mirroring the database holder: a second call would silently
+        // swap the store behind every observer. The **application** context — the setting outlives
+        // every screen and is read by paths outside the Koin graph (the worker, the delivery
+        // factory), just like the notification permission bits.
+        SettingsProvider.initialize(createSettingsStore(applicationContext))
         // The notification channel is created idempotently from the Android notify path
         // (`AndroidNotificationScheduler.triggerImmediateIfOverdue`), not here: its name is a
         // Compose Resource that only resolves through the suspend `getString`, which `onCreate`

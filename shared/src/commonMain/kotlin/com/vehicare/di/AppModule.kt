@@ -41,6 +41,11 @@ import org.koin.dsl.module
  */
 val appModule = module {
     single<VehiCareDatabase> { DatabaseProvider.require() }
+    // The settings store binding exists for ViewModels only (261024-u9g): the delivery paths read
+    // `SettingsProvider.require()` directly, because they are built outside this graph and could
+    // not resolve a Koin binding anyway — the provider is their holder, exactly as DatabaseProvider
+    // is for the Android worker.
+    single<com.vehicare.data.settings.SettingsStore> { com.vehicare.data.settings.SettingsProvider.require() }
     // Deleting a vehicle removes its photo file through the real storage seam (D-07), replacing the
     // no-op default plan 01-03 left in place while the write side did not exist yet (T-01-18).
     // A deleted vehicle must not leave a delivered or scheduled notification behind, so the hook
