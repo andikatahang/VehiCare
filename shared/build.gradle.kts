@@ -48,6 +48,7 @@ kotlin {
             implementation(libs.androidx.activity.compose)
             implementation(libs.sqldelight.android.driver)
             implementation(libs.filekit.dialogs.compose)
+            implementation(libs.androidx.work.runtime)
         }
         commonMain.dependencies {
             implementation(libs.compose.runtime)

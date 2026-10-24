@@ -10,6 +10,8 @@ import org.jetbrains.compose.resources.getString
 import org.jetbrains.compose.resources.pluralStringResource
 import org.jetbrains.compose.resources.stringResource
 import vehicare.shared.generated.resources.Res
+import vehicare.shared.generated.resources.notification_channel_name
+import vehicare.shared.generated.resources.notification_title
 import vehicare.shared.generated.resources.reminder_due_in_km
 import vehicare.shared.generated.resources.reminder_due_now
 import vehicare.shared.generated.resources.reminder_due_on
@@ -200,6 +202,17 @@ object ReminderCopy {
         } else {
             dueSentence(state)
         }
+
+    /**
+     * The notification-side face of the same copy block: a notification's title (D-56 — the
+     * vehicle and the service type, never a promised delivery time). The resource already carries
+     * the `·` separator.
+     */
+    suspend fun notificationTitle(vehicleName: String, serviceType: String): String =
+        getString(Res.string.notification_title, vehicleName, serviceType)
+
+    /** The Android notification channel's user-visible name (D-56). */
+    suspend fun notificationChannelName(): String = getString(Res.string.notification_channel_name)
 
     /** The composable twin of [dueSentence]. */
     @Composable

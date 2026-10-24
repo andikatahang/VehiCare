@@ -1,6 +1,8 @@
 package com.vehicare.di
 
 import android.content.Context
+import com.vehicare.notifications.NotificationScheduler
+import com.vehicare.notifications.createNotificationScheduler
 import org.koin.core.module.Module
 import org.koin.dsl.module
 
@@ -22,4 +24,6 @@ import org.koin.dsl.module
  */
 fun platformModule(androidContext: Context): Module = module {
     single<Context> { androidContext.applicationContext }
+    // The scheduler is platform-bound because only Android needs a `Context` to post.
+    single<NotificationScheduler> { createNotificationScheduler(get<Context>()) }
 }
