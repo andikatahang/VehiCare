@@ -2,15 +2,15 @@
 gsd_state_version: 1.0
 milestone: v1.0
 milestone_name: milestone
-status: Ready to plan
-stopped_at: Phase 3 UI-SPEC approved
-last_updated: "2026-10-22T03:39:38.001Z"
+status: Ready to execute
+stopped_at: Phase 3 plans complete — 8/8 verified (`## VERIFICATION PASSED`), requirements 5/5 and decisions 25/25 covered; awaiting `/gsd-execute-phase 3`
+last_updated: "2026-10-24T01:39:39.000Z"
 progress:
   total_phases: 3
   completed_phases: 2
-  total_plans: 18
+  total_plans: 26
   completed_plans: 18
-  percent: 67
+  percent: 69
 ---
 
 # STATE: VehiCare
@@ -23,13 +23,13 @@ progress:
 ## Current Position
 
 Phase: 3
-Plan: Not started
+Plan: Not started — 8 plans ready (wave 1 = 03-01)
 
 | Field | Value |
 |-------|-------|
-| **Active Phase** | Phase 3: Reminders & Dashboard (UI-SPEC approved — ready to plan) |
-| **Active Plan** | Not started |
-| **Status** | **Phase 2 complete 2026-10-21.** UAT 8/8 passed, including the gap-closure re-test (custom chip renders immediately, multi-select toggles). Security audit threat-secure: 50/50 threats closed (`02-SECURITY.md`, `threats_open: 0`). Verification `status: passed` (52/52 must-haves, 7/7 requirements). **Phase 3 context gathered 2026-10-21** (`03-CONTEXT.md`, D-41…D-65 across four discussed areas) and the **UI design contract is approved 2026-10-22** (`03-UI-SPEC.md`, 6/6 dimensions, no open findings) — ready to plan. |
+| **Active Phase** | Phase 3: Reminders & Dashboard (8/8 plans verified 2026-10-24 — ready to execute) |
+| **Active Plan** | Not started — next is `03-01` (wave 1) |
+| **Status** | **Phase 3 planning complete 2026-10-24.** 8 plans (`03-01`…`03-08`) across 7 waves; plan checker returned `## VERIFICATION PASSED`; requirements coverage 5/5 (REM-01…04, DSH-01); decision coverage 25/25 (D-41…D-65). No Phase 3 code has been written — the working tree still contains planning documents only. Phase 2 remains complete (UAT 8/8, security 50/50 threats closed, verification `passed`). |
 | **Progress** | `[███████░░░] 2/3 phases (67%)` |
 
 ```
@@ -46,7 +46,7 @@ Phase 1 [Complete] → Phase 2 [Complete] → Phase 3 [Not Started]
 |-------|------|--------|
 | 1 | Foundation & Vehicle Management | Complete (2026-10-19) |
 | 2 | Service Log | Complete (2026-10-21) |
-| 3 | Reminders & Dashboard | Not started |
+| 3 | Reminders & Dashboard | Planned — 8/8 verified (2026-10-24) |
 
 ---
 
@@ -55,7 +55,7 @@ Phase 1 [Complete] → Phase 2 [Complete] → Phase 3 [Not Started]
 | Metric | Value |
 |--------|-------|
 | Phases completed | 2 / 3 |
-| Plans completed | 18 / 18 |
+| Plans completed | 18 / 26 |
 | Requirements covered | 17 / 21 |
 | Sessions | 14 |
 
@@ -161,16 +161,16 @@ Unchanged from the contract: Gradle 9.5.1 · SQLDelight 2.4.1 · Koin 4.2.2 · N
 
 ### Blockers
 
-No blockers. **Phase 2 closed 2026-10-21** — UAT 8/8 passed (`02-UAT.md`), security audit threat-secure (`02-SECURITY.md`, 50/50 threats closed, `threats_open: 0`), verification `status: passed` (52/52 must-haves). **Phase 1 closed 2026-10-19** — UAT 6/6 passed (`01-UAT.md`), security audit threat-secure (`01-SECURITY.md`, 72/72 threats closed, `threats_open: 0`). **Carried-forward debt (acknowledged at completion):** `01-VERIFICATION.md` remains `status: human_needed` — all six human checks passed via UAT; the stale field was acknowledged, not re-verified — gates requiring `status: passed` stay blocked until a re-verification (canonical fix; review via `/gsd-audit-uat`). Open code-review findings (`01-REVIEW.md`: CR-01, WR-01…03, IN-01…06) are tracked separately for the review-fix path.
+No blockers. **Phase 3 planning complete 2026-10-24** — 8 plans verified, execution not started. **Phase 2 closed 2026-10-21** — UAT 8/8 passed (`02-UAT.md`), security audit threat-secure (`02-SECURITY.md`, 50/50 threats closed, `threats_open: 0`), verification `status: passed` (52/52 must-haves). **Phase 1 closed 2026-10-19** — UAT 6/6 passed (`01-UAT.md`), security audit threat-secure (`01-SECURITY.md`, 72/72 threats closed, `threats_open: 0`). **Carried-forward debt (acknowledged at completion):** `01-VERIFICATION.md` remains `status: human_needed` — all six human checks passed via UAT; the stale field was acknowledged, not re-verified — gates requiring `status: passed` stay blocked until a re-verification (canonical fix; review via `/gsd-audit-uat`). Open code-review findings (`01-REVIEW.md`: CR-01, WR-01…03, IN-01…06) are tracked separately for the review-fix path.
 
 ---
 
 ## Session Continuity
 
-**Last session:** 2026-10-22T07:23:28.220Z
-**Stopped at:** Session resumed — Phase 3 planning is half-done (4 plans written, planner crashed)
-**Resume file:** .planning/phases/03-reminders-dashboard/.continue-here.md
-**Next action:** Finish Phase 3 planning with `/gsd-plan-phase 3` → choose **Add more plans**. Research (`03-RESEARCH.md`) and the pattern map (`03-PATTERNS.md`) are complete; plans 03-01…03-04 cover the data foundation, the pure due-state engine, persistence/copy/notification identity and the Reminders list screen. Still unplanned: the reminder editor + Detail summary row, the dashboard status line + permission banner, and the two-platform delivery slice — which is why `REM-04` and `DSH-01` are claimed by no plan. `gsd-plan-checker` has not run, so nothing may be executed yet. Commits `5ccc129`, `d890c99`, `a585b4a`, `66e03e1` are local and **not pushed**. Debt: `01-VERIFICATION.md` remains `human_needed` (acknowledged; `/gsd-audit-uat` or re-verify to clear); `01-REVIEW.md` CR-01/WR-01…03/IN-01…06 open; `02-REVIEW.md` WR-01…WR-04 open.
+**Last session:** 2026-10-24T01:39:39.000Z
+**Stopped at:** Phase 3 planning complete — 8 plans verified (`## VERIFICATION PASSED`), requirements 5/5 and decisions 25/25 covered, STATE/ROADMAP updated, plans committed locally. No Phase 3 code executed.
+**Resume file:** .planning/phases/03-reminders-dashboard/03-01-PLAN.md (wave 1 start); phase contract in `03-CONTEXT.md`, `03-RESEARCH.md`, `03-PATTERNS.md`, `03-UI-SPEC.md`
+**Next action:** Run `/gsd-execute-phase 3`. Wave order: 01 → 02/03 → 04 → 05 → 06 → 07 → 08. **User decisions 2026-10-23 (binding):** (1) DSH-01's last-service date joins the card's single status line — `Last service {date} · {sentence}`; (2) D-54's explanation dialog shows only after the first successful add, at most one automatic ask per install; (3) D-61's tap is two-case — askable → dialog, denied → OS settings. Carried debt: `01-VERIFICATION.md` remains `human_needed` (acknowledged; `/gsd-audit-uat` or re-verify to clear); `01-REVIEW.md` CR-01/WR-01…03/IN-01…06 open; `02-REVIEW.md` WR-01…WR-04 open. Local commits are **not pushed**.
 
 ## Decisions
 

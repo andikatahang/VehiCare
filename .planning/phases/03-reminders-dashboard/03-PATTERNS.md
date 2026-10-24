@@ -144,7 +144,7 @@ This is the phase's highest-risk placement question, so it is stated before the 
 
 ```
             ┌──────────────────────────── commonMain ────────────────────────────┐
-            │ DatabaseProvider (object)        NotificationScheduler (expect)     │
+            │ DatabaseProvider (object)        NotificationScheduler (interface) │
             │   holder: DatabaseFactory?         NotificationPermission (expect)  │
             │   initialize(factory) / require()                                   │
             └───────────────▲──────────────────────────▲──────────────────────────┘
@@ -544,31 +544,37 @@ expect fun createDriverFactory(
     databaseName: String = defaultDatabaseName,
 ): DriverFactory
 ```
-Phase 3's fourth seam copies it exactly:
+Phase 3's fourth seam copies the *factory* exactly, but makes the seam itself an interface:
 ```kotlin
-expect class NotificationScheduler {
-    suspend fun permissionState(): NotificationPermissionState
+interface NotificationScheduler {
+    suspend fun permissionState(): NotificationPermission
     suspend fun scheduleTimeBased(due: List<ScheduledReminder>)
     suspend fun triggerImmediateIfOverdue(due: List<DueReminder>)
-    suspend fun refresh(vehicleId: Long)
+    suspend fun cancel(ruleIds: List<Long>)
+    fun evaluateNow()
+    suspend fun openNotificationSettings()
 }
 
 expect fun createNotificationScheduler(platformContext: Any? = null): NotificationScheduler
 ```
-Two rules from the analog: (a) all platform types stay behind `Any?`, (b) the `actual` factory casts and errors with an actionable message — never a silent fallback (see `DriverFactory.android.kt:34-41`).
+Two rules from the analog: (a) all platform types stay behind `Any?`, (b) the platform factory casts and errors with an actionable message — never a silent fallback (see `DriverFactory.android.kt:34-41`). The interface (rather than an `expect class`) is what lets `commonTest` supply a fake scheduler and assert the permission gate and the three time-path cases without a device; the implementations are `internal class AndroidNotificationScheduler` / `internal class IosNotificationScheduler`. `evaluateNow()` is deliberately **not** suspend: the foreground sweep must not be a coroutine a composition can cancel between the claim and the post.
 
 #### `notifications/NotificationPermission.kt` (platform seam, request-response)
 
 **Analog:** `DriverFactory.kt` for the class/factory shape; `MainViewController.kt` for the composition entry.
 
-Android's runtime prompt is only constructible from a composition (`rememberLauncherForActivityResult`), iOS's is a plain suspend call, so this seam needs **both** a plain interface and a `@Composable expect`:
+Android's runtime prompt is only constructible from a composition (`rememberLauncherForActivityResult`), iOS's is a plain suspend call, so this seam needs **both** a plain class and a `@Composable expect`:
 ```kotlin
-expect class NotificationPermission {
-    suspend fun state(): NotificationPermissionState
+internal class NotificationPermissionRequester internal constructor(
+    private val request: (onResult: (NotificationPermission) -> Unit) -> Unit,
+) {
+    fun request(onResult: (NotificationPermission) -> Unit)
 }
 
 @Composable
-expect fun rememberNotificationPermissionRequester(): NotificationPermissionRequester
+internal expect fun rememberNotificationPermissionRequester(
+    scheduler: NotificationScheduler,
+): NotificationPermissionRequester
 ```
 This is a second *composition-scoped* seam, not a second delivery seam — keeping it separate is what lets `NotificationScheduler` stay Compose-free and therefore callable from the worker (`03-RESEARCH.md:352-366`).
 
@@ -1035,7 +1041,7 @@ fun save(onSaved: () -> Unit) {
 
 fun onSaveErrorShown() { … }
 ```
-Phase 3 additions: (a) **after a successful save of the first rule**, trigger the permission explanation — the ViewModel emits a one-shot `askPermission` flag and the screen shows `NotificationsPermissionDialog` (D-54: never at launch, never at screen entry); (b) the save calls `NotificationScheduler.refresh(vehicleId)` so iOS re-schedules (Pitfall 5); (c) the edit path accepts only the first repository emission, exactly as `:104-111` documents.
+Phase 3 additions: (a) **after a successful add** (the first rule or any later one), publish the replay-1 first-ask signal; the Reminders screen consumes it and asks the policy whether to show the explanation dialog — only the first add per install actually opens it (D-54 amended 2026-10-23: never at launch, never at screen entry, never on an edit); (b) the repository's own `onRulesChanged` hook does the notification work — the Koin binding calls `NotificationScheduler.cancel(ruleIds)` then `evaluateNow()`, so the ViewModel never touches the scheduler and an edited rule cannot leave a stale trigger (Pitfall 5); (c) the edit path accepts only the first repository emission, exactly as `:104-111` documents.
 
 #### `ui/reminders/ReminderFormValidation.kt` (pure object, transform)
 
@@ -1420,9 +1426,9 @@ Rationale in the KDoc: concurrent `NativeSqliteDriver` access aborts the iOS pro
 **Source:** `data/db/DatabaseFactory.kt:6-15`; `di/AppModule.kt:34-37`; `data/db/DriverFactory.android.kt:34-41`
 **Apply to:** `VehiCareApp`, `MainViewController`, `AppModule`, `ReminderWorker`. The worker must never construct a driver; `AppModule` must never fall back to `createDriverFactory()`.
 
-### 6. `expect`/`actual` with `platformContext: Any?` + a factory function
+### 6. `expect`/`actual` factory with `platformContext: Any?` (the seam itself may be an interface)
 **Source:** `data/db/DriverFactory.kt:16-40`; `DriverFactory.android.kt:34-41`; `DriverFactory.ios.kt:23-25`
-**Apply to:** `NotificationScheduler`, `NotificationPermission`, both actuals. No Android type crosses into `commonMain`; the Android actual casts and errors with an actionable message; the iOS actual ignores the parameter.
+**Apply to:** `createNotificationScheduler` (factory), `NotificationPermission`, and the permission-requester factory. `NotificationScheduler` itself is a `commonMain` interface implemented by `AndroidNotificationScheduler`/`IosNotificationScheduler`, so `commonTest` can fake it. No Android type crosses into `commonMain`; the Android factory casts and errors with an actionable message; the iOS factory ignores the parameter.
 
 ### 7. One-shot failure flags retire with their message
 **Source:** `ui/service/ServiceEntryEditScreen.kt:118-129`; `ui/service/ServiceEntryEditViewModel.kt:273-277`; `ui/service/ServiceEntryDetailViewModel.kt:83-133`
@@ -1491,7 +1497,7 @@ Rationale in the KDoc: concurrent `NativeSqliteDriver` access aborts the iOS pro
 | `iosApp/iosApp/AppDelegate.swift` | provider (delegate) | event-driven | `iOSApp.swift` is 10 lines with no delegate, no `@UIApplicationDelegateAdaptor` | `03-RESEARCH.md` §U3: add the adaptor to `iOSApp.swift`, call the Kotlin `install()` in `didFinishLaunchingWithOptions` |
 | `…/ui/reminders/components/ReminderToggleRow.kt` | component | request-response | No `Switch` exists anywhere in the app; every current control is a chip, button, field or card | `ui/components/FieldRow.kt:55-88` row layout + M3 `Switch` (which supplies its own 48dp interactive size). UI-SPEC §Rule row anatomy + §Accessibility "two nodes per rule row" |
 
-**Near-misses that are intentionally *not* "no analog":** the notification `expect`/`actual` files and their Android/iOS actuals have no *notification* precedent, but they have an exact **structural** precedent in `DriverFactory.kt` / `DriverFactory.android.kt` / `DriverFactory.ios.kt` (an `expect class` + `expect fun create…(platformContext: Any?)` with a context-casting actual). Copy that structure rather than inventing a new one. `PermissionBanner.kt` is a `partial` match: the app has tappable `Mist` rows (`ServiceSummaryRow`) but no banner — reuse the row anatomy, do not invent a new visual language.
+**Near-misses that are intentionally *not* "no analog":** the notification delivery seam and its Android/iOS implementations have no *notification* precedent, but they have an exact **structural** precedent in `DriverFactory.kt` / `DriverFactory.android.kt` / `DriverFactory.ios.kt` (an `expect fun create…(platformContext: Any?)` with a context-casting factory, plus a platform interface the factory returns). Copy that structure rather than inventing a new one. `PermissionBanner.kt` is a `partial` match: the app has tappable `Mist` rows (`ServiceSummaryRow`) but no banner — reuse the row anatomy, do not invent a new visual language.
 
 ---
 

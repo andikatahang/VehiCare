@@ -122,7 +122,38 @@ Plans:
 3. On Android, overdue mileage reminders are evaluated by a background WorkManager task; on iOS, overdue mileage reminders are evaluated on app foreground via `triggerImmediateIfOverdue()` — both platforms deliver the notification correctly
 4. Home screen dashboard shows all vehicles with last service date and next due service at a glance
 
-**Plans:** TBD
+**Plans:** 8 plans
+Plans:
+
+**Wave 1**
+
+- [ ] 03-01-PLAN.md — the data foundation: `reminder_rule` schema v4 (incl. both cycle markers), generated `4.db`, `DatabaseProvider` for non-Compose callers
+
+**Wave 2** *(blocked on Wave 1 completion)*
+
+- [ ] 03-02-PLAN.md — the pure calculation core: `ReminderStatus` due-state engine, cycle keys, and `ReminderOrdering`
+- [ ] 03-03-PLAN.md — persistence and copy: `ReminderRepository` with the atomic once-per-cycle claim, cascade hook, notification identity, complete string block
+
+**Wave 3** *(blocked on Wave 2 completion)*
+
+- [ ] 03-04-PLAN.md — the Reminders screen list: urgency-ordered rows, in-place enable switch, single-select chips and numeric form rules
+
+**Wave 4** *(blocked on Wave 3 completion)*
+
+- [ ] 03-05-PLAN.md — the reminder editor (add/edit) and the Vehicle Detail Reminders summary row
+
+**Wave 5** *(blocked on Wave 4 completion)*
+
+- [ ] 03-06-PLAN.md — the dashboard: one status line per vehicle card and urgency ordering of the home list
+
+**Wave 6** *(blocked on Wave 5 completion)*
+
+- [ ] 03-07-PLAN.md — delivery: `ReminderDelivery`, `NotificationScheduler` seam, WorkManager worker, iOS pre-scheduling + foreground sweep
+
+**Wave 7** *(blocked on Wave 6 completion)*
+
+- [ ] 03-08-PLAN.md — permission: requester, persisted bits, coordinator, first-add explanation, two-placement banner/dialog
+
 **UI hint**: yes
 
 ---
@@ -133,7 +164,7 @@ Plans:
 |-------|----------------|--------|-----------|
 | 1. Foundation & Vehicle Management | 10/10 | Complete    | 2026-10-19 |
 | 2. Service Log | 8/8 | Complete    | 2026-10-21 |
-| 3. Reminders & Dashboard | 0/? | Not started | — |
+| 3. Reminders & Dashboard | 0/8 | Ready to execute | — |
 
 ---
 

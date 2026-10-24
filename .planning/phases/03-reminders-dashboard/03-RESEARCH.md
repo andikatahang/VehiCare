@@ -20,12 +20,12 @@
 #### Rule Shape & Baseline
 - **D-46:** `reminder_rule` holds `vehicle_id`, the service-type string, `interval_km` (**nullable**) and `interval_months` (**nullable**). **Both may be set on one rule**; the rule becomes due when *either* is reached ("5,000 km OR 6 months"). At least one interval must be present.
 - **D-47:** Intervals are measured from **the last service entry of the same type** — the mileage baseline is that entry's mileage, the time baseline is its service date. Not from the latest entry of any type, and not frozen at rule-creation time.
-- **D-48:** Rules **roll forward automatically**: logging a service of that type moves the baseline and clears the due state with no rule edit, no confirmation prompt and no "mark as done" step. The 30-second entry path (D-31) must not gain a reminder question.
+- **D-48:** **Baselines** roll forward automatically: logging a service of that type moves the baseline and clears the due state with no rule edit, no confirmation prompt and no "mark as done" step. The 30-second entry path (D-31) must not gain a reminder question.
 - **D-49:** For a rule whose type has **no entry yet**, the km baseline is the vehicle's latest entry mileage (any type) and the time baseline is the **rule's creation date**. When the vehicle has no entries at all, the km component renders as **"no mileage data yet"** rather than a due figure — never an invented odometer value (research warns against odometer extrapolation).
 - **D-50:** **Advance notice is per-rule and optional**: `lead_km` and `lead_days` (both nullable, empty = notify exactly at due). *This deliberately exceeds the letter of REM-01/REM-02 — user-approved during this discussion, recorded here so downstream agents do not treat it as scope creep.* A rule with a lead window enters the "due soon" state before it is actually due.
 
 #### Notification Policy & Delivery
-- **D-51:** A rule **notifies once per due cycle**. After a notification is delivered, the rule stays silent until its baseline moves (a service of that type is logged) or the rule is edited. Requires an explicit notification marker on the rule row (shape is agent discretion). Research is unambiguous that repeated nagging is the anti-feature that gets apps uninstalled.
+- **D-51:** A rule **notifies once per due cycle**. After a notification is delivered, the rule stays silent until its baseline moves (a service of that type is logged) or the rule is edited. Requires an explicit once-per-cycle **claim** marker on the rule row (shape resolved below: a cycle key compared atomically); `armed_cycle_key` is D-53 bookkeeping, not a claim. Research is unambiguous that repeated nagging is the anti-feature that gets apps uninstalled.
 - **D-52:** **Android delivers both rule kinds through WorkManager** — mileage evaluation (already fixed by SC-3) and time-based reminders. No `SCHEDULE_EXACT_ALARM`, no `BOOT_COMPLETED` receiver (WorkManager survives reboot by itself). Accepted trade-off: timing may drift by hours under Doze, and the UI copy must not promise exact delivery.
 - **D-53:** **iOS pre-schedules time-based reminders** with `UNCalendarNotificationTrigger` (fires even when the app is killed) and **evaluates mileage rules on app foreground** via the ROADMAP's `triggerImmediateIfOverdue()` (REM-04, SC-3). Time-based delivery is exact on iOS; mileage is inherently manual because the odometer only moves when the user logs it (research Notif 5).
 - **D-54:** **Notification permission is requested only when the user saves their first reminder**, preceded by a short in-app explanation, with denial non-blocking (the rule still saves). SC-2 and the STATE.md Key Decision stand: asking at first launch would burn iOS's one-time prompt before the user knows why. An initial suggestion to prompt at first launch was explicitly withdrawn after the conflict was surfaced.
@@ -41,7 +41,7 @@
 
 #### Cross-Cutting (requirements, not re-discussed)
 - **D-62:** All new schema ships in a **`3.sqm` migration** with a regenerated **`4.db`** baseline; both CI guards (`generateCommonMainVehiCareDatabaseSchema` + `git diff --exit-code`, and `verifyCommonMainVehiCareDatabaseMigration`) must stay green (DAT-04, D-38 precedent). New table: `reminder_rule`, keyed by `vehicle_id`.
-- **D-63:** All reminder **calculation** (which rule is due, by how much, in what order) lives in `commonMain`; **delivery** is a platform seam (`expect`/`actual` `NotificationScheduler` per `.planning/research/ARCHITECTURE.md`). Android-only SDKs stay in `androidMain`, never `commonMain`.
+- **D-63:** All reminder **calculation** (which rule is due, by how much, in what order) lives in `commonMain`; **delivery** is a platform seam (`NotificationScheduler` interface plus an `expect fun` factory, per `.planning/research/ARCHITECTURE.md`). Android-only SDKs stay in `androidMain`, never `commonMain`.
 - **D-64:** Deleting a vehicle deletes **its reminder rules** as well — an extension of the existing cascade (D-39), not a second delete path.
 - **D-65:** Every new user-facing string goes through `Res.string.*` (D-11); the existing theme tokens, spacing scale and type sizes are reused unchanged (01-UI-SPEC), with Phase 3's own UI-SPEC layered on top (ROADMAP `UI hint: yes`).
 
@@ -49,7 +49,7 @@
 
 Bounded by the requirements and the decisions above — decide these during research/planning:
 
-- Exact `reminder_rule` column set beyond the decided ones (notification marker shape: `notified_at` vs. a baseline-stamped column), indexes, and the `created_at` representation.
+- Exact `reminder_rule` column set beyond the decided ones (the once-per-cycle claim marker and the separate armed bookkeeping marker), indexes, and the `created_at` representation.
 - The dashboard query shape — one aggregated read per list load, no N+1 (PITFALLS § SQL 3); how "most urgent" is computed and compared across the km and time axes.
 - Android WorkManager cadence (periodic daily vs. a chain of delayed one-off work), constraint set, and where the worker and channel creation live (`AndroidManifest.xml` and `Application` belong to `androidApp`, so the split between `:shared` `androidMain` and `:androidApp` is a planning decision).
 - Notification channel id/name/importance (research Android 1: create once in `Application.onCreate`, before any notification) and the iOS `UNUserNotificationCenter.delegate` assignment point (research Pitfall 5: before any KMP initialization).
@@ -100,7 +100,7 @@ The third risk area is the SQLDelight migration: `databases/` already holds `1.d
 | Rule validation (intervals ≥ 1, at least one axis) | **commonMain** pure object | — | C-34 requires a pure object; `VehicleFormValidation` is the precedent, unit-tested in `commonTest`. |
 | Due-state computation (km axis, time axis, four sentences) | **commonMain** `ReminderStatus` | — | D-63 + C-28: one source for card, rule row, summary row **and** both platforms' notification copy. |
 | Dashboard aggregation (vehicles + last service + rules) | **Database / Storage** (four flat queries) | commonMain `combine` + ordering | PITFALLS § SQL 3 (no N+1); C-29 ordering needs a cross-axis ratio, computed in Kotlin. |
-| Scheduling + delivery | **Platform** (`expect`/`actual` `NotificationScheduler`) | — | D-63. Android = WorkManager; iOS = `UNCalendarNotificationTrigger` + foreground sweep. No cross-platform notifier exists. |
+| Scheduling + delivery | **Platform** (`NotificationScheduler` interface + `expect fun` factory) | — | D-63. Android = WorkManager; iOS = `UNCalendarNotificationTrigger` + foreground sweep. No cross-platform notifier exists. |
 | Permission request + status read | **Platform** (`actual`) | commonMain gate (when to ask) | The API is platform; the *policy* (first reminder save only, D-54) lives in commonMain. |
 | Foreground hook | **commonMain** (`LifecycleEventEffect`) | — | Verified: CMP 1.12.1 supplies one lifecycle on both platforms (U5). No `expect`/`actual` needed. |
 | Notification tap → Destination | **Platform** (Intent extra / `UNNotificationResponse` id) | commonMain nav state | The OS owns the tap; the payload is `vehicleId` (D-55) and routing stays in the single `NavHost`. |
@@ -250,7 +250,7 @@ shared/src/
 │   │   │   ├── ReminderRepositoryImpl.kt           # impl + mapper + serialized IO lane
 │   │   │   └── VehicleRepositoryImpl.kt            # MODIFIED: delete() also deletes reminder_rule
 │   │   ├── data/db/DatabaseProvider.kt             # NEW expect: process-wide DB accessor (U2)
-│   │   ├── notifications/NotificationScheduler.kt  # NEW expect seam (4th)
+│   │   ├── notifications/NotificationScheduler.kt  # NEW seam (4th): interface + expect factory
 │   │   ├── notifications/NotificationPermission.kt # NEW expect seam: status + request
 │   │   ├── ui/reminders/…                          # RemindersScreen, ReminderEditScreen, ReminderRuleRow,
 │   │   │                                           # ReminderSummaryRow, ReminderFormValidation, ViewModels
@@ -329,26 +329,30 @@ fun MainViewController(): UIViewController {
 
 The existing `DatabaseFactory` doc comment already states the invariant this pattern enforces: *"SQLDelight drivers are not safe to instantiate more than once against the same file […] Nothing else in the app may construct one."* The worker is exactly the "something else" that would have violated it. `[VERIFIED: shared/src/commonMain/kotlin/com/vehicare/data/db/DatabaseFactory.kt]` `[VERIFIED: no startKoin/KoinComponent/getKoin exists anywhere in the tree; Koin is created inside `KoinApplication {}` in App.kt and only there]` `[VERIFIED: createDriverFactory(platformContext: Any?, databaseName: String) is the single platform entry point for driver construction; iOS's actual ignores the context]`
 
-### Pattern 2: `expect`/`actual` delivery seam (the fourth pair)
+### Pattern 2: delivery seam — `commonMain` interface + `expect fun` factory (the fourth platform pair)
 
-**What:** A `commonMain` interface with two intents — `scheduleTimeBased()` (declarative: "make the OS hold the right future triggers") and `triggerImmediateIfOverdue()` (imperative: "evaluate now, notify now") — plus the read and the invalidation hook. Both `actual`s take the already-evaluated `List<DueReminder>` so **zero calculation happens on the platform side** (D-63).
+**What:** A `commonMain` seam with two delivery intents — `scheduleTimeBased()` (declarative: "make the OS hold the right future triggers") and `triggerImmediateIfOverdue()` (imperative: "notify now") — plus the permission read, a cancel hook for stale notifications, the fire-and-forget re-entry point and the OS-settings jump. Both implementations take the already-evaluated `List<DueReminder>` so **zero calculation happens on the platform side** (D-63).
 **When to use:** Always for this phase's delivery. Do not add a fifth seam for foreground detection (U5).
 
 ```kotlin
 // commonMain
-expect class NotificationScheduler {
-    suspend fun permissionState(): NotificationPermissionState      // read-only; polled on every foreground
-    suspend fun scheduleTimeBased(due: List<ScheduledReminder>)     // iOS: pre-schedule. Android: no-op/refresh
-    suspend fun triggerImmediateIfOverdue(due: List<DueReminder>)    // iOS: post now. Android: enqueue one-shot
-    suspend fun refresh(vehicleId: Long)                            // after ANY reminder_rule write (Pitfall 5)
+interface NotificationScheduler {
+    suspend fun permissionState(): NotificationPermission            // read-only; polled on every foreground
+    suspend fun scheduleTimeBased(due: List<ScheduledReminder>)       // iOS: pre-schedule. Android: no-op
+    suspend fun triggerImmediateIfOverdue(due: List<DueReminder>)     // iOS: post now. Android: post now
+    suspend fun cancel(ruleIds: List<Long>)                           // clear pending + delivered per rule
+    fun evaluateNow()                                                 // non-suspend: claim/post must not be cancelled
+    suspend fun openNotificationSettings()                            // denied → the OS app settings screen
 }
+
+expect fun createNotificationScheduler(platformContext: Any? = null): NotificationScheduler
 ```
 
-Exactly three `expect`/`actual` pairs exist today (`Platform.kt`, `AppVersion.kt`, `data/db/DriverFactory.kt`); this is the fourth, and the repo's established way to add platform delivery. `[VERIFIED: filesystem inventory of shared/src/*Main]`
+The interface (not an `expect class`) is deliberate: `commonTest` implements it with a fake to assert the permission gate and the three time-path cases, and the platform implementations stay `internal` (`AndroidNotificationScheduler`, `IosNotificationScheduler`). The `expect fun` factory is still the fourth `expect`/`actual` pair in the repo alongside `Platform.kt`, `AppVersion.kt` and `data/db/DriverFactory.kt`, and it is the repo's established way to add platform delivery. `[VERIFIED: filesystem inventory of shared/src/*Main]`
 
-**One additional, composition-scoped seam is recommended** — `@Composable expect fun rememberNotificationPermissionRequester(...)` (U4). It is not a fifth *delivery* seam: Android's runtime prompt is only constructible from a composition (`rememberLauncherForActivityResult`), while iOS's is a plain suspend framework call. Keeping it separate from `NotificationScheduler` is what lets the scheduler stay a plain class with no Compose dependency, callable from a worker.
+**One additional, composition-scoped seam is recommended** — `@Composable expect fun rememberNotificationPermissionRequester(...)` (U4). It is not a fifth *delivery* seam: Android's runtime prompt is only constructible from a composition (`rememberLauncherForActivityResult`), while iOS's is a plain suspend framework call. Keeping it separate from `NotificationScheduler` is what lets the scheduler stay a plain interface with no Compose dependency, callable from a worker.
 
-*How the `actual` gets its Android `Context`.* Mirror `DriverFactory` exactly: `expect fun createNotificationScheduler(platformContext: Any? = null): NotificationScheduler`, with the Android actual casting to `Context` and erroring with the same "load the platform module" message. Then the binding is one line per platform — `platformModule(androidContext)` registers `single<NotificationScheduler> { createNotificationScheduler(get<Context>()) }`, and `iosMain` gains a two-line `iosPlatformModule` with `single<NotificationScheduler> { createNotificationScheduler() }`, passed from `MainViewController` as `App(iosPlatformModule)`. No Koin override, no global context holder, and the same shape the database seam already uses. `[VERIFIED: DriverFactory.kt — `expect fun createDriverFactory(platformContext: Any? = null, databaseName: String = defaultDatabaseName)`]`
+*How the implementation gets its Android `Context`.* Mirror `DriverFactory` exactly: `expect fun createNotificationScheduler(platformContext: Any? = null): NotificationScheduler`, with the Android factory casting to `Context` and erroring with the same "load the platform module" message. Then the binding is one line per platform — `platformModule(androidContext)` registers `single<NotificationScheduler> { createNotificationScheduler(get<Context>()) }`, and `iosMain` gains a two-line `iosPlatformModule` with `single<NotificationScheduler> { createNotificationScheduler() }`, passed from `MainViewController` as `App(iosPlatformModule)`. No Koin override, no global context holder, and the same shape the database seam already uses. `[VERIFIED: DriverFactory.kt — `expect fun createDriverFactory(platformContext: Any? = null, databaseName: String = defaultDatabaseName)`]`
 
 ### Pattern 3: Flat queries + `combine`, never a LEFT JOIN
 
@@ -430,7 +434,7 @@ Each answer states the evidence, then what it means for the plan.
 
 *Initialisation.* WorkManager ships `androidx.startup.InitializationProvider` in its AAR, and Android instantiates content providers **before** `Application.onCreate`, so `WorkManager.getInstance(context)` is already valid inside `onCreate` with **no** `Configuration.Provider` and **no** manifest surgery. On-demand initialisation would require `tools:node="remove"` on that provider plus a `Configuration.Provider` implementation — all cost, no benefit here. `[CITED: developer.android.com/topic/libraries/architecture/workmanager/advanced/custom-configuration]` `[VERIFIED: work-runtime 2.12.0 POM depends on androidx.startup:startup-runtime]`
 
-*Cadence.* `PeriodicWorkRequestBuilder<ReminderWorker>(1, TimeUnit.DAYS)` — the platform floor is 15 minutes (`PeriodicWorkRequest.MIN_PERIODIC_INTERVAL_MILLIS`), and daily is the right trade for D-52's accepted drift: finer granularity buys nothing when Doze may defer the run by hours anyway, and it multiplies wakeups. `setInitialDelay` is unnecessary; the worker is idempotent and the notification marker makes the first run harmless. No constraints (`setRequiresBatteryNotLow(false)` default, no network requirement) because the work is local and must run on a flat battery. `[CITED: developer.android.com/reference/androidx/work/PeriodicWorkRequest — MIN_PERIODIC_INTERVAL_MILLIS = 900000]`
+*Cadence.* `PeriodicWorkRequestBuilder<ReminderWorker>(1, TimeUnit.DAYS)` — the platform floor is 15 minutes (`PeriodicWorkRequest.MIN_PERIODIC_INTERVAL_MILLIS`), and daily is the right trade for D-52's accepted drift: finer granularity buys nothing when Doze may defer the run by hours anyway, and it multiplies wakeups. `setInitialDelay` is unnecessary; the worker is idempotent and the conditional claim makes the first run harmless. No constraints (`setRequiresBatteryNotLow(false)` default, no network requirement) because the work is local and must run on a flat battery. `[CITED: developer.android.com/reference/androidx/work/PeriodicWorkRequest — MIN_PERIODIC_INTERVAL_MILLIS = 900000]`
 
 *Immediate evaluation.* Enqueue a `OneTimeWorkRequest` under the unique name `"reminder-eval-now"` with `ExistingWorkPolicy.REPLACE` whenever the inputs change: a rule is saved/enabled/deleted, or a service entry is logged (baseline moved). This is also the natural implementation of the Android `actual` for `triggerImmediateIfOverdue()` — the common `ON_RESUME` hook calls it on both platforms, Android defers to the worker, iOS evaluates inline. Same call site, two implementations. `[CITED: developer.android.com/topic/libraries/architecture/workmanager/how-to/managing-work]`
 
@@ -456,7 +460,7 @@ Each answer states the evidence, then what it means for the plan.
 
 ### U3 — `UNUserNotificationCenter` from `iosMain`
 
-**Answer: it is fully reachable from Kotlin/Native through `platform.UserNotifications.*`, all of it behind `@OptIn(ExperimentalForeignApi::class)`, and two details are easy to get wrong: the delegate must be strongly retained *and* must implement `willPresent`, and every scheduled date must be rolled forward into the future first.**
+**Answer: it is fully reachable from Kotlin/Native through `platform.UserNotifications.*`, all of it behind `@OptIn(ExperimentalForeignApi::class)`, and two details are easy to get wrong: the delegate must be strongly retained *and* must implement `willPresent`, and every scheduled trigger instant must be strictly in the future — a past instant is skipped, never rolled forward.**
 
 Verified API surface (names as they appear in compiling Kotlin/Native code):
 
@@ -504,9 +508,9 @@ Verified API surface (names as they appear in compiling Kotlin/Native code):
 
 *Placement.* Inside `App.kt`, above the `NavHost`, so it survives every navigation and is not owned by a screen that can be popped. It also fires on the very first composition, which is what makes a long-overdue rule notify at launch — desirable.
 
-*What it triggers.* `NotificationScheduler.triggerImmediateIfOverdue(evaluate(now))` plus a `NotificationScheduler.permissionState()` refresh. Both are idempotent: the due list is computed by the same pure function, and the marker makes delivery once-per-cycle.
+*What it triggers.* `NotificationScheduler.triggerImmediateIfOverdue(evaluate(now))` plus a `NotificationScheduler.permissionState()` refresh. Both are idempotent: the due list is computed by the same pure function, and the conditional claim (`markNotified`) makes delivery once-per-cycle — `armed_cycle_key` only records that the OS already had the cycle and is never a claim.
 
-*Guard against double-fire.* `ON_RESUME` can fire in quick succession (e.g. returning from the permission dialog triggers a configuration-less resume on some devices). Keep a short single-flight guard (`Mutex.tryLock`) in the scheduler, or simply rely on the atomic `UPDATE` — a second evaluation finds the marker set and notifies nothing.
+*Guard against double-fire.* `ON_RESUME` can fire in quick succession (e.g. returning from the permission dialog triggers a configuration-less resume on some devices). Keep a short single-flight guard (`Mutex.tryLock`) in the scheduler, or simply rely on the atomic `UPDATE` — a second evaluation finds the claim set and notifies nothing.
 
 *Rejected alternative:* a fifth `expect`/`actual` (`AppForegroundDetector`). It would duplicate what the lifecycle already models, and the iOS `actual` would have to re-implement scene-observer bookkeeping that CMP already ships.
 
@@ -637,7 +641,8 @@ CREATE TABLE reminder_rule (
     lead_days           INTEGER,
     enabled             INTEGER NOT NULL DEFAULT 1,
     created_at_epoch_ms INTEGER NOT NULL,
-    notified_cycle_key  TEXT
+    notified_cycle_key  TEXT,
+    armed_cycle_key     TEXT
 );
 
 CREATE INDEX reminder_rule_vehicle ON reminder_rule(vehicle_id);
@@ -651,6 +656,7 @@ Column-by-column rationale (the CONTEXT left the extra shape to the agent):
 - **`enabled INTEGER NOT NULL DEFAULT 1`.** No boolean adapter exists in the project and SQLDelight maps `INTEGER` to `Long`; the mapper does `enabled != 0L`. Introducing a `ColumnAdapter<Boolean, Long>` for one column would add a second custom-type mechanism for no gain.
 - **`created_at_epoch_ms` as UTC start-of-day millis** — deliberately the *same* convention as `service_entry.service_date_epoch_ms` ("UTC start-of-day millis of the civil date"), because D-49 makes it a time baseline that is compared against entry dates. Storing a wall-clock instant here would make rules created at 23:50 behave differently from rules created at 00:10 on the same day.
 - **`notified_cycle_key TEXT` nullable, `NULL` = never notified in the current cycle.** See below.
+- **`armed_cycle_key TEXT` nullable, `NULL` = no OS request has been accepted for the current cycle.** This is **bookkeeping, not a claim**: it is written only after `scheduleTimeBased` returns successfully, and it answers one question the claim cannot answer on iOS — "did the OS ever have this cycle?" A pre-scheduled request fires with no app code running, so the app cannot write `notified_cycle_key` at delivery. The sweep uses this marker to distinguish an armed cycle that is now past (claim only, the OS already had its chance) from a cycle that was never armed because the rule was created inside or after its own window (claim **then post**, so the first notification is not swallowed). It is never read as a claim and never gates a post by itself. See "Why a second marker" below.
 
 ### Why a cycle key, not a timestamp or two baseline columns
 
@@ -673,7 +679,17 @@ Consequences, each of which is a requirement:
 - two evaluations in the same cycle compute the same key → the conditional `UPDATE` affects 0 rows → no second notification (D-51);
 - deleting an entry moves the baseline backwards → new key → the rule legitimately becomes due again. That is correct, not a regression, and it is a case worth a `commonTest` assertion.
 
-The repository *also* clears the key explicitly on rule edit — defence in depth, in case a future column is added that the key does not cover.
+### Why a second marker (`armed_cycle_key`) on iOS
+
+D-53 splits delivery: time-based rules are pre-scheduled with the OS, mileage rules run in the foreground sweep. When a pre-scheduled request fires, **no app code runs**, so `markNotified` cannot be called at delivery. Without a second fact the next sweep would see `notified_cycle_key = NULL` and either re-arm the same cycle (double notification) or claim it silently (the first notification of a rule created inside its own window is swallowed). `armed_cycle_key` records that the OS accepted a request for that exact cycle, and `scheduleTimeBased` is its only writer. The time path is then exactly three cases:
+
+- **armed and strictly past** → claim only: the OS had its chance, and the claim stops future sweeps from re-arming the cycle.
+- **armed and due today** → retain the request **unclaimed**: the 09:00 trigger may still fire, and the first sweep that sees the instant strictly past writes the claim.
+- **never armed, notification instant today or past** → claim **then post**: the rule was created inside or after its own window, and claiming without posting would make its first notification silent.
+
+A claimed cycle is never re-armed, and the armed marker is never a claim. Editing or toggling the rule clears both markers, so the next schedule is a fresh arm.
+
+The repository *also* clears both keys explicitly on rule edit — defence in depth, in case a future column is added that the key does not cover.
 
 ### Queries
 
@@ -684,22 +700,30 @@ selectById:        SELECT * FROM reminder_rule WHERE id = ?;
 
 insert:
 INSERT INTO reminder_rule(vehicle_id, service_type, interval_km, interval_months,
-                          lead_km, lead_days, enabled, created_at_epoch_ms, notified_cycle_key)
-VALUES (?, ?, ?, ?, ?, ?, ?, ?, NULL);
+                          lead_km, lead_days, enabled, created_at_epoch_ms,
+                          notified_cycle_key, armed_cycle_key)
+VALUES (?, ?, ?, ?, ?, ?, ?, ?, NULL, NULL);
 
 update:
 UPDATE reminder_rule
 SET service_type=?, interval_km=?, interval_months=?, lead_km=?, lead_days=?,
-    enabled=?, notified_cycle_key=NULL
+    enabled=?, notified_cycle_key=NULL, armed_cycle_key=NULL
 WHERE id=?;
 
 setEnabled:
-UPDATE reminder_rule SET enabled=?, notified_cycle_key=NULL WHERE id=?;
+UPDATE reminder_rule
+SET enabled=?, notified_cycle_key=NULL, armed_cycle_key=NULL
+WHERE id=?;
 
 -- The atomic once-per-cycle claim. Returns the number of rows changed.
 markNotified:
 UPDATE reminder_rule SET notified_cycle_key = ?
 WHERE id = ? AND (notified_cycle_key IS NULL OR notified_cycle_key <> ?);
+
+-- Bookkeeping only: the caller writes it after the platform accepted the request.
+markArmed:
+UPDATE reminder_rule SET armed_cycle_key = ?
+WHERE id = ? AND (armed_cycle_key IS NULL OR armed_cycle_key <> ?);
 
 delete:              DELETE FROM reminder_rule WHERE id = ?;
 deleteRulesForVehicle: DELETE FROM reminder_rule WHERE vehicle_id = ?;
@@ -708,7 +732,7 @@ countEnabledForVehicle:
 SELECT COUNT(*) FROM reminder_rule WHERE vehicle_id = ? AND enabled = 1;
 ```
 
-`markNotified`'s `WHERE` clause is the whole of D-51's guarantee — it is a compare-and-set, not a read-then-write, so the periodic run and the immediate run cannot both notify.
+`markNotified`'s `WHERE` clause is the whole of D-51's guarantee — it is a compare-and-set, not a read-then-write, so the periodic run and the immediate run cannot both notify. `markArmed` has the same compare-and-set shape but is **not** a claim: its affected-row count is ignored, it is written only after `scheduleTimeBased` returns, and a failed schedule leaves the cycle unarmed so the next sweep retries.
 
 ### Migration `3.sqm` → baseline `4.db`
 
@@ -727,7 +751,8 @@ CREATE TABLE reminder_rule (
     lead_days           INTEGER,
     enabled             INTEGER NOT NULL DEFAULT 1,
     created_at_epoch_ms INTEGER NOT NULL,
-    notified_cycle_key  TEXT
+    notified_cycle_key  TEXT,
+    armed_cycle_key     TEXT
 );
 
 CREATE INDEX reminder_rule_vehicle ON reminder_rule(vehicle_id);
@@ -761,12 +786,12 @@ Mechanics that must not be guessed:
 
 ### Pitfall 4: A past-dated `UNCalendarNotificationTrigger` fires immediately, every time it is scheduled
 **What goes wrong:** an overdue rule produces a notification on every foreground/save, re-nagging (D-51 violation).
-**How to avoid:** roll the computed due date forward by whole intervals until it is strictly in the future before scheduling; deliver the already-overdue case only through `triggerImmediateIfOverdue()` (U3, Pitfall C).
+**How to avoid:** never roll a due date forward. `ReminderSchedule.currentOccurrence` is the cycle's due date, `notificationDate` is that date minus `lead_days`, and neither ever rolls. The orchestrator schedules only a `notificationDate` strictly in the future, plus an already-armed due-today row; the iOS actual resolves the trigger instant and skips anything whose `timeIntervalSinceNow <= 0`, so an already-fired request cannot be resurrected. An overdue cycle is either claimed **then** posted by the sweep (never armed) or claimed **without** posting when `armed_cycle_key` proves the OS already had it (U3, Pitfall C).
 **Warning signs:** duplicate notifications whose count matches screen visits rather than due cycles.
 
 ### Pitfall 5: Pending iOS notifications outlive the rule
 **What goes wrong:** a deleted, disabled or edited rule still fires — iOS holds the trigger in the OS.
-**How to avoid:** a single invariant — **every write to `reminder_rule` calls `NotificationScheduler.refresh(vehicleId)`**, where the iOS `actual` removes that vehicle's pending identifiers and re-adds the next occurrence for each enabled rule. Deletes call it too, before/after the row is gone (the identifiers carry `vehicleId` and `ruleId`, so the cancel does not need the row).
+**How to avoid:** a single invariant — **every mutation that invalidates a notification reports the affected rule ids to a repository hook, and the Koin binding calls `NotificationScheduler.cancel(ruleIds)` before `evaluateNow()`**. `ReminderRepositoryImpl` passes the edited/toggled/deleted rule id; `VehicleRepositoryImpl` collects the vehicle's rule ids before the cascade delete and passes them with the vehicle id. The identifiers carry `vehicleId` and `ruleId`, so `cancel` needs no row; iOS removes both pending (`v<id>:r<id>`) and delivered (`v<id>:r<id>:now`) requests, and Android cancels `ruleId.toInt()`.
 **Warning signs:** a reminder for a rule that no longer exists.
 
 ### Pitfall 6: The notification channel does not exist yet
@@ -841,35 +866,43 @@ class ReminderWorker(
 
 ```kotlin
 // shared/src/iosMain/kotlin/com/vehicare/notifications/NotificationScheduler.ios.kt
+internal const val IMMEDIATE_ID_SUFFIX: String = ":now"
+
 @OptIn(ExperimentalForeignApi::class)
-actual class NotificationScheduler {
+internal class IosNotificationScheduler internal constructor() : NotificationScheduler {
 
     private val center = UNUserNotificationCenter.currentNotificationCenter()
-    // STRONG reference: center.delegate is weak — a local object would be collected (Pitfall 2).
-    private val delegate = IosNotificationDelegate()
 
-    fun install() {
-        center.delegate = delegate
-    }
+    override suspend fun scheduleTimeBased(due: List<ScheduledReminder>) {
+        // Declarative: clear this app's own pending requests, then add exactly this list.
+        val existing = suspendCancellableCoroutine { cont ->
+            center.getPendingNotificationRequestsWithCompletionHandler { requests ->
+                cont.resume(
+                    requests.mapNotNull { (it as? UNNotificationRequest)?.identifier }
+                        .filter(::isOwnIdentifier),
+                )
+            }
+        }
+        center.removePendingNotificationRequestsWithIdentifiers(existing)
 
-    actual suspend fun scheduleTimeBased(due: List<ScheduledReminder>) {
         due.forEach { item ->
             val id = ReminderNotificationId.encode(item.vehicleId, item.ruleId)
-            center.removePendingNotificationRequestsWithIdentifiers(listOf(id))
-
             val content = UNMutableNotificationContent().apply {
                 title = item.title
                 body = item.body
                 sound = UNNotificationSound.defaultSound()
             }
-            // item.nextOccurrence is already rolled into the FUTURE (Pitfall 4).
+            // item.notificationDate is the occurrence minus lead_days; it is never rolled forward.
             val components = NSDateComponents().apply {
-                year = item.nextOccurrence.year.toLong()
-                month = item.nextOccurrence.monthNumber.toLong()
-                day = item.nextOccurrence.dayOfMonth.toLong()
-                hour = REMINDER_HOUR.toLong()
+                year = item.notificationDate.year.toLong()
+                month = item.notificationDate.monthNumber.toLong()
+                day = item.notificationDate.dayOfMonth.toLong()
+                hour = REMINDER_NOTIFICATION_HOUR.toLong()
                 minute = 0
             }
+            // Due-today requests are retained only while 09:00 is still ahead; never resurrect one.
+            val instant = NSCalendar.currentCalendar.dateFromComponents(components)
+            if (instant == null || instant.timeIntervalSinceNow <= 0) return@forEach
             val trigger = UNCalendarNotificationTrigger
                 .triggerWithDateMatchingComponents(components, repeats = false)
             val request = UNNotificationRequest.requestWithIdentifier(id, content, trigger)
@@ -877,7 +910,7 @@ actual class NotificationScheduler {
         }
     }
 
-    actual suspend fun triggerImmediateIfOverdue(due: List<DueReminder>) {
+    override suspend fun triggerImmediateIfOverdue(due: List<DueReminder>) {
         due.forEach { reminder ->
             val content = UNMutableNotificationContent().apply {
                 title = reminder.title
@@ -886,13 +919,16 @@ actual class NotificationScheduler {
             }
             // nil trigger = deliver now. Visible only because willPresent returns .banner (Pitfall 3).
             val request = UNNotificationRequest.requestWithIdentifier(
-                ReminderNotificationId.encode(reminder.vehicleId, reminder.ruleId),
+                ReminderNotificationId.encode(reminder.vehicleId, reminder.ruleId) + IMMEDIATE_ID_SUFFIX,
                 content,
                 trigger = null,
             )
             center.addNotificationRequest(request) { _ -> }
         }
     }
+
+    // cancel(ruleIds), permissionState(), evaluateNow() and openNotificationSettings() are
+    // specified member-for-member in 03-07 Task 2; the snippet shows the two delivery paths.
 }
 
 // The delegate — installed once, before Compose (U3, Pitfall D).
@@ -914,7 +950,8 @@ internal class IosNotificationDelegate : NSObject(), UNUserNotificationCenterDel
         withCompletionHandler: () -> Unit,
     ) {
         if (didReceiveNotificationResponse.actionIdentifier == UNNotificationDefaultActionIdentifier) {
-            ReminderNotificationId.parseVehicleId(didReceiveNotificationResponse.notification.request.identifier)
+            val identifier = didReceiveNotificationResponse.notification.request.identifier
+            ReminderNotificationId.vehicleIdOf(identifier.removeSuffix(IMMEDIATE_ID_SUFFIX))
                 ?.let(NotificationTapBus::publish)
         }
         withCompletionHandler()
@@ -995,31 +1032,37 @@ object ReminderStatus {
 | A3 | Default WorkManager initialisation (the `androidx.startup` provider) runs before `Application.onCreate`, so `WorkManager.getInstance` is safe there | U1 | LOW: the design does not actually call `getInstance` in `onCreate` — only the channel and the DB holder are initialised there. Even if the ordering differed, the first `getInstance` happens from the repository/worker, well after startup. |
 | A4 | SQLite's single-`MAX()` bare-column rule behaves identically on the API 26 SQLite (3.18) | U6, Schema | LOW: the project already depends on this exact behaviour in `selectLearnedTypes`, which ships and passes its tests on the same engine. |
 | A5 | `getString`/`getPluralString` are safe to call off the main thread from a worker | U9, Code Examples | LOW: they read the resource bundle through the generated accessor with no thread affinity; the only cost is first-call I/O. If a platform ever asserted, the fix is to resolve the strings before entering `withContext`. |
-| A6 | DSH-01's "last service date" is delivered somewhere the UI-SPEC already defines | Open Questions | MEDIUM: the UI-SPEC adds exactly one status line (C-30) and never mentions a last-service-date element. See Open Question 1 — this is a planning/product call, not something research may redesign. |
+| A6 | DSH-01's "last service date" is delivered somewhere the UI-SPEC already defines | Open Questions | MEDIUM → **RESOLVED 2026-10-23**: the date shares the card's single status line (`Last service {date} · {sentence}`, C-30 amended); the original risk note is kept below. The UI-SPEC adds exactly one status line (C-30) and never mentions a last-service-date element. See Open Question 1 — this was a planning/product call, not something research may redesign; it was decided by the user on 2026-10-23. |
 | A7 | Android's `notDetermined` vs `denied` can be derived from "at least one rule exists" without extra storage | U4 | LOW: D-54 guarantees the prompt is only ever triggered by a first rule save, so the rule count is a faithful proxy. Edge case: a user who denies, then deletes every rule, then re-adds one — the banner would offer the explanation dialog again and the OS would decline silently (harmless, no crash). |
 | A8 | The 4-flow `combine` dashboard read is fast enough without pagination | U6 | LOW: N is a personal vehicle count; four indexed reads plus an in-memory sort is microseconds at any realistic N. |
 
-## Open Questions
+## Open Questions (RESOLVED)
+
+> All four questions below were resolved on 2026-10-23; the `RESOLVED:` line under each records the decision. The original analysis is kept verbatim as evidence.
 
 1. **Where DSH-01's "last service date" is rendered on the home screen.**
    - What we know: the approved UI-SPEC gives the card exactly one new status line (`{type} · {sentence}`, C-30) and never specifies a last-service-date element; the data is available in the same read (`selectVehicleStats.last_service_epoch_ms`), so no extra query is needed either way.
    - What's unclear: whether the planner treats DSH-01's two facts as satisfied by the status line (next due) plus the existing Detail summary row, or expects the status line's `upcoming` form to carry the date (`Due on 12 Mar 2027`, C-43).
    - Recommendation: implement the query regardless (it is needed for D-49's fallback and for the sentence context), and let the UI-SPEC's line contract decide the rendering. **Research does not redesign the card.**
+   - **RESOLVED 2026-10-23 (user-approved):** the last-service date is rendered **on the home card's existing single status line** — `Last service {date} · {due sentence}` (+ ` · +N due`), falling back to `{type} · {sentence}` when the vehicle has no service entry. DSH-01 is therefore met literally on the home screen. UI-SPEC C-30 and CONTEXT D-59 were amended to match; plan 03-06 implements it (reusing `service_summary_last` and `ServiceDates`).
 
 2. **Whether `(vehicle_id, service_type)` should be unique.**
    - What we know: D-46 puts both intervals on one rule, which makes two rules for the same type on the same vehicle redundant.
    - What's unclear: whether a duplicate is a user error to block or a legitimate state to allow.
    - Recommendation: do **not** add a `UNIQUE` index (it is a product decision with migration consequences). Add the plain `vehicle_id` index; the editor's chip group makes accidental duplicates unlikely. If uniqueness is later wanted, it needs its own migration *and* a decision about which duplicate survives.
+   - **RESOLVED 2026-10-23:** the recommendation stands — no `UNIQUE` index; `3.sqm` ships the plain `vehicle_id` index (plan 03-01).
 
 3. **Force-stop behaviour on aggressive OEM builds.**
    - What we know: WorkManager cannot re-arm after a force-stop until the app next runs (Pitfall 10); D-52 forbids the `BOOT_COMPLETED` workaround that some apps use.
    - What's unclear: nothing technical — it is a documented limitation.
    - Recommendation: keep the copy honest and record the limitation in the phase summary; no code change.
+   - **RESOLVED 2026-10-23:** accepted as a documented limitation — the phase summary records it, no code change.
 
 4. **`UNUserNotificationCenter` provisional authorisation.**
    - What we know: iOS can grant "provisional" delivery without a prompt, which would bypass the whole C-38/C-39 explanation flow.
    - What's unclear: whether that is desirable — it conflicts with D-54's explicit "explain, then ask".
    - Recommendation: do not use it. D-54 is locked; noted only so a future reviewer does not "discover" it as an improvement.
+   - **RESOLVED 2026-10-23:** not used — the explicit explanation-then-ask flow stays; the iOS requester requests alert + sound only, no provisional authorization (plan 03-08).
 
 ## Environment Availability
 
