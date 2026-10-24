@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.vehicare.domain.repository.ReminderRepository
 import com.vehicare.domain.repository.VehicleRepository
+import com.vehicare.data.settings.SettingsProvider
 import com.vehicare.domain.DueState
 import com.vehicare.domain.ReminderOrdering
 import com.vehicare.domain.ReminderRow
@@ -109,12 +110,13 @@ class VehicleListViewModel(
                     reminderRepo.observeAllRules(),
                     reminderRepo.observeTypeBaselines(),
                     reminderRepo.observeVehicleStats(),
-                ) { vehicles, rules, baselines, stats ->
+                    SettingsProvider.observeIntervalMonthsOrDefault(),
+                ) { vehicles, rules, baselines, stats, globalMonths ->
                     if (vehicles.isEmpty()) {
                         VehicleListUiState.Empty
                     } else {
                         VehicleListUiState.Content(
-                            buildDashboard(vehicles, rules, baselines, stats),
+                            buildDashboard(vehicles, rules, baselines, stats, globalMonths),
                         )
                     }
                 }
@@ -140,11 +142,18 @@ class VehicleListViewModel(
         rules: List<ReminderRule>,
         baselines: List<TypeBaseline>,
         stats: List<VehicleStats>,
+        globalIntervalMonths: Long?,
     ): List<VehicleDashboardRow> {
         val vehiclesById = vehicles.associateBy { it.id }
         val statsById = stats.associateBy { it.vehicleId }
 
-        val allRows = ReminderStatus.evaluateAll(rules, baselines, stats, ServiceDates.today())
+        val allRows = ReminderStatus.evaluateAll(
+            rules,
+            baselines,
+            stats,
+            ServiceDates.today(),
+            globalIntervalMonths,
+        )
         val rowsByVehicle = allRows.groupBy { it.rule.vehicleId }
 
         val groups = vehicles.map { vehicle ->

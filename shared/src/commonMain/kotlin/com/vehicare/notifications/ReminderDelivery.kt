@@ -3,6 +3,7 @@ package com.vehicare.notifications
 import com.vehicare.data.db.DatabaseProvider
 import com.vehicare.data.repository.ReminderRepositoryImpl
 import com.vehicare.data.repository.VehicleRepositoryImpl
+import com.vehicare.data.settings.SettingsProvider
 import com.vehicare.domain.DueState
 import com.vehicare.domain.repository.ReminderRepository
 import com.vehicare.domain.repository.VehicleRepository
@@ -50,6 +51,7 @@ internal class ReminderDelivery(
     private val scheduler: NotificationScheduler,
     private val today: () -> LocalDate = ServiceDates::today,
     private val immediateAxes: Set<ReminderAxis> = setOf(ReminderAxis.DISTANCE, ReminderAxis.TIME),
+    private val globalIntervalMonths: () -> Long? = { null },
 ) {
 
     suspend fun evaluateAndDeliver() {
@@ -61,10 +63,14 @@ internal class ReminderDelivery(
         val stats = reminderRepository.observeVehicleStats().first()
         val vehiclesById = vehicles.associateBy { it.id }
 
-        val today = today()
-        val rows = ReminderStatus.evaluateAll(rules, baselines, stats, today)
+        // The global interval is read ONCE per sweep (261024-u9g, D-1): one evaluation, one value —
+        // the lambda stays lazy so each sweep picks up a fresh setting, never mid-sweep a torn one.
+        val globalMonths = globalIntervalMonths()
 
-        val timePathOwned = timePathOwnedRuleIds(rows, baselines, today, immediateAxes)
+        val today = today()
+        val rows = ReminderStatus.evaluateAll(rules, baselines, stats, today, globalMonths)
+
+        val timePathOwned = timePathOwnedRuleIds(rows, baselines, today, immediateAxes, globalMonths)
         val candidateRows = ReminderOrdering.sortRules(
             immediateCandidates(rows, immediateAxes, timePathOwned),
         )
@@ -79,7 +85,7 @@ internal class ReminderDelivery(
             val scheduledCycleKeys = mutableMapOf<Long, String>()
 
             val timeEligible = ReminderOrdering.sortRules(rows).filter { row ->
-                row.evaluation != null && row.rule.intervalMonths != null
+                row.evaluation != null && (globalMonths ?: row.rule.intervalMonths) != null
             }
 
             for (row in timeEligible) {
@@ -92,8 +98,8 @@ internal class ReminderDelivery(
                 if (rule.notifiedCycleKey == evaluation.cycleKey) continue
                 val vehicle = vehiclesById[rule.vehicleId] ?: continue
 
-                val due = ReminderSchedule.currentOccurrence(rule, baselines) ?: continue
-                val notifyAt = ReminderSchedule.notificationDate(rule, baselines) ?: continue
+                val due = ReminderSchedule.currentOccurrence(rule, baselines, globalMonths) ?: continue
+                val notifyAt = ReminderSchedule.notificationDate(rule, baselines, globalMonths) ?: continue
                 val armed = rule.armedCycleKey == evaluation.cycleKey
 
                 when {
@@ -211,7 +217,8 @@ internal fun immediateCandidates(
 
 /**
  * The ids the time path owns in this cycle: empty when `TIME` is in [immediateAxes] (Android's
- * worker delivers the time axis there), otherwise the ids of enabled rows with a time interval
+ * worker delivers the time axis there), otherwise the ids of enabled rows with an **effective**
+ * time interval (261024-u9g, D-1 — the global setting, when set, arms the axis on every rule)
  * whose [ReminderSchedule.notificationDate] is today or past (inclusive — the notification
  * boundary belongs to the OS request, not to the sweep).
  *
@@ -224,12 +231,15 @@ internal fun timePathOwnedRuleIds(
     baselines: List<TypeBaseline>,
     today: LocalDate,
     immediateAxes: Set<ReminderAxis>,
+    globalIntervalMonths: Long? = null,
 ): Set<Long> {
     if (ReminderAxis.TIME in immediateAxes) return emptySet()
     return rows
-        .filter { row -> row.rule.enabled && row.rule.intervalMonths != null }
+        // Eligibility is on the EFFECTIVE months (261024-u9g, D-1): once the global setting is set,
+        // every enabled rule gains a time axis — exactly the universality the setting asks for.
+        .filter { row -> row.rule.enabled && (globalIntervalMonths ?: row.rule.intervalMonths) != null }
         .mapNotNull { row ->
-            val notifyAt = ReminderSchedule.notificationDate(row.rule, baselines) ?: return@mapNotNull null
+            val notifyAt = ReminderSchedule.notificationDate(row.rule, baselines, globalIntervalMonths) ?: return@mapNotNull null
             row.rule.id.takeIf { notifyAt <= today }
         }
         .toSet()
@@ -273,6 +283,10 @@ internal object ReminderDeliveryFactory {
             reminderRepository = reminderRepository,
             scheduler = scheduler,
             immediateAxes = immediateAxes,
+            // Lazily read per sweep so a Settings change is picked up by the very next pass
+            // (261024-u9g) — never snapshotted at factory time. Outside the Koin graph, the same
+            // reason the database is read through DatabaseProvider.
+            globalIntervalMonths = { SettingsProvider.require().readIntervalMonths() },
         )
     }
 }

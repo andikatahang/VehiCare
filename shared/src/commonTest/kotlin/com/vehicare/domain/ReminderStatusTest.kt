@@ -404,6 +404,100 @@ class ReminderStatusTest {
         assertEquals(first.cycleKey, ReminderStatus.evaluate(oilChange, null, 10_000, today).cycleKey)
     }
 
+    // ---- the global interval setting (261024-u9g, D-1) -------------------------------------
+
+    @Test
+    fun aGlobalIntervalGivesAKmOnlyRuleAWorkingTimeAxis() {
+        // March 15 service; global 6 months → time due at March + 6 = September 15. The 50 000 km
+        // interval never completes, so the time axis must decide from the global value alone.
+        val marchBaseline = baseline(date = LocalDate(2026, 3, 15), km = 10_000)
+        val evaluation = ReminderStatus.evaluate(
+            rule = rule(intervalKm = 50_000),
+            typeBaseline = marchBaseline,
+            currentMileageKm = 10_000,
+            today = LocalDate(2026, 5, 1),
+            globalIntervalMonths = 6L,
+        )
+
+        val state = evaluation.state
+        assertIs<DueState.Upcoming>(state)
+        assertEquals(LocalDate(2026, 9, 15), state.dueDate)
+        assertEquals(ReminderAxis.TIME, evaluation.axis)
+    }
+
+    @Test
+    fun theGlobalIntervalReplacesARuleOwnMonthsEntirely() {
+        // The rule says 12 months (→ 2027-03-15); the global 3-month setting wins regardless,
+        // because D-1 is an override, not a min or a max.
+        val marchBaseline = baseline(date = LocalDate(2026, 3, 15), km = 10_000)
+        val evaluation = ReminderStatus.evaluate(
+            rule = rule(intervalMonths = 12L),
+            typeBaseline = marchBaseline,
+            currentMileageKm = 10_000,
+            today = LocalDate(2026, 5, 1),
+            globalIntervalMonths = 3L,
+        )
+
+        val state = evaluation.state
+        assertIs<DueState.Upcoming>(state)
+        assertEquals(LocalDate(2026, 6, 15), state.dueDate, "global 3 months, not the rule's own 12")
+    }
+
+    @Test
+    fun aNullGlobalIntervalKeepsTheRuleOwnMonths() {
+        val marchBaseline = baseline(date = LocalDate(2026, 3, 15), km = 10_000)
+        val evaluation = ReminderStatus.evaluate(
+            rule = rule(intervalMonths = 12L),
+            typeBaseline = marchBaseline,
+            currentMileageKm = 10_000,
+            today = LocalDate(2026, 5, 1),
+            globalIntervalMonths = null,
+        )
+
+        val state = evaluation.state
+        assertIs<DueState.Upcoming>(state)
+        assertEquals(LocalDate(2027, 3, 15), state.dueDate, "per-rule fallback when never set (D-1)")
+    }
+
+    @Test
+    fun theCycleKeyIsDerivedFromTheEffectiveMonths() {
+        val pinned = baseline(date = LocalDate(2026, 1, 1), km = 10_000)
+        val dual = rule(intervalKm = 5_000, intervalMonths = 6)
+
+        val withGlobal = ReminderStatus.cycleKey(dual, 10_000, pinned.baselineDateEpochMs, effectiveMonths = 3L)
+        val perRule = ReminderStatus.cycleKey(dual, 10_000, pinned.baselineDateEpochMs)
+
+        assertTrue(withGlobal != perRule, "the effective months, not the stored value, defines the cycle")
+        // The effective value must land where the stored months segment sits, so a setting change
+        // re-arms every previously notified cycle (D-1's re-arm guarantee).
+        assertTrue(withGlobal.contains("|i5000:3|"))
+        assertTrue(perRule.contains("|i5000:6|"))
+    }
+
+    @Test
+    fun evaluateAllThreadsTheGlobalIntervalToEveryRow() {
+        val rules = listOf(rule(id = 1L, intervalKm = 50_000), rule(id = 2L, intervalKm = 50_000))
+        val baselines = listOf(
+            baseline(vehicleId = 1L, typeLabel = "Oil change", date = LocalDate(2026, 3, 15)),
+            baseline(vehicleId = 2L, typeLabel = "Oil change", date = LocalDate(2026, 3, 15)),
+        )
+
+        val rows = ReminderStatus.evaluateAll(
+            rules = rules,
+            baselines = baselines,
+            stats = listOf(stats(1), stats(2)),
+            today = LocalDate(2026, 5, 1),
+            globalIntervalMonths = 9L,
+        )
+
+        val expected = LocalDate(2026, 12, 15)
+        rows.forEach { row ->
+            val state = row.evaluation?.state
+            assertIs<DueState.Upcoming>(state)
+            assertEquals(expected, state.dueDate, "both vehicles use the global 9 months")
+        }
+    }
+
     @Test
     fun theCycleKeyNamesEveryInputItCovers() {
         val key = ReminderStatus.cycleKey(

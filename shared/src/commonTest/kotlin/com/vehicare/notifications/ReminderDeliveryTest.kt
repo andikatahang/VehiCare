@@ -15,6 +15,7 @@ import com.vehicare.testing.IgnoreOnAndroidHost
 import com.vehicare.util.ServiceDates
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.test.runTest
 import kotlinx.datetime.DatePeriod
@@ -468,7 +469,236 @@ class ReminderDeliveryTest {
         assertEquals(LocalDate(2026, 2, 1), scheduled.notificationDate)
         assertEquals("Due soon — 7 days left", scheduled.body)
     }
+
+    // ---- the global interval setting (261024-u9g, D-1/D-2) --------------------------------------
+
+    /**
+     * JVM-host-blocked only, not logic-blocked — see the KDoc above [theSameCycleWithNoArmedMarkerIsClaimedAndPosted].
+     */
+    @IgnoreOnAndroidHost
+    @Test
+    fun changingTheGlobalIntervalStartsANewCycleThatIsDeliveredAgain() = runTest {
+        val marchBaseline = TypeBaseline(
+            vehicleId = 1L,
+            typeLabel = "Brake service",
+            baselineDateEpochMs = ServiceDates.toStorage(LocalDate(2026, 3, 1)),
+            baselineKm = 10_000L,
+        )
+        val kmOnlyRule = rule(id = 1L, intervalKm = 50_000L, intervalMonths = null)
+        var globalMonths: Long? = 6L
+        val reminderRepository = FakeReminderRepository(
+            MutableStateFlow(
+                listOf(kmOnlyRule.copy(notifiedCycleKey = cycleKeyOf(kmOnlyRule, marchBaseline, 6L))),
+            ),
+            baselines = listOf(marchBaseline),
+            stats = listOf(VehicleStats(vehicleId = 1L, lastServiceEpochMs = null, lastMileageKm = 10_000L)),
+        )
+        val vehicleRepository = FakeVehicleRepository(listOf(vehicle()))
+        val scheduler = FakeNotificationScheduler()
+
+        suspend fun deliver(today: LocalDate) {
+            ReminderDelivery(
+                vehicleRepository,
+                reminderRepository,
+                scheduler,
+                today = { today },
+                immediateAxes = setOf(ReminderAxis.DISTANCE, ReminderAxis.TIME),
+                globalIntervalMonths = { globalMonths },
+            ).evaluateAndDeliver()
+        }
+
+        // The notified cycle (global 6 → due 2026-09-01, still upcoming) is not re-delivered.
+        deliver(LocalDate(2026, 6, 5))
+        assertTrue(scheduler.triggeredCalls.isEmpty())
+        assertTrue(reminderRepository.markNotifiedCalls.isEmpty())
+
+        // Global 6 → 3: the cycle key changes, so the (now overdue) cycle is delivered again.
+        globalMonths = 3L
+        deliver(LocalDate(2026, 6, 5))
+        assertEquals(1, scheduler.triggeredCalls.size)
+        val delivered = scheduler.triggeredCalls.single().single()
+        assertEquals(DueState.Overdue(kmOver = null, daysOver = 4L), delivered.state, "due 2026-06-01 = March + 3")
+
+        // A repeat sweep with the same global value re-attempts the claim, the compare-and-set
+        // returns false, and no second notification is posted for the same cycle key.
+        deliver(LocalDate(2026, 6, 5))
+        assertEquals(1, scheduler.triggeredCalls.size)
+        assertEquals(2, reminderRepository.markNotifiedCalls.size)
+        val keyUnder3 = cycleKeyOf(kmOnlyRule, marchBaseline, 3L)
+        assertTrue(reminderRepository.markNotifiedCalls.all { it.second == keyUnder3 })
+        assertEquals(
+            keyUnder3,
+            reminderRepository.observeAllRules().first().single().notifiedCycleKey,
+        )
+    }
+
+    /**
+     * **The user story (D-2, reschedule-only)** — JVM-host-blocked only, not logic-blocked, see the
+     * KDoc above [theSameCycleWithNoArmedMarkerIsClaimedAndPosted]. A rule exists and its earlier
+     * cycle (measured from the rule's creation) was already notified; then a service of the rule's
+     * type is inserted through the in-memory repository. The baseline shifts to the newest entry,
+     * the next sweep delivers exactly one notification whose state proves the next due date, and
+     * no rule row is created.
+     */
+    @IgnoreOnAndroidHost
+    @Test
+    fun aLoggedMarchServiceMovesTheBaselineAndDeliversExactlyOnceWithoutCreatingARule() = runTest {
+        val ruleRow = rule(
+            id = 1L,
+            serviceType = "Oil change",
+            intervalKm = 50_000L,
+            intervalMonths = null,
+            createdAt = LocalDate(2026, 1, 10),
+        )
+        val rulesFlow = MutableStateFlow(listOf(ruleRow))
+        val entriesFlow = MutableStateFlow(emptyList<FakeServiceEntry>())
+        val reminderRepository = InMemoryServiceDataRepository(rulesFlow, entriesFlow)
+        val vehicleRepository = FakeVehicleRepository(listOf(vehicle(name = "Toyota Corolla")))
+        val scheduler = FakeNotificationScheduler()
+        val globalMonths: Long? = 3L
+
+        // Earlier cycle: no entry yet → the baseline is the creation date (Jan 10 + 3 = Apr 10,
+        // overdue on May 1), so the earlier cycle is delivered.
+        ReminderDelivery(
+            vehicleRepository,
+            reminderRepository,
+            scheduler,
+            today = { LocalDate(2026, 5, 1) },
+            immediateAxes = setOf(ReminderAxis.DISTANCE, ReminderAxis.TIME),
+            globalIntervalMonths = { globalMonths },
+        ).evaluateAndDeliver()
+        assertEquals(1, scheduler.triggeredCalls.size)
+
+        // The story: a March service is logged through the repository — no manual rule edit.
+        reminderRepository.insertServiceEntry(
+            FakeServiceEntry(vehicleId = 1L, typeLabel = "Oil change", dateEpochMs = ServiceDates.toStorage(LocalDate(2026, 3, 20)), km = 20_000L),
+        )
+
+        // The next sweep measures from the March entry: due = March + 3 = June 20, overdue by
+        // June 25 → exactly one more notification, twelve-steps through the real baseline move.
+        ReminderDelivery(
+            vehicleRepository,
+            reminderRepository,
+            scheduler,
+            today = { LocalDate(2026, 6, 25) },
+            immediateAxes = setOf(ReminderAxis.DISTANCE, ReminderAxis.TIME),
+            globalIntervalMonths = { globalMonths },
+        ).evaluateAndDeliver()
+
+        assertEquals(2, scheduler.triggeredCalls.size)
+        val marchDelivery = scheduler.triggeredCalls[1].single()
+        assertEquals(DueState.Overdue(kmOver = null, daysOver = 5L), marchDelivery.state, "next due = March + 3 months")
+
+        // Reschedule-only: exactly one rule row still exists, never a created one.
+        assertEquals(1, reminderRepository.observeAllRules().first().size)
+        val claimedKey = ReminderStatus.cycleKey(
+            ruleRow,
+            kmBaseline = 20_000L,
+            dateBaselineEpochMs = ServiceDates.toStorage(LocalDate(2026, 3, 20)),
+            effectiveMonths = 3L,
+        )
+        assertEquals(claimedKey, reminderRepository.markNotifiedCalls.last().second)
+    }
+
+    private fun cycleKeyOf(rule: ReminderRule, baseline: TypeBaseline, effectiveMonths: Long?): String =
+        ReminderStatus.cycleKey(
+            rule,
+            kmBaseline = baseline.baselineKm,
+            dateBaselineEpochMs = baseline.baselineDateEpochMs,
+            effectiveMonths = effectiveMonths,
+        )
+
+    @Test
+    fun timePathOwnsAMonthsNullRuleOnceTheGlobalIntervalIsSet() {
+        val marchBaseline = TypeBaseline(
+            vehicleId = 1L,
+            typeLabel = "Brake service",
+            baselineDateEpochMs = ServiceDates.toStorage(LocalDate(2026, 3, 1)),
+            baselineKm = 10_000L,
+        )
+        val kmOnlyRule = rule(id = 1L, intervalKm = 50_000L, intervalMonths = null)
+        val rows = listOf(
+            row(kmOnlyRule, DueState.Upcoming(kmLeft = 50_000L, dueDate = null), ReminderAxis.DISTANCE),
+        )
+
+        // Once the global interval exists, EVERY enabled rule gains a time axis (D-1's universality):
+        // the notification instant belongs to the OS time path even without a stored interval.
+        val owned = timePathOwnedRuleIds(
+            rows,
+            baselines = listOf(marchBaseline),
+            today = LocalDate(2026, 6, 5),
+            immediateAxes = setOf(ReminderAxis.DISTANCE),
+            globalIntervalMonths = 3L,
+        )
+
+        assertEquals(setOf(1L), owned)
+    }
 }
+
+/**
+ * An in-memory [ReminderRepository] with a real write surface for service entries (261024-u9g, D-2):
+ * inserting an entry shifts the type baselines with the production `selectTypeBaselines` semantics —
+ * the newest entry per (vehicle, case-insensitive type) is that type's baseline — so the user-story
+ * sweep can be exercised through actual baseline movement instead of a mocked baseline swap.
+ */
+private class InMemoryServiceDataRepository(
+    private val rulesFlow: MutableStateFlow<List<ReminderRule>>,
+    private val entriesFlow: MutableStateFlow<List<FakeServiceEntry>>,
+) : ReminderRepository {
+
+    val markNotifiedCalls = mutableListOf<Pair<Long, String>>()
+
+    /** Real write path (the one service-entry insertion the story needs). */
+    fun insertServiceEntry(entry: FakeServiceEntry) {
+        entriesFlow.value = entriesFlow.value + entry
+    }
+
+    override fun observeRules(vehicleId: Long): Flow<List<ReminderRule>> =
+        flowOf(rulesFlow.value.filter { it.vehicleId == vehicleId })
+
+    override fun observeAllRules(): Flow<List<ReminderRule>> = flowOf(rulesFlow.value)
+
+    override fun observeRule(ruleId: Long): Flow<ReminderRule?> =
+        flowOf(rulesFlow.value.firstOrNull { it.id == ruleId })
+
+    override fun observeTypeBaselines(): Flow<List<TypeBaseline>> = flowOf(
+        entriesFlow.value
+            .groupBy { it.vehicleId to it.typeLabel.lowercase() }
+            .map { (_, entries) -> entries.maxBy { it.dateEpochMs } }
+            .map { e -> TypeBaseline(e.vehicleId, e.typeLabel, e.dateEpochMs, e.km) },
+    )
+
+    override fun observeVehicleStats(): Flow<List<VehicleStats>> = flowOf(emptyList())
+
+    override suspend fun save(rule: ReminderRule): Long = error("the sweep must never create a rule (D-2, reschedule-only)")
+
+    override suspend fun setEnabled(ruleId: Long, enabled: Boolean) = error("the sweep must never toggle a rule")
+
+    override suspend fun markNotified(ruleId: Long, cycleKey: String): Boolean {
+        markNotifiedCalls += ruleId to cycleKey
+        val current = rulesFlow.value.first { it.id == ruleId }
+        if (current.notifiedCycleKey == cycleKey) return false
+        rulesFlow.value = rulesFlow.value.map {
+            if (it.id == ruleId) it.copy(notifiedCycleKey = cycleKey) else it
+        }
+        return true
+    }
+
+    override suspend fun markArmed(ruleId: Long, cycleKey: String) {
+        rulesFlow.value = rulesFlow.value.map {
+            if (it.id == ruleId) it.copy(armedCycleKey = cycleKey) else it
+        }
+    }
+
+    override suspend fun delete(ruleId: Long) = error("the sweep must never delete a rule")
+}
+
+private data class FakeServiceEntry(
+    val vehicleId: Long,
+    val typeLabel: String,
+    val dateEpochMs: Long,
+    val km: Long,
+)
 
 // ---- fakes ------------------------------------------------------------------------------------
 

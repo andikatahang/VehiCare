@@ -169,4 +169,53 @@ class ReminderScheduleTest {
         val resolved = ReminderSchedule.timeBaselineOf(rule(createdAt = createdAt), baselines = emptyList())
         assertEquals(createdAt, resolved)
     }
+
+    // ---- the global interval setting (261024-u9g, D-1) -----------------------------------------
+
+    @Test
+    fun aGlobalIntervalGivesAMonthsNullRuleAnOccurrence() {
+        val occurrence = ReminderSchedule.currentOccurrence(
+            rule(intervalMonths = null, createdAt = LocalDate(2026, 3, 15)),
+            baselines = emptyList(),
+            globalIntervalMonths = 6L,
+        )
+
+        assertEquals(LocalDate(2026, 9, 15), occurrence)
+    }
+
+    @Test
+    fun theGlobalIntervalOverridesTheRuleOwnMonths() {
+        // The rule says 12 months; the global 3-month setting wins (override, not min/max).
+        val occurrence = ReminderSchedule.currentOccurrence(
+            rule(intervalMonths = 12L, createdAt = LocalDate(2026, 3, 15)),
+            baselines = emptyList(),
+            globalIntervalMonths = 3L,
+        )
+
+        assertEquals(LocalDate(2026, 6, 15), occurrence)
+    }
+
+    @Test
+    fun aNullGlobalIntervalKeepsThePerRuleBehavior() {
+        val createdAt = LocalDate(2026, 3, 15)
+        val occurrence = ReminderSchedule.currentOccurrence(
+            rule(intervalMonths = 12L, createdAt = createdAt),
+            baselines = emptyList(),
+            globalIntervalMonths = null,
+        )
+
+        assertEquals(LocalDate(2027, 3, 15), occurrence)
+    }
+
+    @Test
+    fun notificationDateHonorsTheGlobalInterval() {
+        val notifyAt = ReminderSchedule.notificationDate(
+            rule(intervalMonths = null, leadDays = 7L, createdAt = LocalDate(2026, 3, 15)),
+            baselines = emptyList(),
+            globalIntervalMonths = 6L,
+        )
+
+        // due = March + 6 = September 15; the lead counts back from the global occurrence.
+        assertEquals(LocalDate(2026, 9, 8), notifyAt)
+    }
 }

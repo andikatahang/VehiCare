@@ -161,12 +161,22 @@ object ReminderSchedule {
     /**
      * This cycle's due date, or `null` when [rule] has no time interval or is disabled.
      *
+     * The interval is the **effective** one (261024-u9g, D-1): [globalIntervalMonths] when the
+     * app-level setting is set, else [ReminderRule.intervalMonths] — so a months-null rule gains a
+     * time axis the moment the global value exists.
+     *
      * **No rolling**: the result stays in the past after the occurrence passes, because that is
      * exactly the fact the orchestrator needs to close the cycle. This is the only function allowed
      * to answer "what is this cycle's due date?" (the boundary includes today).
      */
-    fun currentOccurrence(rule: ReminderRule, baselines: List<TypeBaseline>): LocalDate? {
-        val intervalMonths = rule.intervalMonths ?: return null
+    fun currentOccurrence(
+        rule: ReminderRule,
+        baselines: List<TypeBaseline>,
+        globalIntervalMonths: Long? = null,
+    ): LocalDate? {
+        // The interval is the effective one: the app-level global setting when set (261024-u9g,
+        // D-1), else the rule's own — a months-null rule gains a time axis from the global value.
+        val intervalMonths = globalIntervalMonths ?: rule.intervalMonths ?: return null
         if (!rule.enabled) return null
         require(intervalMonths > 0) {
             "intervalMonths must be > 0 (D-46): rule ${rule.id} has $intervalMonths."
@@ -184,8 +194,12 @@ object ReminderSchedule {
      * opens. Never multiplies months by 30: `kotlinx.datetime`'s month arithmetic clamps 31 Jan + 1
      * month to 28 Feb, and day subtraction must not reintroduce that drift.
      */
-    fun notificationDate(rule: ReminderRule, baselines: List<TypeBaseline>): LocalDate? {
-        val due = currentOccurrence(rule, baselines) ?: return null
+    fun notificationDate(
+        rule: ReminderRule,
+        baselines: List<TypeBaseline>,
+        globalIntervalMonths: Long? = null,
+    ): LocalDate? {
+        val due = currentOccurrence(rule, baselines, globalIntervalMonths) ?: return null
         return due.minus(rule.leadDays ?: 0L, DateTimeUnit.DAY)
     }
 }

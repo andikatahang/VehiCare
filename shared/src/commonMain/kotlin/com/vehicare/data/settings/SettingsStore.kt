@@ -70,6 +70,17 @@ object SettingsProvider {
      */
     fun require(): SettingsStore =
         holder ?: error("SettingsProvider.initialize() was never called")
+
+    /**
+     * A **non-throwing, reactive** read for in-graph consumers (the UI ViewModels whose combines
+     * re-derive due states): when the platform entry point never initialized the provider — plain
+     * unit-test contexts, always — this is a plain `null` flow, which is exactly D-1's "never set"
+     * fallback. In production it re-emits on every Settings change, so lists stay live without a
+     * poll.
+     */
+    fun observeIntervalMonthsOrDefault(): Flow<Long?> =
+        runCatching { require().observeIntervalMonths() }
+            .getOrDefault(MutableStateFlow(null))
 }
 
 /**

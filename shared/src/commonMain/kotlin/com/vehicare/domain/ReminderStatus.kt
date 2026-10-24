@@ -178,6 +178,7 @@ object ReminderStatus {
         typeBaseline: TypeBaseline?,
         currentMileageKm: Long?,
         today: LocalDate,
+        globalIntervalMonths: Long? = null,
     ): ReminderEvaluation {
         require(rule.enabled) {
             "A disabled rule has no due state (D-43): rule ${rule.id} must not be evaluated."
@@ -185,12 +186,15 @@ object ReminderStatus {
         require(rule.intervalKm != null || rule.intervalMonths != null) {
             "A rule needs at least one interval (D-46): rule ${rule.id} has neither km nor months."
         }
+        // The effective months — the app-level global setting when it is set (261024-u9g, D-1),
+        // else the rule's own value — is what every time-axis decision below computes from.
+        val effectiveMonths = globalIntervalMonths ?: rule.intervalMonths
         require(rule.intervalKm == null || rule.intervalKm >= 1L) {
             "intervalKm must be >= 1 when set (C-34): rule ${rule.id} has ${rule.intervalKm}."
         }
-        require(rule.intervalMonths == null || rule.intervalMonths in 1L..MAX_INTERVAL_MONTHS) {
+        require(effectiveMonths == null || effectiveMonths in 1L..MAX_INTERVAL_MONTHS) {
             "intervalMonths must be in 1..$MAX_INTERVAL_MONTHS (C-34): rule ${rule.id} has " +
-                "${rule.intervalMonths}."
+                "$effectiveMonths."
         }
         require(rule.leadKm == null || rule.leadKm >= 1L) {
             "leadKm must be >= 1 when set (C-34: blank means no lead): rule ${rule.id} has " +
@@ -203,10 +207,10 @@ object ReminderStatus {
 
         val kmBaseline: Long? = typeBaseline?.baselineKm ?: currentMileageKm
         val dateBaselineEpochMs: Long = typeBaseline?.baselineDateEpochMs ?: rule.createdAtEpochMs
-        val key = cycleKey(rule, kmBaseline, dateBaselineEpochMs)
+        val key = cycleKey(rule, kmBaseline, dateBaselineEpochMs, effectiveMonths = effectiveMonths)
 
         val distance = distanceReading(rule.intervalKm, kmBaseline, currentMileageKm)
-        val time = timeReading(rule.intervalMonths, dateBaselineEpochMs, today)
+        val time = timeReading(effectiveMonths, dateBaselineEpochMs, today)
 
         // C-29's tie-break (a) applied at the source: an exact tie names the distance axis.
         if (distance != null && (time == null || distance.progress >= time.progress)) {
@@ -255,6 +259,7 @@ object ReminderStatus {
         baselines: List<TypeBaseline>,
         stats: List<VehicleStats>,
         today: LocalDate,
+        globalIntervalMonths: Long? = null,
     ): List<ReminderRow> {
         if (rules.isEmpty()) return emptyList()
 
@@ -273,6 +278,7 @@ object ReminderStatus {
                     typeBaseline = typeBaseline,
                     currentMileageKm = statsByVehicle[rule.vehicleId]?.lastMileageKm,
                     today = today,
+                    globalIntervalMonths = globalIntervalMonths,
                 )
             }
             ReminderRow(rule = rule, evaluation = evaluation)
@@ -299,12 +305,23 @@ object ReminderStatus {
      *
      * The worker claims delivery on this exact string, so it must stay deterministic: no
      * timestamps, no ordering, no formatting that depends on a locale (T-03-07).
+     *
+     * [effectiveMonths] (261024-u9g, D-1) is the resolved interval to key on — the app-level global
+     * setting when set, else the rule's own; callers that did not resolve one may omit it and the
+     * key falls back to `rule.intervalMonths`. When the global setting is set it replaces
+     * `intervalMonths` for both the due arithmetic and this key, so changing the setting naturally
+     * starts a new cycle and re-arms every previously notified row.
      */
-    fun cycleKey(rule: ReminderRule, kmBaseline: Long?, dateBaselineEpochMs: Long): String =
+    fun cycleKey(
+        rule: ReminderRule,
+        kmBaseline: Long?,
+        dateBaselineEpochMs: Long,
+        effectiveMonths: Long? = null,
+    ): String =
         "b" + (kmBaseline ?: -1L) +
             ":" + dateBaselineEpochMs +
             "|i" + (rule.intervalKm ?: -1L) +
-            ":" + (rule.intervalMonths ?: -1L) +
+            ":" + (effectiveMonths ?: rule.intervalMonths ?: -1L) +
             "|l" + (rule.leadKm ?: -1L) +
             ":" + (rule.leadDays ?: -1L)
 

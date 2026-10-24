@@ -2,6 +2,7 @@ package com.vehicare.ui.reminders
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.vehicare.data.settings.SettingsProvider
 import com.vehicare.domain.repository.ReminderRepository
 import com.vehicare.domain.ReminderOrdering
 import com.vehicare.domain.ReminderRow
@@ -185,13 +186,17 @@ internal fun observeRemindersUiState(
             repo.observeRules(vehicleId),
             repo.observeTypeBaselines(),
             repo.observeVehicleStats(),
-        ) { rules, baselines, stats ->
+            SettingsProvider.observeIntervalMonthsOrDefault(),
+        ) { rules, baselines, stats, globalMonths ->
             val rows = ReminderOrdering.sortRules(
                 ReminderStatus.evaluateAll(
                     rules = rules,
                     baselines = baselines,
                     stats = stats,
                     today = ServiceDates.today(),
+                    // D-1: the same effective interval the delivery path evaluates with
+                    // (261024-u9g) — the list never disagrees with the notifications.
+                    globalIntervalMonths = globalMonths,
                 ),
             )
             if (rows.isEmpty()) RemindersUiState.Empty else RemindersUiState.Content(rows)
