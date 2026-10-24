@@ -4,7 +4,7 @@ package com.vehicare.domain
  * A logged service event for one vehicle.
  *
  * This is the only shape the UI layer ever sees: SQLDelight's generated row types stop at the
- * data layer's mapper (see `com.vehicare.data.ServiceEntryEntityMapper`).
+ * data layer's mapper (see `com.vehicare.data.mapper.ServiceEntryEntityMapper`).
  *
  * Only [vehicleId], [dateEpochMs], [mileageKm] and [serviceTypes] are required to save an entry
  * (D-27); cost, notes, workshop, mechanic, parts and photos are optional and can be filled in

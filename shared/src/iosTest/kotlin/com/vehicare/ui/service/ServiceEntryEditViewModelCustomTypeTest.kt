@@ -1,6 +1,6 @@
 package com.vehicare.ui.service
 
-import com.vehicare.data.ServiceEntryRepository
+import com.vehicare.domain.repository.ServiceEntryRepository
 import com.vehicare.domain.HistorySort
 import com.vehicare.domain.ServiceEntry
 import com.vehicare.domain.ServiceSummary

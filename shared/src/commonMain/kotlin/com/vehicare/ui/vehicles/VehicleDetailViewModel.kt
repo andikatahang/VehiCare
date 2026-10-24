@@ -2,7 +2,7 @@ package com.vehicare.ui.vehicles
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.vehicare.data.VehicleRepository
+import com.vehicare.domain.repository.VehicleRepository
 import com.vehicare.domain.Vehicle
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.MutableStateFlow

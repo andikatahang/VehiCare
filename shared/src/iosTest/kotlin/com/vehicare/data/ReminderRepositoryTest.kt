@@ -2,6 +2,9 @@ package com.vehicare.data
 
 import app.cash.sqldelight.db.SqlDriver
 import com.vehicare.data.db.createDriverFactory
+import com.vehicare.data.repository.ReminderRepositoryImpl
+import com.vehicare.data.repository.ServiceEntryRepositoryImpl
+import com.vehicare.data.repository.VehicleRepositoryImpl
 import com.vehicare.db.VehiCareDatabase
 import com.vehicare.domain.ReminderRule
 import com.vehicare.domain.ServiceEntry

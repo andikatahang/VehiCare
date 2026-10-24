@@ -1,11 +1,11 @@
 package com.vehicare.di
 
-import com.vehicare.data.ReminderRepository
-import com.vehicare.data.ReminderRepositoryImpl
-import com.vehicare.data.ServiceEntryRepository
-import com.vehicare.data.ServiceEntryRepositoryImpl
-import com.vehicare.data.VehicleRepository
-import com.vehicare.data.VehicleRepositoryImpl
+import com.vehicare.domain.repository.ReminderRepository
+import com.vehicare.domain.repository.ServiceEntryRepository
+import com.vehicare.domain.repository.VehicleRepository
+import com.vehicare.data.repository.ReminderRepositoryImpl
+import com.vehicare.data.repository.ServiceEntryRepositoryImpl
+import com.vehicare.data.repository.VehicleRepositoryImpl
 import com.vehicare.data.db.DatabaseProvider
 import com.vehicare.db.VehiCareDatabase
 import com.vehicare.notifications.NotificationScheduler

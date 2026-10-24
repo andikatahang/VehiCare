@@ -1,4 +1,4 @@
-package com.vehicare.data
+package com.vehicare.data.mapper
 
 import com.vehicare.db.Vehicle as VehicleEntity
 import com.vehicare.domain.Vehicle

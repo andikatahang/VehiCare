@@ -4,7 +4,7 @@ package com.vehicare.domain
  * A vehicle as the app understands it.
  *
  * This is the only shape the UI layer ever sees: SQLDelight's generated row types stop at the
- * data layer's mapper (see `com.vehicare.data.VehicleEntityMapper`), so a schema change cannot
+ * data layer's mapper (see `com.vehicare.data.mapper.VehicleEntityMapper`), so a schema change cannot
  * ripple into a composable.
  *
  * Only [name] is required (D-09) — logging a car must be fast, every other field is optional and

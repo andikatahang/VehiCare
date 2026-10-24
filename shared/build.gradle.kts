@@ -109,3 +109,14 @@ sqldelight {
 dependencies {
     androidRuntimeClasspath(libs.compose.uiTooling)
 }
+
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompilationTask<*>>().configureEach {
+    val generateRes = project.tasks.findByName("generateComposeResClass")
+    if (generateRes != null && this != generateRes) {
+        dependsOn(generateRes)
+    }
+    val sqlDelightGen = project.tasks.findByName("generateVehiCareDatabaseInterface")
+    if (sqlDelightGen != null && this != sqlDelightGen) {
+        dependsOn(sqlDelightGen)
+    }
+}

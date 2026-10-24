@@ -2,8 +2,8 @@ package com.vehicare.ui.vehicles
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.vehicare.data.ReminderRepository
-import com.vehicare.data.VehicleRepository
+import com.vehicare.domain.repository.ReminderRepository
+import com.vehicare.domain.repository.VehicleRepository
 import com.vehicare.domain.DueState
 import com.vehicare.domain.ReminderOrdering
 import com.vehicare.domain.ReminderRow

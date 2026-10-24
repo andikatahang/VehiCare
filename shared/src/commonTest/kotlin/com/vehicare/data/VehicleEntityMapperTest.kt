@@ -1,5 +1,7 @@
 package com.vehicare.data
 
+import com.vehicare.data.mapper.toBindParameters
+import com.vehicare.data.mapper.toDomain
 import com.vehicare.db.Vehicle as VehicleEntity
 import com.vehicare.domain.Vehicle
 import com.vehicare.domain.VehicleType

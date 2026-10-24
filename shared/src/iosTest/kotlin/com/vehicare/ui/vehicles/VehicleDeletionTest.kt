@@ -1,8 +1,8 @@
 package com.vehicare.ui.vehicles
 
 import app.cash.sqldelight.db.SqlDriver
-import com.vehicare.data.VehicleRepository
-import com.vehicare.data.VehicleRepositoryImpl
+import com.vehicare.data.repository.VehicleRepositoryImpl
+import com.vehicare.domain.repository.VehicleRepository
 import com.vehicare.data.db.createDriverFactory
 import com.vehicare.db.VehiCareDatabase
 import com.vehicare.domain.Vehicle

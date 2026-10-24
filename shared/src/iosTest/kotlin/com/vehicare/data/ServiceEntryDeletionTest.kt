@@ -1,11 +1,11 @@
 package com.vehicare.data
 
 import app.cash.sqldelight.db.SqlDriver
-import com.vehicare.data.ServiceEntryRepository
-import com.vehicare.data.ServiceEntryRepositoryImpl
-import com.vehicare.data.VehicleRepository
-import com.vehicare.data.VehicleRepositoryImpl
 import com.vehicare.data.db.createDriverFactory
+import com.vehicare.data.repository.ServiceEntryRepositoryImpl
+import com.vehicare.data.repository.VehicleRepositoryImpl
+import com.vehicare.domain.repository.ServiceEntryRepository
+import com.vehicare.domain.repository.VehicleRepository
 import com.vehicare.db.VehiCareDatabase
 import com.vehicare.domain.ServiceEntry
 import com.vehicare.domain.ServicePart

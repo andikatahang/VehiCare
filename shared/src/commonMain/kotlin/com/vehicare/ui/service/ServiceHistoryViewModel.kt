@@ -2,7 +2,7 @@ package com.vehicare.ui.service
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.vehicare.data.ServiceEntryRepository
+import com.vehicare.domain.repository.ServiceEntryRepository
 import com.vehicare.domain.HistorySort
 import com.vehicare.domain.ServiceEntry
 import kotlinx.coroutines.ExperimentalCoroutinesApi

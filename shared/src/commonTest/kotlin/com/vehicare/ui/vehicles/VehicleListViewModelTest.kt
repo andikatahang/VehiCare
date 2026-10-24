@@ -1,7 +1,7 @@
 package com.vehicare.ui.vehicles
 
-import com.vehicare.data.ReminderRepository
-import com.vehicare.data.VehicleRepository
+import com.vehicare.domain.repository.ReminderRepository
+import com.vehicare.domain.repository.VehicleRepository
 import com.vehicare.domain.DueState
 import com.vehicare.domain.ReminderEvaluation
 import com.vehicare.domain.ReminderRow

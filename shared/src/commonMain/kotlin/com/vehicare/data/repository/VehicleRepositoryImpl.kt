@@ -1,9 +1,12 @@
-package com.vehicare.data
+package com.vehicare.data.repository
 
 import app.cash.sqldelight.coroutines.asFlow
 import app.cash.sqldelight.coroutines.mapToList
 import app.cash.sqldelight.coroutines.mapToOneOrNull
 import com.vehicare.db.VehiCareDatabase
+import com.vehicare.data.mapper.toDomain
+import com.vehicare.data.mapper.toBindParameters
+import com.vehicare.domain.repository.VehicleRepository
 import com.vehicare.domain.Vehicle
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers

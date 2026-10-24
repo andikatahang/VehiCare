@@ -1,4 +1,4 @@
-package com.vehicare.data
+package com.vehicare.data.mapper
 
 import com.vehicare.db.Reminder_rule as ReminderRuleEntity
 import com.vehicare.db.SelectTypeBaselines

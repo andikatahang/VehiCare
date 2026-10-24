@@ -1,6 +1,6 @@
 package com.vehicare.ui.reminders
 
-import com.vehicare.data.ReminderRepository
+import com.vehicare.domain.repository.ReminderRepository
 import com.vehicare.domain.DueState
 import com.vehicare.domain.ReminderAxis
 import com.vehicare.domain.ReminderRule

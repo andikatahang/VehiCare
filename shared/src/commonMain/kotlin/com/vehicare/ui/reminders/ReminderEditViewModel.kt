@@ -2,7 +2,7 @@ package com.vehicare.ui.reminders
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.vehicare.data.ReminderRepository
+import com.vehicare.domain.repository.ReminderRepository
 import com.vehicare.domain.ReminderRule
 import com.vehicare.notifications.FirstReminderAskSignal
 import com.vehicare.ui.service.SelectionMode

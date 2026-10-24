@@ -1,4 +1,4 @@
-package com.vehicare.data
+package com.vehicare.domain.repository
 
 import com.vehicare.domain.Vehicle
 import kotlinx.coroutines.flow.Flow

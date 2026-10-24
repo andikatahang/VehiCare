@@ -1,7 +1,5 @@
 package com.vehicare.notifications
 
-import com.vehicare.data.ReminderRepository
-import com.vehicare.data.VehicleRepository
 import com.vehicare.domain.DueState
 import com.vehicare.domain.ReminderAxis
 import com.vehicare.domain.ReminderEvaluation
@@ -11,6 +9,8 @@ import com.vehicare.domain.ReminderStatus
 import com.vehicare.domain.TypeBaseline
 import com.vehicare.domain.Vehicle
 import com.vehicare.domain.VehicleStats
+import com.vehicare.domain.repository.ReminderRepository
+import com.vehicare.domain.repository.VehicleRepository
 import com.vehicare.testing.IgnoreOnAndroidHost
 import com.vehicare.util.ServiceDates
 import kotlinx.coroutines.flow.Flow

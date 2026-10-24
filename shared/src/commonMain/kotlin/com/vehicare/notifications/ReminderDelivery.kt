@@ -1,11 +1,11 @@
 package com.vehicare.notifications
 
-import com.vehicare.data.ReminderRepository
-import com.vehicare.data.ReminderRepositoryImpl
-import com.vehicare.data.VehicleRepository
-import com.vehicare.data.VehicleRepositoryImpl
 import com.vehicare.data.db.DatabaseProvider
+import com.vehicare.data.repository.ReminderRepositoryImpl
+import com.vehicare.data.repository.VehicleRepositoryImpl
 import com.vehicare.domain.DueState
+import com.vehicare.domain.repository.ReminderRepository
+import com.vehicare.domain.repository.VehicleRepository
 import com.vehicare.domain.ReminderAxis
 import com.vehicare.domain.ReminderOrdering
 import com.vehicare.domain.ReminderRow
