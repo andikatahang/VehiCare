@@ -25,8 +25,8 @@
 
 ### Reminders
 
-- [ ] **REM-01**: User can set a mileage-based reminder for a service type (trigger after X km from last service)
-- [ ] **REM-02**: User can set a time-based reminder for a service type (trigger after X months from last service)
+- [x] **REM-01**: User can set a mileage-based reminder for a service type (trigger after X km from last service)
+- [x] **REM-02**: User can set a time-based reminder for a service type (trigger after X months from last service)
 - [ ] **REM-03**: User receives a local push notification when a reminder becomes due
 - [ ] **REM-04**: On iOS, mileage-based reminders are evaluated on app foreground (iOS background limitation)
 
@@ -95,8 +95,8 @@ Which phases cover which requirements. Updated during roadmap creation.
 | SVC-05 | Phase 2: Service Log | Complete |
 | SVC-06 | Phase 2: Service Log | Complete |
 | SVC-07 | Phase 2: Service Log | Complete |
-| REM-01 | Phase 3: Reminders & Dashboard | Pending |
-| REM-02 | Phase 3: Reminders & Dashboard | Pending |
+| REM-01 | Phase 3: Reminders & Dashboard | Complete |
+| REM-02 | Phase 3: Reminders & Dashboard | Complete |
 | REM-03 | Phase 3: Reminders & Dashboard | Pending |
 | REM-04 | Phase 3: Reminders & Dashboard | Pending |
 | DSH-01 | Phase 3: Reminders & Dashboard | Pending |
